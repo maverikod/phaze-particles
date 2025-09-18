@@ -132,7 +132,7 @@ class ProtonStaticCommand(BaseCommand):
             parser: Argument parser to add arguments to
         """
         parser.add_argument(
-            "--config", type=str, help="Configuration file path (YAML format)"
+            "--config", type=str, help="Configuration file path (JSON format)"
         )
 
         parser.add_argument(
@@ -235,19 +235,41 @@ class ProtonStaticCommand(BaseCommand):
         try:
             # Load configuration if provided
             if args.config:
-                self.load_config(args.config)
-                if not self.validate_config():
-                    print("Error: Invalid configuration file", file=sys.stderr)
+                try:
+                    model_config = ModelConfig.from_file(args.config)
+                    print(f"Configuration loaded from: {args.config}")
+                except Exception as e:
+                    print(f"Error loading configuration file: {e}", file=sys.stderr)
                     return 1
+            else:
+                # Use command line arguments to create config
+                model_config = ModelConfig(
+                    grid_size=args.grid_size,
+                    box_size=args.box_size,
+                    torus_config=args.config_type,
+                    validation_enabled=True,
+                    save_reports=True,
+                    output_dir=args.output,
+                )
 
-            # Use config values or command line arguments
-            grid_size = self.get_config("grid_size", args.grid_size)
-            box_size = self.get_config("box_size", args.box_size)
-            config_type = self.get_config("config_type", args.config_type)
-            output_dir = self.get_config("output", args.output)
-            verbose = self.get_config("verbose", args.verbose)
-            save_data = self.get_config("save_data", args.save_data)
-            generate_plots = self.get_config("generate_plots", args.generate_plots)
+            # Override with command line arguments if provided
+            grid_size = (
+                args.grid_size if args.grid_size != 64 else model_config.grid_size
+            )
+            box_size = args.box_size if args.box_size != 4.0 else model_config.box_size
+            config_type = (
+                args.config_type
+                if args.config_type != "all"
+                else model_config.torus_config
+            )
+            output_dir = (
+                args.output
+                if args.output != "proton_static_results"
+                else model_config.output_dir
+            )
+            verbose = args.verbose
+            save_data = args.save_data
+            generate_plots = args.generate_plots
 
             # Display CUDA status
             print("Running integrated proton model...")
@@ -266,23 +288,19 @@ class ProtonStaticCommand(BaseCommand):
             if generate_plots:
                 print("Plot generation enabled")
 
-            if args.config:
-                print(f"Using configuration file: {args.config}")
-
-            # Create model configuration
-            model_config = ModelConfig(
-                grid_size=grid_size,
-                box_size=box_size,
-                torus_config=config_type,
-                validation_enabled=True,
-                save_reports=True,
-                output_dir=output_dir,
-            )
+            # Update model config with final values
+            model_config.grid_size = grid_size
+            model_config.box_size = box_size
+            model_config.torus_config = config_type
+            model_config.output_dir = output_dir
 
             # Create and run model
             with create_performance_monitor("Proton Static Model") as monitor:
                 # Create model
                 model = ProtonModel(model_config)
+
+                # Display model CUDA status
+                print(f"Model CUDA Status: {model.get_cuda_status()}")
 
                 # Run model with progress tracking
                 print("Starting proton model calculation...")

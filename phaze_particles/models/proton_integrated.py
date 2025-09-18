@@ -25,6 +25,8 @@ from ..utils.numerical_methods import (
     ConstraintConfig,
 )
 from ..utils.validation import ValidationSystem, ExperimentalData, CalculatedData
+from ..utils.cuda import get_cuda_manager
+from ..utils.progress import create_progress_bar, create_performance_monitor
 
 
 class ModelStatus(Enum):
@@ -210,6 +212,9 @@ class ProtonModel:
         if errors:
             raise ValueError(f"Configuration validation failed: {errors}")
 
+        # Initialize CUDA manager
+        self.cuda_manager = get_cuda_manager()
+
         # Initialize components
         self._initialize_components()
 
@@ -275,6 +280,7 @@ class ProtonModel:
                 self.validation_system = None
 
             print("All model components successfully initialized")
+            print(f"CUDA Status: {self.cuda_manager.get_status_string()}")
 
         except Exception as e:
             self.status = ModelStatus.FAILED
@@ -516,27 +522,36 @@ class ProtonModel:
         start_time = time.time()
 
         try:
+            # Create progress bar for the full cycle
+            progress_bar = create_progress_bar(6, "Proton Model Execution")
+
             # Create geometry
+            progress_bar.update(1)
             if not self.create_geometry():
                 raise RuntimeError("Failed to create geometry")
 
             # Build fields
+            progress_bar.update(1)
             if not self.build_fields():
                 raise RuntimeError("Failed to build fields")
 
             # Calculate energy
+            progress_bar.update(1)
             if not self.calculate_energy():
                 raise RuntimeError("Failed to calculate energy")
 
             # Calculate physics
+            progress_bar.update(1)
             if not self.calculate_physics():
                 raise RuntimeError("Failed to calculate physics")
 
             # Optimize
+            progress_bar.update(1)
             if not self.optimize():
                 raise RuntimeError("Failed to optimize")
 
             # Validate
+            progress_bar.update(1)
             if not self.validate():
                 raise RuntimeError("Failed to validate")
 
@@ -633,6 +648,24 @@ class ProtonModel:
             self.relaxation_solver.reset()
 
         print("Model reset to initial state")
+
+    def get_cuda_status(self) -> str:
+        """
+        Get CUDA status string.
+
+        Returns:
+            CUDA status string
+        """
+        return self.cuda_manager.get_status_string()
+
+    def get_cuda_info(self) -> Dict[str, Any]:
+        """
+        Get detailed CUDA information.
+
+        Returns:
+            Dictionary with CUDA information
+        """
+        return self.cuda_manager.get_detailed_status()
 
 
 class ProtonModelFactory:
