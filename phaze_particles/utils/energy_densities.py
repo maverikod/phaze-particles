@@ -7,7 +7,7 @@ Email: vasilyvz@gmail.com
 """
 
 import numpy as np
-from typing import Tuple, List, Dict, Any, Optional
+from typing import List, Dict, Any
 from dataclasses import dataclass
 import math
 
@@ -41,7 +41,7 @@ class EnergyDensity:
         Returns:
             Total energy E = ∫ ℰ d³x
         """
-        return np.sum(self.total_density) * self.dx**3
+        return np.sum(self.total_density) * self.dx ** 3
 
     def get_energy_components(self) -> Dict[str, float]:
         """
@@ -51,9 +51,9 @@ class EnergyDensity:
             Dictionary with energy components
         """
         return {
-            "E2": np.sum(self.c2_term) * self.dx**3,
-            "E4": np.sum(self.c4_term) * self.dx**3,
-            "E6": np.sum(self.c6_term) * self.dx**3,
+            "E2": np.sum(self.c2_term) * self.dx ** 3,
+            "E4": np.sum(self.c4_term) * self.dx ** 3,
+            "E6": np.sum(self.c6_term) * self.dx ** 3,
             "E_total": self.get_total_energy(),
         }
 
@@ -111,7 +111,7 @@ class BaryonDensity:
 
     def compute_baryon_density(
         self, left_currents: Dict[str, Dict[str, np.ndarray]]
-    ) -> np.ndarray:
+    ) -> Any:
         """
         Calculate baryon charge density.
 
@@ -143,21 +143,21 @@ class BaryonDensity:
         # Normalization
         baryon_density *= -1.0 / (24 * math.pi**2)
 
-        return baryon_density
+        return baryon_density.astype(np.float64)
 
-    def _get_epsilon_tensor(self) -> np.ndarray:
+    def _get_epsilon_tensor(self) -> Any:
         """Get antisymmetric tensor εⁱʲᵏ."""
         epsilon = np.zeros((3, 3, 3))
         epsilon[0, 1, 2] = epsilon[1, 2, 0] = epsilon[2, 0, 1] = 1
         epsilon[0, 2, 1] = epsilon[2, 1, 0] = epsilon[1, 0, 2] = -1
-        return epsilon
+        return epsilon.astype(np.float64)
 
     def _compute_triple_trace(
         self,
         l1: Dict[str, np.ndarray],
         l2: Dict[str, np.ndarray],
         l3: Dict[str, np.ndarray],
-    ) -> np.ndarray:
+    ) -> Any:
         """
         Calculate Tr(L₁ L₂ L₃).
 
@@ -181,7 +181,7 @@ class BaryonDensity:
             + l1l2_11 * l3["l_11"]
         )
 
-        return trace
+        return trace.astype(np.float64)
 
 
 class EnergyDensityCalculator:
@@ -253,7 +253,9 @@ class EnergyDensityCalculator:
             c6=self.c6,
         )
 
-    def compute_baryon_number(self, field_derivatives: Dict[str, Any]) -> float:
+    def compute_baryon_number(
+        self, field_derivatives: Dict[str, Any]
+    ) -> float:
         """
         Calculate baryon number.
 
@@ -292,7 +294,7 @@ class EnergyAnalyzer:
         Returns:
             Dictionary with analysis results
         """
-        analysis = {}
+        analysis: Dict[str, Any] = {}
 
         # Energy components
         analysis["components"] = energy_density.get_energy_components()
@@ -306,7 +308,9 @@ class EnergyAnalyzer:
         )
 
         # Density statistics
-        analysis["density_stats"] = self._compute_density_statistics(energy_density)
+        analysis["density_stats"] = self._compute_density_statistics(
+            energy_density
+        )
 
         # Model quality
         analysis["quality"] = self._assess_energy_quality(energy_density)
@@ -326,16 +330,18 @@ class EnergyAnalyzer:
             Dictionary with statistics
         """
         return {
-            "total_mean": np.mean(energy_density.total_density),
-            "total_std": np.std(energy_density.total_density),
-            "total_max": np.max(energy_density.total_density),
-            "total_min": np.min(energy_density.total_density),
-            "c2_mean": np.mean(energy_density.c2_term),
-            "c4_mean": np.mean(energy_density.c4_term),
-            "c6_mean": np.mean(energy_density.c6_term),
+            "total_mean": float(np.mean(energy_density.total_density)),
+            "total_std": float(np.std(energy_density.total_density)),
+            "total_max": float(np.max(energy_density.total_density)),
+            "total_min": float(np.min(energy_density.total_density)),
+            "c2_mean": float(np.mean(energy_density.c2_term)),
+            "c4_mean": float(np.mean(energy_density.c4_term)),
+            "c6_mean": float(np.mean(energy_density.c6_term)),
         }
 
-    def _assess_energy_quality(self, energy_density: EnergyDensity) -> Dict[str, Any]:
+    def _assess_energy_quality(
+        self, energy_density: EnergyDensity
+    ) -> Dict[str, Any]:
         """
         Assess energy model quality.
 
@@ -375,7 +381,9 @@ class EnergyAnalyzer:
             "overall_quality": overall_quality,
             "balance_quality": balance_quality,
             "virial_condition": virial_ok,
-            "recommendations": self._get_energy_recommendations(balance, virial_ok),
+            "recommendations": self._get_energy_recommendations(
+                balance, virial_ok
+            ),
         }
 
     def _get_energy_recommendations(
@@ -402,17 +410,27 @@ class EnergyAnalyzer:
         e4_ratio = balance["E4_ratio"]
 
         if e2_ratio > 0.6:
-            recommendations.append("Reduce c₂ constant to decrease E₂ contribution")
+            recommendations.append(
+                "Reduce c₂ constant to decrease E₂ contribution"
+            )
         elif e2_ratio < 0.4:
-            recommendations.append("Increase c₂ constant to increase E₂ contribution")
+            recommendations.append(
+                "Increase c₂ constant to increase E₂ contribution"
+            )
 
         if e4_ratio > 0.6:
-            recommendations.append("Reduce c₄ constant to decrease E₄ contribution")
+            recommendations.append(
+                "Reduce c₄ constant to decrease E₄ contribution"
+            )
         elif e4_ratio < 0.4:
-            recommendations.append("Increase c₄ constant to increase E₄ contribution")
+            recommendations.append(
+                "Increase c₄ constant to increase E₄ contribution"
+            )
 
         if balance["E6_ratio"] > 0.1:
-            recommendations.append("Reduce c₆ constant to decrease E₆ contribution")
+            recommendations.append(
+                "Reduce c₆ constant to decrease E₆ contribution"
+            )
 
         return recommendations
 
@@ -461,16 +479,20 @@ class EnergyOptimizer:
 
         for iteration in range(max_iterations):
             # Calculate energy density with current constants
+            grid_size = field_derivatives["left_currents"]["x"]["l_00"].shape[
+                0
+            ]
             calculator = EnergyDensityCalculator(
-                field_derivatives["left_currents"]["x"]["l_00"].shape[0],
-                field_derivatives["left_currents"]["x"]["l_00"].shape[0]
-                * 0.1,  # Approximate box_size
+                grid_size,
+                grid_size * 0.1,  # Approximate box_size
                 c2,
                 c4,
                 c6,
             )
 
-            energy_density = calculator.compute_energy_density(field_derivatives)
+            energy_density = calculator.compute_energy_density(
+                field_derivatives
+            )
             balance = energy_density.get_energy_balance()
 
             # Check convergence
@@ -520,11 +542,15 @@ class EnergyDensities:
         self.c4 = c4
         self.c6 = c6
 
-        self.calculator = EnergyDensityCalculator(grid_size, box_size, c2, c4, c6)
+        self.calculator = EnergyDensityCalculator(
+            grid_size, box_size, c2, c4, c6
+        )
         self.analyzer = EnergyAnalyzer()
         self.optimizer = EnergyOptimizer()
 
-    def compute_energy(self, field_derivatives: Dict[str, Any]) -> EnergyDensity:
+    def compute_energy(
+        self, field_derivatives: Dict[str, Any]
+    ) -> EnergyDensity:
         """
         Calculate energy density.
 
@@ -536,7 +562,9 @@ class EnergyDensities:
         """
         return self.calculator.compute_energy_density(field_derivatives)
 
-    def compute_baryon_number(self, field_derivatives: Dict[str, Any]) -> float:
+    def compute_baryon_number(
+        self, field_derivatives: Dict[str, Any]
+    ) -> float:
         """
         Calculate baryon number.
 
@@ -560,7 +588,9 @@ class EnergyDensities:
         """
         return self.analyzer.analyze_energy(energy_density)
 
-    def optimize_constants(self, field_derivatives: Dict[str, Any]) -> Dict[str, float]:
+    def optimize_constants(
+        self, field_derivatives: Dict[str, Any]
+    ) -> Dict[str, float]:
         """
         Optimize Skyrme constants.
 
@@ -588,6 +618,7 @@ class EnergyDensities:
         components = analysis["components"]
         balance = analysis["balance"]
         quality = analysis["quality"]
+        virial_status = '✓ PASS' if analysis['virial_condition'] else '✗ FAIL'
 
         report = f"""
 ENERGY DENSITY ANALYSIS
@@ -604,7 +635,7 @@ Energy Balance:
   E₄/E_total: {balance['E4_ratio']:.3f} (target: 0.500)
   E₆/E_total: {balance['E6_ratio']:.3f}
 
-Virial Condition (E₂ = E₄): {'✓ PASS' if analysis['virial_condition'] else '✗ FAIL'}
+Virial Condition (E₂ = E₄): {virial_status}
 
 Quality Assessment:
   Overall Quality: {quality['overall_quality'].upper()}
