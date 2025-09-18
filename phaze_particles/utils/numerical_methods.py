@@ -9,11 +9,11 @@ Email: vasilyvz@gmail.com
 import numpy as np
 import time
 import logging
-from typing import Tuple, List, Dict, Any, Optional, Callable
+from typing import Tuple, Dict, Any, Optional, Callable, Union
 from dataclasses import dataclass
 from enum import Enum
 
-from .cuda import get_cuda_manager, is_cuda_available
+# from .cuda import get_cuda_manager, is_cuda_available
 from .mathematical_foundations import ArrayBackend
 from .progress import ProgressBar
 
@@ -30,14 +30,40 @@ class RelaxationMethod(Enum):
 class RelaxationConfig:
     """Relaxation configuration."""
 
-    method: RelaxationMethod
-    max_iterations: int = 1000
-    convergence_tol: float = 1e-6
-    step_size: float = 0.01
-    momentum: float = 0.9
-    beta1: float = 0.9
-    beta2: float = 0.999
-    epsilon: float = 1e-8
+    def __init__(
+        self,
+        method: Union[RelaxationMethod, str] = RelaxationMethod.GRADIENT_DESCENT,
+        max_iterations: int = 1000,
+        convergence_tol: float = 1e-6,
+        step_size: float = 0.01,
+        momentum: float = 0.9,
+        beta1: float = 0.9,
+        beta2: float = 0.999,
+        epsilon: float = 1e-8,
+    ):
+        """
+        Initialize relaxation configuration.
+
+        Args:
+            method: Relaxation method (enum or string)
+            max_iterations: Maximum iterations
+            convergence_tol: Convergence tolerance
+            step_size: Step size
+            momentum: Momentum parameter
+            beta1: Adam beta1 parameter
+            beta2: Adam beta2 parameter
+            epsilon: Adam epsilon parameter
+        """
+        if isinstance(method, str):
+            method = RelaxationMethod(method)
+        self.method = method
+        self.max_iterations = max_iterations
+        self.convergence_tol = convergence_tol
+        self.step_size = step_size
+        self.momentum = momentum
+        self.beta1 = beta1
+        self.beta2 = beta2
+        self.epsilon = epsilon
 
 
 @dataclass

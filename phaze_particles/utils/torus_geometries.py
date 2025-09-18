@@ -121,9 +121,7 @@ class Torus120Degrees:
 
         return tori
 
-    def get_field_direction(
-        self, x: Any, y: Any, z: Any
-    ) -> Tuple[Any, Any, Any]:
+    def get_field_direction(self, x: Any, y: Any, z: Any) -> Tuple[Any, Any, Any]:
         """
         Вычисление направления поля n̂(x) для 120° конфигурации.
 
@@ -142,9 +140,7 @@ class Torus120Degrees:
             distance = self._distance_to_torus(x, y, z, torus)
 
             # Весовая функция (гауссова)
-            weight = self.backend.exp(
-                -(distance**2) / (2 * torus.thickness**2)
-            )
+            weight = self.backend.exp(-(distance**2) / (2 * torus.thickness**2))
 
             # Добавление вклада от тора
             n_x += weight * torus.axis[0] * torus.strength
@@ -157,9 +153,7 @@ class Torus120Degrees:
 
         return n_x / norm, n_y / norm, n_z / norm
 
-    def _distance_to_torus(
-        self, x: Any, y: Any, z: Any, torus: TorusParameters
-    ) -> Any:
+    def _distance_to_torus(self, x: Any, y: Any, z: Any, torus: TorusParameters) -> Any:
         """
         Вычисление расстояния до тора.
 
@@ -176,9 +170,7 @@ class Torus120Degrees:
         dz = z - torus.center[2]
 
         # Проекция на ось тора
-        axis_proj = (
-            dx * torus.axis[0] + dy * torus.axis[1] + dz * torus.axis[2]
-        )
+        axis_proj = dx * torus.axis[0] + dy * torus.axis[1] + dz * torus.axis[2]
 
         # Координаты в плоскости, перпендикулярной оси тора
         perp_x = dx - axis_proj * torus.axis[0]
@@ -263,9 +255,7 @@ class TorusClover:
 
         return tori
 
-    def get_field_direction(
-        self, x: Any, y: Any, z: Any
-    ) -> Tuple[Any, Any, Any]:
+    def get_field_direction(self, x: Any, y: Any, z: Any) -> Tuple[Any, Any, Any]:
         """
         Вычисление направления поля n̂(x) для клевер конфигурации.
 
@@ -284,9 +274,7 @@ class TorusClover:
             distance = self._distance_to_torus(x, y, z, torus)
 
             # Весовая функция (гауссова)
-            weight = self.backend.exp(
-                -(distance**2) / (2 * torus.thickness**2)
-            )
+            weight = self.backend.exp(-(distance**2) / (2 * torus.thickness**2))
 
             # Добавление вклада от тора
             n_x += weight * torus.axis[0] * torus.strength
@@ -299,9 +287,7 @@ class TorusClover:
 
         return n_x / norm, n_y / norm, n_z / norm
 
-    def _distance_to_torus(
-        self, x: Any, y: Any, z: Any, torus: TorusParameters
-    ) -> Any:
+    def _distance_to_torus(self, x: Any, y: Any, z: Any, torus: TorusParameters) -> Any:
         """
         Вычисление расстояния до тора (аналогично 120° конфигурации).
         """
@@ -309,9 +295,7 @@ class TorusClover:
         dy = y - torus.center[1]
         dz = z - torus.center[2]
 
-        axis_proj = (
-            dx * torus.axis[0] + dy * torus.axis[1] + dz * torus.axis[2]
-        )
+        axis_proj = dx * torus.axis[0] + dy * torus.axis[1] + dz * torus.axis[2]
 
         perp_x = dx - axis_proj * torus.axis[0]
         perp_y = dy - axis_proj * torus.axis[1]
@@ -393,9 +377,7 @@ class TorusCartesian:
 
         return tori
 
-    def get_field_direction(
-        self, x: Any, y: Any, z: Any
-    ) -> Tuple[Any, Any, Any]:
+    def get_field_direction(self, x: Any, y: Any, z: Any) -> Tuple[Any, Any, Any]:
         """
         Вычисление направления поля n̂(x) для декартовой конфигурации.
 
@@ -414,9 +396,7 @@ class TorusCartesian:
             distance = self._distance_to_torus(x, y, z, torus)
 
             # Весовая функция (гауссова)
-            weight = self.backend.exp(
-                -(distance**2) / (2 * torus.thickness**2)
-            )
+            weight = self.backend.exp(-(distance**2) / (2 * torus.thickness**2))
 
             # Добавление вклада от тора
             n_x += weight * torus.axis[0] * torus.strength
@@ -429,9 +409,7 @@ class TorusCartesian:
 
         return n_x / norm, n_y / norm, n_z / norm
 
-    def _distance_to_torus(
-        self, x: Any, y: Any, z: Any, torus: TorusParameters
-    ) -> Any:
+    def _distance_to_torus(self, x: Any, y: Any, z: Any, torus: TorusParameters) -> Any:
         """
         Вычисление расстояния до тора (аналогично другим конфигурациям).
         """
@@ -439,9 +417,7 @@ class TorusCartesian:
         dy = y - torus.center[1]
         dz = z - torus.center[2]
 
-        axis_proj = (
-            dx * torus.axis[0] + dy * torus.axis[1] + dz * torus.axis[2]
-        )
+        axis_proj = dx * torus.axis[0] + dy * torus.axis[1] + dz * torus.axis[2]
 
         perp_x = dx - axis_proj * torus.axis[0]
         perp_y = dy - axis_proj * torus.axis[1]
@@ -455,14 +431,23 @@ class TorusCartesian:
 class TorusGeometryManager:
     """Менеджер тороидальных геометрий."""
 
-    def __init__(self, backend: Optional[ArrayBackend] = None):
+    def __init__(
+        self,
+        backend: Optional[ArrayBackend] = None,
+        grid_size: int = 64,
+        box_size: float = 4.0,
+    ):
         """
         Инициализация менеджера геометрий.
 
         Args:
             backend: Array backend (CUDA-aware or NumPy)
+            grid_size: Размер сетки
+            box_size: Размер области
         """
         self.backend = backend or ArrayBackend()
+        self.grid_size = grid_size
+        self.box_size = box_size
         self.configurations = {
             TorusConfiguration.CONFIG_120_DEG: Torus120Degrees,
             TorusConfiguration.CONFIG_CLOVER: TorusClover,
@@ -494,6 +479,26 @@ class TorusGeometryManager:
         config_class = self.configurations[config_type]
         return config_class(radius, thickness, strength, self.backend)
 
+    def create_field_direction(
+        self,
+        config_type: TorusConfiguration,
+        radius: float = 1.0,
+        thickness: float = 0.2,
+    ) -> Any:
+        """
+        Создание направления поля для тороидальной конфигурации.
+
+        Args:
+            config_type: Тип конфигурации
+            radius: Радиус тора
+            thickness: Толщина тора
+
+        Returns:
+            Направление поля
+        """
+        configuration = self.create_configuration(config_type, radius, thickness)
+        return configuration
+
     def get_available_configurations(self) -> List[TorusConfiguration]:
         """
         Получить список доступных конфигураций.
@@ -503,9 +508,7 @@ class TorusGeometryManager:
         """
         return list(self.configurations.keys())
 
-    def get_configuration_info(
-        self, config_type: TorusConfiguration
-    ) -> Dict[str, Any]:
+    def get_configuration_info(self, config_type: TorusConfiguration) -> Dict[str, Any]:
         """
         Получить информацию о конфигурации.
 
@@ -530,9 +533,7 @@ class TorusGeometryManager:
             },
             TorusConfiguration.CONFIG_CARTESIAN: {
                 "name": "Cartesian Configuration",
-                "description": (
-                    "Three tori along x, y, z axes with D₄ symmetry"
-                ),
+                "description": ("Three tori along x, y, z axes with D₄ symmetry"),
                 "symmetry_group": "D₄",
                 "num_tori": 3,
             },
@@ -640,9 +641,7 @@ class TorusGeometries:
         n_x, n_y, n_z = config.get_field_direction(self.X, self.Y, self.Z)
         return n_x, n_y, n_z
 
-    def get_configuration_info(
-        self, config_type: TorusConfiguration
-    ) -> Dict[str, Any]:
+    def get_configuration_info(self, config_type: TorusConfiguration) -> Dict[str, Any]:
         """
         Получить информацию о конфигурации.
 

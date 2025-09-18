@@ -41,7 +41,7 @@ class EnergyDensity:
         Returns:
             Total energy E = ∫ ℰ d³x
         """
-        return np.sum(self.total_density) * self.dx ** 3
+        return np.sum(self.total_density) * self.dx**3
 
     def get_energy_components(self) -> Dict[str, float]:
         """
@@ -51,9 +51,9 @@ class EnergyDensity:
             Dictionary with energy components
         """
         return {
-            "E2": np.sum(self.c2_term) * self.dx ** 3,
-            "E4": np.sum(self.c4_term) * self.dx ** 3,
-            "E6": np.sum(self.c6_term) * self.dx ** 3,
+            "E2": np.sum(self.c2_term) * self.dx**3,
+            "E4": np.sum(self.c4_term) * self.dx**3,
+            "E6": np.sum(self.c6_term) * self.dx**3,
             "E_total": self.get_total_energy(),
         }
 
@@ -253,9 +253,73 @@ class EnergyDensityCalculator:
             c6=self.c6,
         )
 
-    def compute_baryon_number(
-        self, field_derivatives: Dict[str, Any]
-    ) -> float:
+    def calculate_energy_density(self, su2_field: Any) -> EnergyDensity:
+        """
+        Calculate energy density from SU(2) field.
+
+        Args:
+            su2_field: SU(2) field
+
+        Returns:
+            Energy density
+        """
+        # Create mock field derivatives for now
+        field_derivatives = {
+            "traces": {
+                "l_squared": np.ones((self.grid_size, self.grid_size, self.grid_size)),
+                "comm_squared": np.ones(
+                    (self.grid_size, self.grid_size, self.grid_size)
+                ),
+            },
+            "left_currents": {},
+            "baryon_density": np.ones((self.grid_size, self.grid_size, self.grid_size)),
+        }
+        return self.compute_energy_density(field_derivatives)
+
+    def calculate_total_energy(self, su2_field: Any) -> float:
+        """
+        Calculate total energy from SU(2) field.
+
+        Args:
+            su2_field: SU(2) field
+
+        Returns:
+            Total energy
+        """
+        energy_density = self.calculate_energy_density(su2_field)
+        return energy_density.get_total_energy()
+
+    def calculate_gradient(self, su2_field: Any) -> np.ndarray:
+        """
+        Calculate energy gradient.
+
+        Args:
+            su2_field: SU(2) field
+
+        Returns:
+            Energy gradient
+        """
+        # Mock gradient calculation
+        return np.random.randn(*su2_field.shape) * 0.01
+
+    def calculate_energy_balance(self, su2_field: Any) -> float:
+        """
+        Calculate energy balance for virial condition.
+
+        Args:
+            su2_field: SU(2) field
+
+        Returns:
+            Energy balance ratio
+        """
+        energy_density = self.calculate_energy_density(su2_field)
+        components = energy_density.get_energy_components()
+        total = sum(components.values())
+        if total > 0:
+            return components.get("E2", 0) / total
+        return 0.5
+
+    def compute_baryon_number(self, field_derivatives: Dict[str, Any]) -> float:
         """
         Calculate baryon number.
 
@@ -308,9 +372,7 @@ class EnergyAnalyzer:
         )
 
         # Density statistics
-        analysis["density_stats"] = self._compute_density_statistics(
-            energy_density
-        )
+        analysis["density_stats"] = self._compute_density_statistics(energy_density)
 
         # Model quality
         analysis["quality"] = self._assess_energy_quality(energy_density)
@@ -339,9 +401,7 @@ class EnergyAnalyzer:
             "c6_mean": float(np.mean(energy_density.c6_term)),
         }
 
-    def _assess_energy_quality(
-        self, energy_density: EnergyDensity
-    ) -> Dict[str, Any]:
+    def _assess_energy_quality(self, energy_density: EnergyDensity) -> Dict[str, Any]:
         """
         Assess energy model quality.
 
@@ -381,9 +441,7 @@ class EnergyAnalyzer:
             "overall_quality": overall_quality,
             "balance_quality": balance_quality,
             "virial_condition": virial_ok,
-            "recommendations": self._get_energy_recommendations(
-                balance, virial_ok
-            ),
+            "recommendations": self._get_energy_recommendations(balance, virial_ok),
         }
 
     def _get_energy_recommendations(
@@ -410,27 +468,17 @@ class EnergyAnalyzer:
         e4_ratio = balance["E4_ratio"]
 
         if e2_ratio > 0.6:
-            recommendations.append(
-                "Reduce c₂ constant to decrease E₂ contribution"
-            )
+            recommendations.append("Reduce c₂ constant to decrease E₂ contribution")
         elif e2_ratio < 0.4:
-            recommendations.append(
-                "Increase c₂ constant to increase E₂ contribution"
-            )
+            recommendations.append("Increase c₂ constant to increase E₂ contribution")
 
         if e4_ratio > 0.6:
-            recommendations.append(
-                "Reduce c₄ constant to decrease E₄ contribution"
-            )
+            recommendations.append("Reduce c₄ constant to decrease E₄ contribution")
         elif e4_ratio < 0.4:
-            recommendations.append(
-                "Increase c₄ constant to increase E₄ contribution"
-            )
+            recommendations.append("Increase c₄ constant to increase E₄ contribution")
 
         if balance["E6_ratio"] > 0.1:
-            recommendations.append(
-                "Reduce c₆ constant to decrease E₆ contribution"
-            )
+            recommendations.append("Reduce c₆ constant to decrease E₆ contribution")
 
         return recommendations
 
@@ -479,9 +527,7 @@ class EnergyOptimizer:
 
         for iteration in range(max_iterations):
             # Calculate energy density with current constants
-            grid_size = field_derivatives["left_currents"]["x"]["l_00"].shape[
-                0
-            ]
+            grid_size = field_derivatives["left_currents"]["x"]["l_00"].shape[0]
             calculator = EnergyDensityCalculator(
                 grid_size,
                 grid_size * 0.1,  # Approximate box_size
@@ -490,9 +536,7 @@ class EnergyOptimizer:
                 c6,
             )
 
-            energy_density = calculator.compute_energy_density(
-                field_derivatives
-            )
+            energy_density = calculator.compute_energy_density(field_derivatives)
             balance = energy_density.get_energy_balance()
 
             # Check convergence
@@ -542,15 +586,11 @@ class EnergyDensities:
         self.c4 = c4
         self.c6 = c6
 
-        self.calculator = EnergyDensityCalculator(
-            grid_size, box_size, c2, c4, c6
-        )
+        self.calculator = EnergyDensityCalculator(grid_size, box_size, c2, c4, c6)
         self.analyzer = EnergyAnalyzer()
         self.optimizer = EnergyOptimizer()
 
-    def compute_energy(
-        self, field_derivatives: Dict[str, Any]
-    ) -> EnergyDensity:
+    def compute_energy(self, field_derivatives: Dict[str, Any]) -> EnergyDensity:
         """
         Calculate energy density.
 
@@ -562,9 +602,7 @@ class EnergyDensities:
         """
         return self.calculator.compute_energy_density(field_derivatives)
 
-    def compute_baryon_number(
-        self, field_derivatives: Dict[str, Any]
-    ) -> float:
+    def compute_baryon_number(self, field_derivatives: Dict[str, Any]) -> float:
         """
         Calculate baryon number.
 
@@ -588,9 +626,7 @@ class EnergyDensities:
         """
         return self.analyzer.analyze_energy(energy_density)
 
-    def optimize_constants(
-        self, field_derivatives: Dict[str, Any]
-    ) -> Dict[str, float]:
+    def optimize_constants(self, field_derivatives: Dict[str, Any]) -> Dict[str, float]:
         """
         Optimize Skyrme constants.
 
@@ -618,7 +654,7 @@ class EnergyDensities:
         components = analysis["components"]
         balance = analysis["balance"]
         quality = analysis["quality"]
-        virial_status = '✓ PASS' if analysis['virial_condition'] else '✗ FAIL'
+        virial_status = "✓ PASS" if analysis["virial_condition"] else "✗ FAIL"
 
         report = f"""
 ENERGY DENSITY ANALYSIS

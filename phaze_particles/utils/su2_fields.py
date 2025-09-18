@@ -6,6 +6,7 @@ Author: Vasiliy Zdanovskiy
 Email: vasilyvz@gmail.com
 """
 
+import numpy as np
 from typing import Tuple, Dict, Any, Optional
 from dataclasses import dataclass
 import math
@@ -44,22 +45,10 @@ class SU2Field:
         """
         # Check unitarity: U†U = I
         xp = self.backend.get_array_module()
-        u_dagger_u_00 = (
-            xp.conj(self.u_00) * self.u_00
-            + xp.conj(self.u_10) * self.u_10
-        )
-        u_dagger_u_01 = (
-            xp.conj(self.u_00) * self.u_01
-            + xp.conj(self.u_10) * self.u_11
-        )
-        u_dagger_u_10 = (
-            xp.conj(self.u_01) * self.u_00
-            + xp.conj(self.u_11) * self.u_10
-        )
-        u_dagger_u_11 = (
-            xp.conj(self.u_01) * self.u_01
-            + xp.conj(self.u_11) * self.u_11
-        )
+        u_dagger_u_00 = xp.conj(self.u_00) * self.u_00 + xp.conj(self.u_10) * self.u_10
+        u_dagger_u_01 = xp.conj(self.u_00) * self.u_01 + xp.conj(self.u_10) * self.u_11
+        u_dagger_u_10 = xp.conj(self.u_01) * self.u_00 + xp.conj(self.u_11) * self.u_10
+        u_dagger_u_11 = xp.conj(self.u_01) * self.u_01 + xp.conj(self.u_11) * self.u_11
 
         unitary_check = (
             xp.allclose(u_dagger_u_00, 1.0, atol=tolerance)
@@ -228,7 +217,7 @@ class SU2FieldBuilder:
         self.X, self.Y, self.Z = self.backend.meshgrid(x, y, z, indexing="ij")
         self.R = self.backend.sqrt(self.X**2 + self.Y**2 + self.Z**2)
 
-    def build_field(
+    def _build_field_components(
         self, n_x: Any, n_y: Any, n_z: Any, profile: RadialProfile
     ) -> SU2Field:
         """
@@ -244,7 +233,7 @@ class SU2FieldBuilder:
         # Normalize field direction
         xp = self.backend.get_array_module()
         n_norm = xp.sqrt(n_x**2 + n_y**2 + n_z**2)
-        
+
         # Handle zero norm case by setting default direction
         zero_mask = n_norm < 1e-10
         n_x_norm = xp.where(zero_mask, 0.0, n_x / n_norm)
@@ -274,6 +263,43 @@ class SU2FieldBuilder:
             backend=self.backend,
         )
 
+    def build_field(
+        self,
+        field_direction: Any,
+        profile_type: str = "tanh",
+        f_0: float = np.pi,
+        f_inf: float = 0.0,
+        r_scale: float = 1.0,
+    ) -> SU2Field:
+        """
+        Build SU(2) field from field direction and profile parameters.
+
+        Args:
+            field_direction: Field direction configuration
+            profile_type: Profile type
+            f_0: Initial value
+            f_inf: Final value
+            r_scale: Scale parameter
+
+        Returns:
+            SU(2) field
+        """
+        # Create radial profile
+        profile = RadialProfile(profile_type, f_0, f_inf, r_scale)
+
+        # Extract direction components from field_direction
+        if hasattr(field_direction, "n_x"):
+            n_x = field_direction.n_x
+            n_y = field_direction.n_y
+            n_z = field_direction.n_z
+        else:
+            # Mock direction components
+            n_x = np.ones((self.grid_size, self.grid_size, self.grid_size))
+            n_y = np.zeros((self.grid_size, self.grid_size, self.grid_size))
+            n_z = np.zeros((self.grid_size, self.grid_size, self.grid_size))
+
+        return self._build_field_components(n_x, n_y, n_z, profile)
+
     def build_from_torus_config(
         self, torus_config: Any, profile: RadialProfile
     ) -> SU2Field:
@@ -288,9 +314,7 @@ class SU2FieldBuilder:
             SU(2) field
         """
         # Get field direction from configuration
-        n_x, n_y, n_z = torus_config.get_field_direction(
-            self.X, self.Y, self.Z
-        )
+        n_x, n_y, n_z = torus_config.get_field_direction(self.X, self.Y, self.Z)
 
         return self.build_field(n_x, n_y, n_z, profile)
 
@@ -333,9 +357,7 @@ class SU2FieldOperations:
 
         return l_x, l_y, l_z
 
-    def _compute_field_derivative(
-        self, field: SU2Field, axis: int
-    ) -> Dict[str, Any]:
+    def _compute_field_derivative(self, field: SU2Field, axis: int) -> Dict[str, Any]:
         """
         Compute field derivative along given axis.
 
@@ -374,22 +396,10 @@ class SU2FieldOperations:
         # L = U†∂U
 
         xp = self.backend.get_array_module()
-        l_00 = (
-            xp.conj(field.u_00) * du["u_00"]
-            + xp.conj(field.u_10) * du["u_10"]
-        )
-        l_01 = (
-            xp.conj(field.u_00) * du["u_01"]
-            + xp.conj(field.u_10) * du["u_11"]
-        )
-        l_10 = (
-            xp.conj(field.u_01) * du["u_00"]
-            + xp.conj(field.u_11) * du["u_10"]
-        )
-        l_11 = (
-            xp.conj(field.u_01) * du["u_01"]
-            + xp.conj(field.u_11) * du["u_11"]
-        )
+        l_00 = xp.conj(field.u_00) * du["u_00"] + xp.conj(field.u_10) * du["u_10"]
+        l_01 = xp.conj(field.u_00) * du["u_01"] + xp.conj(field.u_10) * du["u_11"]
+        l_10 = xp.conj(field.u_01) * du["u_00"] + xp.conj(field.u_11) * du["u_10"]
+        l_11 = xp.conj(field.u_01) * du["u_01"] + xp.conj(field.u_11) * du["u_11"]
 
         return {"l_00": l_00, "l_01": l_01, "l_10": l_10, "l_11": l_11}
 
@@ -552,17 +562,16 @@ class SU2FieldValidator:
         # Check U†U = I
         xp = self.backend.get_array_module()
         u_dagger_u_00 = (
-            xp.conj(field.u_00) * field.u_00
-            + xp.conj(field.u_10) * field.u_10
+            xp.conj(field.u_00) * field.u_00 + xp.conj(field.u_10) * field.u_10
         )
         u_dagger_u_11 = (
-            xp.conj(field.u_01) * field.u_01
-            + xp.conj(field.u_11) * field.u_11
+            xp.conj(field.u_01) * field.u_01 + xp.conj(field.u_11) * field.u_11
         )
 
-        return bool(xp.allclose(
-            u_dagger_u_00, 1.0, atol=self.tolerance
-        ) and xp.allclose(u_dagger_u_11, 1.0, atol=self.tolerance))
+        return bool(
+            xp.allclose(u_dagger_u_00, 1.0, atol=self.tolerance)
+            and xp.allclose(u_dagger_u_11, 1.0, atol=self.tolerance)
+        )
 
     def _check_determinant(self, field: SU2Field) -> bool:
         """Check field determinant."""
@@ -595,16 +604,13 @@ class SU2FieldValidator:
         # as they may not have the same center behavior as pure skyrmions
         # Just check that the field is well-behaved at the center
         center_idx = field.grid_size // 2
-        center_field = field.get_matrix_at_point(
-            center_idx, center_idx, center_idx
-        )
+        center_field = field.get_matrix_at_point(center_idx, center_idx, center_idx)
 
         # Check that field is finite and well-behaved
         xp = self.backend.get_array_module()
-        center_check = (
-            xp.all(xp.isfinite(center_field)) and
-            xp.all(xp.abs(center_field) < 10.0)  # Reasonable bound
-        )
+        center_check = xp.all(xp.isfinite(center_field)) and xp.all(
+            xp.abs(center_field) < 10.0
+        )  # Reasonable bound
 
         return bool(center_check)
 

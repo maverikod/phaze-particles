@@ -187,7 +187,7 @@ class ModelResults:
         # Convert ModelStatus enum to string value
         if "status" in result_dict and hasattr(result_dict["status"], "value"):
             result_dict["status"] = result_dict["status"].value
-        
+
         with open(output_path, "w") as f:
             json.dump(result_dict, f, indent=2, default=str)
 
@@ -226,7 +226,9 @@ class ProtonModel:
             )
 
             # Torus geometries
-            self.torus_geometries = TorusGeometryManager()
+            self.torus_geometries = TorusGeometryManager(
+                grid_size=self.config.grid_size, box_size=self.config.box_size
+            )
 
             # SU(2) fields
             self.su2_field_builder = SU2FieldBuilder(
@@ -307,9 +309,7 @@ class ProtonModel:
             )
 
             self.status = ModelStatus.GEOMETRY_CREATED
-            print(
-                f"Torus geometry created: {self.config.torus_config}"
-            )
+            print(f"Torus geometry created: {self.config.torus_config}")
             return True
 
         except Exception as e:
@@ -408,13 +408,13 @@ class ProtonModel:
                 raise ValueError("Physics must be calculated first")
 
             # Functions for optimization
-            def energy_function(U):
+            def energy_function(U: Any) -> float:
                 return self.energy_calculator.calculate_total_energy(U)
 
-            def gradient_function(U):
+            def gradient_function(U: Any) -> np.ndarray:
                 return self.energy_calculator.calculate_gradient(U)
 
-            def constraint_functions(U):
+            def constraint_functions(U: Any) -> Dict[str, float]:
                 return {
                     "baryon_number": (
                         self.physics_calculator.calculate_baryon_number(U)
@@ -610,7 +610,7 @@ class ProtonModel:
         """
         return self.results
 
-    def save_results(self, output_path: str):
+    def save_results(self, output_path: str) -> None:
         """
         Save results to file.
 
