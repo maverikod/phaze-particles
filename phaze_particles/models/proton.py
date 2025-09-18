@@ -18,6 +18,11 @@ from ..utils.numerical_methods import (
     NumericalMethods,
 )
 from ..utils.physics import PhysicsAnalyzer, PhysicalQuantitiesCalculator
+from ..utils.validation import (
+    ValidationSystem,
+    ExperimentalData,
+    CalculatedData,
+)
 from ..utils.su2_fields import SU2Field
 from ..utils.torus_geometries import TorusGeometryManager
 from ..utils.energy_densities import EnergyDensityCalculator
@@ -44,7 +49,8 @@ class ProtonModel(BaseModel):
             "config_type": "all",  # '120deg', 'clover', 'cartesian', 'all'
             "convergence_tolerance": 1e-6,
             "max_iterations": 1000,
-            "relaxation_method": "gradient_descent",  # 'gradient_descent', 'lbfgs', 'adam'
+            # 'gradient_descent', 'lbfgs', 'adam'
+            "relaxation_method": "gradient_descent",
             "step_size": 0.01,
             "momentum": 0.9,
         }
@@ -131,6 +137,10 @@ class ProtonModel(BaseModel):
         # Initialize physics analyzer
         self.physics_analyzer = PhysicsAnalyzer()
 
+        # Initialize validation system
+        experimental_data = ExperimentalData()
+        self.validation_system = ValidationSystem(experimental_data)
+
         # Initialize relaxation solver
         relaxation_config = RelaxationConfig(
             method=RelaxationMethod(self.parameters["relaxation_method"]),
@@ -173,14 +183,20 @@ class ProtonModel(BaseModel):
 
         # Combine results
         self.results = self._combine_results(results)
-        
+
         # Perform physical analysis
         print("Performing physical analysis...")
         self._perform_physical_analysis()
 
+        # Perform validation
+        print("Performing model validation...")
+        self._perform_validation()
+
         return self.results
 
-    def _run_configuration(self, U_init: np.ndarray, config_type: str) -> Dict[str, Any]:
+    def _run_configuration(
+        self, U_init: np.ndarray, config_type: str
+    ) -> Dict[str, Any]:
         """
         Run calculation for specific configuration.
 
@@ -193,80 +209,94 @@ class ProtonModel(BaseModel):
         """
         # Set up torus geometry
         self.torus_manager.set_configuration(config_type)
-        
+
         # Create constraint functions
         constraint_functions = self._create_constraint_functions()
-        
+
         # Create energy and gradient functions
         energy_function = self._create_energy_function(config_type)
         gradient_function = self._create_gradient_function(config_type)
-        
+
         # Run relaxation
         print(f"Running relaxation for {config_type}...")
         relaxation_result = self.relaxation_solver.solve(
             U_init, energy_function, gradient_function, constraint_functions
         )
-        
+
         # Calculate physical quantities
         print(f"Calculating physical quantities for {config_type}...")
-        U_final = relaxation_result['solution']
+        U_final = relaxation_result["solution"]
         field_derivatives = self.su2_field.compute_derivatives(U_final)
-        energy = relaxation_result['final_energy']
-        
+        energy = relaxation_result["final_energy"]
+
         quantities = self.physics_calculator.compute_all_quantities(
             U_final, self.torus_manager.get_profile(), field_derivatives, energy
         )
-        
+
         return {
-            'relaxation': relaxation_result,
-            'quantities': quantities,
-            'field': U_final,
-            'derivatives': field_derivatives,
+            "relaxation": relaxation_result,
+            "quantities": quantities,
+            "field": U_final,
+            "derivatives": field_derivatives,
         }
 
     def _create_constraint_functions(self) -> Dict[str, Callable]:
         """Create constraint functions for relaxation."""
+
         def baryon_function(U):
             derivatives = self.su2_field.compute_derivatives(U)
-            return self.physics_calculator.baryon_calculator.compute_baryon_number(derivatives)
-        
-        def charge_function(U):
-            charge_density = self.physics_calculator.charge_density.compute_charge_density(
-                U, self.torus_manager.get_profile()
+            return self.physics_calculator.baryon_calculator.compute_baryon_number(
+                derivatives
             )
-            return self.physics_calculator.charge_density.compute_electric_charge(charge_density)
-        
+
+        def charge_function(U):
+            charge_density = (
+                self.physics_calculator.charge_density.compute_charge_density(
+                    U, self.torus_manager.get_profile()
+                )
+            )
+            return self.physics_calculator.charge_density.compute_electric_charge(
+                charge_density
+            )
+
         def energy_balance_function(U):
             # Calculate energy components
             derivatives = self.su2_field.compute_derivatives(U)
-            energy_components = self.energy_calculator.compute_all_components(U, derivatives)
+            energy_components = self.energy_calculator.compute_all_components(
+                U, derivatives
+            )
             total_energy = sum(energy_components.values())
             if total_energy > 0:
-                return energy_components['E2'] / total_energy
+                return energy_components["E2"] / total_energy
             return 0.5
-        
+
         return {
-            'baryon_number': baryon_function,
-            'electric_charge': charge_function,
-            'energy_balance': energy_balance_function,
+            "baryon_number": baryon_function,
+            "electric_charge": charge_function,
+            "energy_balance": energy_balance_function,
         }
 
     def _create_energy_function(self, config_type: str) -> Callable:
         """Create energy function for specific configuration."""
+
         def energy_function(U):
             derivatives = self.su2_field.compute_derivatives(U)
-            energy_components = self.energy_calculator.compute_all_components(U, derivatives)
+            energy_components = self.energy_calculator.compute_all_components(
+                U, derivatives
+            )
             return sum(energy_components.values())
-        
+
         return energy_function
 
     def _create_gradient_function(self, config_type: str) -> Callable:
         """Create gradient function for specific configuration."""
+
         def gradient_function(U):
-            # Simplified gradient - in real implementation would compute functional derivative
+            # Simplified gradient - in real implementation would compute
+            # functional derivative
             # For now, return small random gradient
             return np.random.randn(*U.shape) * 0.01
-        
+
         return gradient_function
 
     def _combine_results(self, config_results: Dict[str, Any]) -> Dict[str, Any]:
@@ -275,25 +305,27 @@ class ProtonModel(BaseModel):
         # In full implementation, would combine or select best result
         first_config = list(config_results.keys())[0]
         first_result = config_results[first_config]
-        
-        quantities = first_result['quantities']
-        
+
+        quantities = first_result["quantities"]
+
         return {
             "electric_charge": quantities.electric_charge,
             "baryon_number": quantities.baryon_number,
             "mass": quantities.mass,
             "radius": quantities.charge_radius,
             "magnetic_moment": quantities.magnetic_moment,
+            "total_energy": quantities.energy,
             "energy_balance": {
                 "E2_percentage": 50.0,  # Placeholder
                 "E4_percentage": 50.0,  # Placeholder
-                "E6_percentage": 0.0,   # Placeholder
+                "E6_percentage": 0.0,  # Placeholder
             },
             "configurations": {
                 config: {"status": "completed"} for config in config_results.keys()
             },
             "relaxation_info": {
-                config: result['relaxation'] for config, result in config_results.items()
+                config: result["relaxation"]
+                for config, result in config_results.items()
             },
         }
 
@@ -306,9 +338,9 @@ class ProtonModel(BaseModel):
             "radius": self.results["radius"],
             "magnetic_moment": self.results["magnetic_moment"],
         }
-        
+
         analysis_results = self.physics_analyzer.analyze_results(calculated_values)
-        
+
         # Add analysis to results
         self.results["physical_analysis"] = {
             "comparison_table": self.physics_analyzer.generate_comparison_table(),
@@ -326,6 +358,45 @@ class ProtonModel(BaseModel):
                 }
                 for result in analysis_results
             ],
+        }
+
+    def _perform_validation(self):
+        """Perform model validation."""
+        # Create calculated data for validation
+        calculated_data = CalculatedData(
+            proton_mass=self.results["mass"],
+            charge_radius=self.results["radius"],
+            magnetic_moment=self.results["magnetic_moment"],
+            electric_charge=self.results["electric_charge"],
+            baryon_number=self.results["baryon_number"],
+            energy_balance=self.results["energy_balance"]["E2_percentage"] / 100.0,
+            total_energy=self.results["total_energy"],
+            execution_time=0.0,  # Will be set by caller
+        )
+
+        # Perform validation
+        validation_results = self.validation_system.validate_model(calculated_data)
+
+        # Add validation results to model results
+        self.results["validation"] = {
+            "overall_status": validation_results["overall_status"].value,
+            "weighted_score": validation_results["weighted_score"],
+            "text_report": validation_results["text_report"],
+            "json_report": validation_results["json_report"],
+            "validation_results": [
+                {
+                    "parameter_name": result.parameter_name,
+                    "calculated_value": result.calculated_value,
+                    "experimental_value": result.experimental_value,
+                    "experimental_error": result.experimental_error,
+                    "deviation": result.deviation,
+                    "deviation_percent": result.deviation_percent,
+                    "within_tolerance": result.within_tolerance,
+                    "status": result.status.value,
+                }
+                for result in validation_results["validation_results"]
+            ],
+            "quality_assessment": validation_results["quality_assessment"],
         }
 
     def get_available_configurations(self) -> List[str]:
@@ -350,3 +421,46 @@ class ProtonModel(BaseModel):
             "E4_percentage": 50.0,
             "E6_percentage": 0.0,
         }
+
+    def get_validation_report(self) -> str:
+        """
+        Get validation report.
+
+        Returns:
+            Validation report text
+        """
+        if "validation" not in self.results:
+            return "No validation results available."
+
+        return self.results["validation"]["text_report"]
+
+    def get_validation_status(self) -> str:
+        """
+        Get validation status.
+
+        Returns:
+            Validation status string
+        """
+        if "validation" not in self.results:
+            return "unknown"
+
+        return self.results["validation"]["overall_status"]
+
+    def save_validation_reports(self, output_dir: str = "validation_reports"):
+        """
+        Save validation reports to files.
+
+        Args:
+            output_dir: Output directory for reports
+        """
+        if "validation" not in self.results:
+            print("No validation results to save.")
+            return
+
+        self.validation_system.save_reports(
+            {
+                "text_report": self.results["validation"]["text_report"],
+                "json_report": self.results["validation"]["json_report"],
+            },
+            output_dir,
+        )
