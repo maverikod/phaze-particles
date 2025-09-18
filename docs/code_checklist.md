@@ -67,6 +67,17 @@
 - [ ] Default configuration is provided
 - [ ] Configuration can override command-line arguments
 
+### 2.5 Results Output Requirements
+- [ ] Command saves results to CSV files
+- [ ] CSV files follow naming template: `[-short-desc-of-args]-YYYY-MM-DDThh.mm.ss.csv`
+- [ ] Results directory structure: `results/command/subcommand/`
+- [ ] CSV files use UTF-8 with BOM encoding
+- [ ] CSV headers are descriptive and consistent
+- [ ] All numerical results are included in CSV
+- [ ] Configuration parameters are saved as CSV columns
+- [ ] Timestamp is included in ISO 8601 format
+- [ ] Missing values are handled consistently
+
 ## 3. CLI Integration Checklist
 
 ### 3.1 Main CLI Integration
@@ -90,41 +101,70 @@
 - [ ] Command handles configuration errors
 - [ ] Command handles validation errors
 
-## 4. Testing Checklist
+## 4. CSV Output Checklist
 
-### 4.1 Unit Tests
+### 4.1 File Naming and Structure
+- [ ] CSV filename follows template: `[-short-desc-of-args]-YYYY-MM-DDThh.mm.ss.csv`
+- [ ] Results directory created: `results/command/subcommand/`
+- [ ] Directory structure matches command hierarchy
+- [ ] Timestamp format is ISO 8601: YYYY-MM-DDTHH:MM:SS
+- [ ] Short description includes key parameters (grid size, config type, etc.)
+
+### 4.2 CSV Content and Format
+- [ ] UTF-8 with BOM encoding for Excel compatibility
+- [ ] Descriptive column headers in first row
+- [ ] Consistent data types per column
+- [ ] All input parameters included as columns
+- [ ] All calculated results included as columns
+- [ ] Timestamp column in ISO 8601 format
+- [ ] Model version and metadata included
+- [ ] Missing values handled consistently (empty strings or "N/A")
+
+### 4.3 Data Validation
+- [ ] CSV file is valid and can be opened in Excel
+- [ ] All numerical data is properly formatted
+- [ ] No corrupted or malformed data
+- [ ] File size is reasonable for data volume
+- [ ] CSV can be imported into analysis tools
+
+## 5. Testing Checklist
+
+### 5.1 Unit Tests
 - [ ] Command has unit tests
 - [ ] All public methods are tested
 - [ ] Edge cases are covered
 - [ ] Error conditions are tested
 - [ ] Configuration loading is tested
+- [ ] CSV output generation is tested
 
-### 4.2 Integration Tests
+### 5.2 Integration Tests
 - [ ] Command works with main CLI
 - [ ] Command works with subcommands
-- [4] Command works with configuration files
+- [ ] Command works with configuration files
 - [ ] Command produces expected output
 - [ ] Command handles real-world scenarios
+- [ ] CSV files are generated correctly
+- [ ] CSV content matches expected results
 
-## 5. Documentation Checklist
+## 6. Documentation Checklist
 
-### 5.1 Command Documentation
+### 6.1 Command Documentation
 - [ ] Command has dedicated documentation file
 - [ ] Documentation includes usage examples
 - [ ] Documentation includes parameter descriptions
 - [ ] Documentation includes configuration examples
 - [ ] Documentation includes troubleshooting guide
 
-### 5.2 API Documentation
+### 6.2 API Documentation
 - [ ] All public methods are documented
 - [ ] Method signatures are documented
 - [ ] Return values are documented
 - [ ] Exceptions are documented
 - [ ] Configuration schema is documented
 
-## 6. Performance Checklist
+## 7. Performance Checklist
 
-### 6.1 Execution Performance
+### 7.1 Execution Performance
 - [ ] Command executes within reasonable time
 - [ ] Memory usage is reasonable
 - [ ] No memory leaks

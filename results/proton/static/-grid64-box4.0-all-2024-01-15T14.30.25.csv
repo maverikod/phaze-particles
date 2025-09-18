@@ -1,0 +1,2 @@
+timestamp,command,subcommand,grid_size,box_size,config_type,electric_charge,baryon_number,mass,radius,magnetic_moment,energy_balance_e2,energy_balance_e4,energy_balance_e6,execution_time_seconds,model_version,status
+2024-01-15T14:30:25,proton,static,64,4.0,all,1.0,1.0,938.272,0.84,2.793,50.0,50.0,0.0,15.2,0.1.0,success

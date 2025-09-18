@@ -46,6 +46,19 @@ phaze-particles/
 │   ├── tech_spec.md              # Technical specifications
 │   ├── project_standards.md      # This file
 │   └── README.md                 # Project overview
+├── results/                      # Generated results (CSV files)
+│   ├── proton/                   # Proton model results
+│   │   ├── static/               # Static proton results
+│   │   │   ├── -grid64-box4.0-all-2024-01-15T14.30.25.csv
+│   │   │   ├── -grid128-box6.0-120deg-2024-01-15T15.45.12.csv
+│   │   │   └── -custom-config-2024-01-15T16.20.33.csv
+│   │   └── dynamic/              # Dynamic proton results (future)
+│   │       └── -collision-sim-2024-01-15T17.10.45.csv
+│   └── neutron/                  # Neutron model results (future)
+│       └── static/
+│           └── -basic-model-2024-01-15T18.00.15.csv
+├── config/                       # Configuration examples
+│   └── proton_static.json        # Example JSON configuration
 ├── scripts/                      # Build and utility scripts
 ├── requirements.txt              # Python dependencies
 ├── pyproject.toml                # Project configuration
@@ -66,6 +79,8 @@ phaze-particles/
 - **docs/**: All project documentation
 - **docs/commands/**: Command-specific documentation (one subdirectory per command)
 - **docs/reports/**: Model execution reports and bug reports
+- **results/**: Generated CSV results organized by command/subcommand
+- **config/**: Configuration examples and templates
 - **scripts/**: Build, deployment, and utility scripts
 
 ## 2. Coding Standards
@@ -138,6 +153,40 @@ phaze-particles/
 - **Bug reports**: Also stored in `docs/reports/` directory
 - **Format**: Markdown with tables, graphs, and analysis
 - **Naming**: `YYYY-MM-DD_model-name_report.md`
+
+### 4.3 Results Output Standards
+
+- **CSV files**: All numerical results must be saved in CSV format
+- **Directory structure**: `results/command/subcommand/`
+- **File naming template**: `[-short-desc-of-args]-YYYY-MM-DDThh.mm.ss.csv`
+- **Encoding**: UTF-8 with BOM for Excel compatibility
+- **Headers**: First row must contain column names
+- **Data types**: Consistent data types per column
+- **Missing values**: Use empty strings or "N/A" for missing data
+
+#### 4.3.1 CSV File Naming Examples
+
+```
+results/
+├── proton/
+│   ├── static/
+│   │   ├── -grid64-box4.0-all-2024-01-15T14.30.25.csv
+│   │   ├── -grid128-box6.0-120deg-2024-01-15T15.45.12.csv
+│   │   └── -custom-config-2024-01-15T16.20.33.csv
+│   └── dynamic/
+│       └── -collision-sim-2024-01-15T17.10.45.csv
+└── neutron/
+    └── static/
+        └── -basic-model-2024-01-15T18.00.15.csv
+```
+
+#### 4.3.2 CSV Content Requirements
+
+- **Timestamp column**: ISO 8601 format (YYYY-MM-DDTHH:MM:SS)
+- **Configuration parameters**: All input parameters as columns
+- **Results data**: All calculated values as columns
+- **Metadata**: Model version, execution time, etc.
+- **Validation flags**: Success/failure indicators
 
 ## 5. Development Workflow
 

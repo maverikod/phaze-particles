@@ -16,6 +16,8 @@ Phaze-Particles is a comprehensive framework for modeling elementary particles, 
 - **Modular Design**: Extensible architecture for additional particle types
 - **Scientific Validation**: Built-in validation against experimental data
 - **Graceful Shutdown**: Proper signal handling for clean application termination
+- **CSV Results**: All numerical results saved in structured CSV format
+- **JSON Configuration**: Support for configuration files in JSON format
 
 ## Installation
 
@@ -68,6 +70,26 @@ phaze-particles proton static --config config/proton_static.json
 - `phaze-particles proton static`: Static proton model with three torus configurations
 - `phaze-particles proton dynamic`: Dynamic proton model (planned)
 
+## Results Output
+
+All model results are automatically saved to CSV files in the `results/` directory:
+
+### File Naming Convention
+```
+results/command/subcommand/[-short-desc-of-args]-YYYY-MM-DDThh.mm.ss.csv
+```
+
+### Example Files
+- `results/proton/static/-grid64-box4.0-all-2024-01-15T14.30.25.csv`
+- `results/proton/static/-grid128-box6.0-120deg-2024-01-15T15.45.12.csv`
+
+### CSV Content
+Each CSV file contains:
+- **Input parameters**: Grid size, box size, configuration type, etc.
+- **Calculated results**: Electric charge, mass, radius, magnetic moment, etc.
+- **Metadata**: Timestamp, execution time, model version, status
+- **Energy balance**: E2, E4, E6 energy components
+
 ## Project Structure
 
 ```
@@ -83,6 +105,10 @@ phaze-particles/
 │   ├── reports/                  # Model reports and bug reports
 │   └── tech_spec.md              # Technical specifications
 ├── config/                       # Configuration examples
+├── results/                      # Generated CSV results
+│   ├── proton/static/            # Static proton model results
+│   ├── proton/dynamic/           # Dynamic proton model results
+│   └── neutron/static/           # Static neutron model results
 └── scripts/                      # Build and utility scripts
 ```
 
