@@ -9,6 +9,7 @@ Email: vasilyvz@gmail.com
 import sys
 from pathlib import Path
 from unittest.mock import patch
+import pytest
 
 # Add project root to path for testing
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -28,9 +29,10 @@ def test_help_command():
     cli = PhazeParticlesCLI()
 
     with patch("sys.argv", ["phaze-particles", "--help"]):
-        result = cli.run(["--help"])
-        # Help should return 0 (success) or 1 (no command specified)
-        assert result in [0, 1]
+        with pytest.raises(SystemExit) as exc_info:
+            cli.run(["--help"])
+        # Help should exit with code 0 (success)
+        assert exc_info.value.code == 0
 
 
 def test_version_command():
@@ -38,18 +40,20 @@ def test_version_command():
     cli = PhazeParticlesCLI()
 
     with patch("sys.argv", ["phaze-particles", "--version"]):
-        result = cli.run(["--version"])
-        # Version should return 0 (success)
-        assert result == 0
+        with pytest.raises(SystemExit) as exc_info:
+            cli.run(["--version"])
+        # Version should exit with code 0 (success)
+        assert exc_info.value.code == 0
 
 
 def test_proton_command_help():
     """Test proton command help."""
     cli = PhazeParticlesCLI()
 
-    result = cli.run(["proton", "--help"])
-    # Help should return 0 (success)
-    assert result == 0
+    with pytest.raises(SystemExit) as exc_info:
+        cli.run(["proton", "--help"])
+    # Help should exit with code 0 (success)
+    assert exc_info.value.code == 0
 
 
 def test_proton_static_command():
