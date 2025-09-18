@@ -215,6 +215,29 @@ results/
 - **Recommendations**: Suggestions for model improvement
 - **Validation status**: Pass/fail based on physical criteria
 
+### 4.5 CUDA and Performance Standards
+
+- **CUDA detection**: Centralized CUDA availability detection and reporting
+- **Performance indicators**: Display CUDA usage status in command output
+- **Progress tracking**: Progress bars for long-running operations
+- **Time estimation**: Calculate and display execution time and percentage
+- **Logging**: Comprehensive logging for debugging and monitoring
+
+#### 4.5.1 CUDA Integration Requirements
+
+- **Automatic detection**: Detect CUDA availability at startup
+- **Status reporting**: Display CUDA status in command output
+- **Fallback support**: Graceful fallback to CPU when CUDA unavailable
+- **Performance logging**: Log CUDA vs CPU performance metrics
+
+#### 4.5.2 Progress Tracking Requirements
+
+- **Progress bars**: Visual progress indicators for operations >5 seconds
+- **Time estimation**: Calculate remaining time based on current progress
+- **Percentage display**: Show completion percentage
+- **Logging levels**: Different logging levels (INFO, DEBUG, WARNING, ERROR)
+- **Performance metrics**: Track and report execution times
+
 ## 5. Development Workflow
 
 ### 5.1 Code Quality

@@ -8,51 +8,53 @@ Email: vasilyvz@gmail.com
 
 import argparse
 import sys
-from typing import List, Optional
+from typing import List
 
 from ..base import BaseCommand
 from ...utils.physics import PhysicsAnalyzer
+from ...utils.cuda import get_cuda_status
+from ...utils.progress import create_progress_bar, create_performance_monitor
 
 
 class ProtonCommand(BaseCommand):
     """
     Proton modeling command with subcommands for different model types.
     """
-    
-    def __init__(self):
+
+    def __init__(self) -> None:
         """Initialize proton command."""
         super().__init__(
             name="proton",
-            description="Proton modeling using topological soliton approaches"
+            description="Proton modeling using topological soliton approaches",
         )
         self.subcommands = {
-            'static': ProtonStaticCommand(),
+            "static": ProtonStaticCommand(),
             # Future subcommands will be added here
             # 'dynamic': ProtonDynamicCommand(),
         }
-    
+
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         """
         Add proton command arguments.
-        
+
         Args:
             parser: Argument parser to add arguments to
         """
         subparsers = parser.add_subparsers(
-            dest='subcommand',
-            help='Available proton model types',
-            metavar='MODEL_TYPE'
+            dest="subcommand",
+            help="Available proton model types",
+            metavar="MODEL_TYPE"
         )
-        
+
         # Add subcommand parsers
         for subcmd_name, subcmd_instance in self.subcommands.items():
             subcmd_parser = subparsers.add_parser(
                 subcmd_name,
                 help=subcmd_instance.description,
-                description=subcmd_instance.description
+                description=subcmd_instance.description,
             )
             subcmd_instance.add_arguments(subcmd_parser)
-    
+
     def get_subcommands(self) -> List[str]:
         """
         Get list of available subcommands.
@@ -86,7 +88,8 @@ class ProtonCommand(BaseCommand):
             Exit code
         """
         if not args.subcommand:
-            print("Error: No subcommand specified. Use --help for available options.")
+            print("Error: No subcommand specified. "
+                  "Use --help for available options.")
             return 1
 
         if args.subcommand not in self.subcommands:
@@ -102,74 +105,76 @@ class ProtonStaticCommand(BaseCommand):
     """
     Static proton model command based on three torus configurations.
     """
-    
-    def __init__(self):
+
+    def __init__(self) -> None:
         """Initialize static proton command."""
         super().__init__(
             name="proton static",
-            description="Static proton model with three torus configurations (120°, clover, cartesian)"
+            description=(
+                "Static proton model with three torus configurations "
+                "(120°, clover, cartesian)"
+            ),
         )
-    
+
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         """
         Add static proton command arguments.
-        
+
         Args:
             parser: Argument parser to add arguments to
         """
         parser.add_argument(
-            '--config',
-            type=str,
-            help='Configuration file path (YAML format)'
+            "--config", type=str, help="Configuration file path (YAML format)"
         )
-        
+
         parser.add_argument(
-            '--output',
+            "--output",
             type=str,
-            default='proton_static_results',
-            help='Output directory for results (default: proton_static_results)'
+            default="proton_static_results",
+            help=(
+                "Output directory for results "
+                "(default: proton_static_results)"
+            ),
         )
-        
+
         parser.add_argument(
-            '--grid-size',
+            "--grid-size",
             type=int,
             default=64,
-            help='Grid size for numerical calculations (default: 64)'
+            help="Grid size for numerical calculations (default: 64)",
         )
-        
+
         parser.add_argument(
-            '--box-size',
+            "--box-size",
             type=float,
             default=4.0,
-            help='Box size in femtometers (default: 4.0)'
+            help="Box size in femtometers (default: 4.0)",
         )
-        
+
         parser.add_argument(
-            '--config-type',
+            "--config-type",
             type=str,
-            choices=['120deg', 'clover', 'cartesian', 'all'],
-            default='all',
-            help='Torus configuration type to run (default: all)'
+            choices=["120deg", "clover", "cartesian", "all"],
+            default="all",
+            help="Torus configuration type to run (default: all)",
         )
-        
+
         parser.add_argument(
-            '--verbose',
-            action='store_true',
-            help='Enable verbose output'
+            "--verbose", action="store_true", help="Enable verbose output"
         )
-        
+
         parser.add_argument(
-            '--save-data',
-            action='store_true',
-            help='Save numerical data to files'
+            "--save-data",
+            action="store_true",
+            help="Save numerical data to files"
         )
-        
+
         parser.add_argument(
-            '--generate-plots',
-            action='store_true',
-            help='Generate visualization plots'
+            "--generate-plots",
+            action="store_true",
+            help="Generate visualization plots"
         )
-    
+
     def get_subcommands(self) -> List[str]:
         """
         Get list of available subcommands.
@@ -186,7 +191,11 @@ class ProtonStaticCommand(BaseCommand):
         Returns:
             Help text string
         """
-        return f"{self.description}\n\nThis command implements the static proton model with three torus configurations."
+        return (
+            f"{self.description}\n\n"
+            f"This command implements the static proton model "
+            f"with three torus configurations."
+        )
 
     def validate_config(self) -> bool:
         """
@@ -237,10 +246,15 @@ class ProtonStaticCommand(BaseCommand):
             output_dir = self.get_config("output", args.output)
             verbose = self.get_config("verbose", args.verbose)
             save_data = self.get_config("save_data", args.save_data)
-            generate_plots = self.get_config("generate_plots", args.generate_plots)
+            generate_plots = self.get_config(
+                "generate_plots", args.generate_plots
+            )
 
+            # Display CUDA status
             print("Hello from proton_model (prototype).")
-            print(f"Running static proton model with configuration: {config_type}")
+            print(get_cuda_status())
+            print(f"Running static proton model with configuration: "
+                  f"{config_type}")
             print(f"Grid size: {grid_size}")
             print(f"Box size: {box_size} fm")
             print(f"Output directory: {output_dir}")
@@ -257,38 +271,64 @@ class ProtonStaticCommand(BaseCommand):
             if args.config:
                 print(f"Using configuration file: {args.config}")
 
+            # Create performance monitor
+            with create_performance_monitor("Proton Static Model") as monitor:
+                # Simulate long-running calculation with progress bar
+                total_iterations = 100
+                progress_bar = create_progress_bar(
+                    total_iterations, "Calculating proton model"
+                )
+
+                # Simulate calculation steps
+                for i in range(total_iterations):
+                    # Simulate work
+                    import time
+
+                    time.sleep(0.05)  # 50ms per iteration
+
+                    # Update progress
+                    progress_bar.update(1)
+
+                # Add performance metrics
+                monitor.add_metric("grid_size", grid_size)
+                monitor.add_metric("box_size", box_size)
+                monitor.add_metric("config_type", config_type)
+                monitor.add_metric("iterations", total_iterations)
+
             # TODO: Implement actual proton model calculations
-            # This is where the original proton_model.py logic will be integrated
-            
+            # This is where the original proton_model.py logic
+            # will be integrated
+
             # Simulate calculated values for demonstration
             calculated_values = {
                 "electric_charge": 1.0,
                 "baryon_number": 1.0,
                 "mass": 938.5,  # Slightly different from experimental
                 "radius": 0.85,  # Slightly different from experimental
-                "magnetic_moment": 2.79,  # Slightly different from experimental
+                "magnetic_moment": 2.79,  # Slightly different
                 "energy_balance_e2": 48.0,  # Slightly off from 50%
                 "energy_balance_e4": 52.0,  # Slightly off from 50%
             }
-            
+
             # Perform physical analysis
             analyzer = PhysicsAnalyzer()
-            analysis_results = analyzer.analyze_results(calculated_values)
-            
+            analyzer.analyze_results(calculated_values)
+
             # Print analysis results
             print(analyzer.generate_comparison_table())
-            
+
             # Print recommendations
             recommendations = analyzer.get_recommendations()
             if recommendations:
                 print("\nRECOMMENDATIONS:")
                 for i, rec in enumerate(recommendations, 1):
                     print(f"{i}. {rec}")
-            
-            print(f"\nStatic proton model execution completed successfully.")
+
+            print("\nStatic proton model execution completed successfully.")
             print(f"Overall Quality: {analyzer.get_overall_quality().upper()}")
-            print(f"Validation Status: {analyzer.get_validation_status().upper()}")
-            
+            print(f"Validation Status: "
+                  f"{analyzer.get_validation_status().upper()}")
+
             return 0
 
         except Exception as e:

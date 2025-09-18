@@ -93,6 +93,16 @@ alwaysApply: true
 - [ ] Recommendations for model improvement are provided
 - [ ] All physical parameters meet experimental tolerances
 
+### 2.7 CUDA and Performance Requirements
+- [ ] Command displays CUDA availability status
+- [ ] CUDA detection is centralized and consistent
+- [ ] Progress bars are shown for operations >5 seconds
+- [ ] Time estimation and percentage completion are displayed
+- [ ] Comprehensive logging is implemented
+- [ ] Performance metrics are tracked and reported
+- [ ] Graceful fallback to CPU when CUDA unavailable
+- [ ] CUDA vs CPU performance comparison is logged
+
 ## 3. CLI Integration Checklist
 
 ### 3.1 Main CLI Integration
@@ -173,9 +183,43 @@ alwaysApply: true
 - [ ] Validation status clearly indicated
 - [ ] Recommendations provided for model improvement
 
-## 6. Testing Checklist
+## 6. CUDA and Performance Checklist
 
-### 6.1 Unit Tests
+### 6.1 CUDA Detection and Integration
+- [ ] CUDA availability is detected at startup
+- [ ] CUDA status is displayed in command output
+- [ ] CUDA device information is logged (name, memory, compute capability)
+- [ ] Fallback to CPU is implemented when CUDA unavailable
+- [ ] CUDA initialization errors are handled gracefully
+- [ ] CUDA memory management is properly implemented
+
+### 6.2 Progress Tracking and Logging
+- [ ] Progress bars are shown for operations >5 seconds
+- [ ] Time estimation is calculated and displayed
+- [ ] Percentage completion is accurate and updated
+- [ ] Logging levels are properly configured (INFO, DEBUG, WARNING, ERROR)
+- [ ] Performance metrics are tracked (execution time, memory usage)
+- [ ] Progress can be interrupted gracefully (Ctrl+C)
+
+### 6.3 Performance Monitoring
+- [ ] Execution time is measured and reported
+- [ ] Memory usage is monitored and logged
+- [ ] CUDA vs CPU performance is compared
+- [ ] Performance bottlenecks are identified
+- [ ] Resource utilization is optimized
+- [ ] Performance data is saved for analysis
+
+### 6.4 User Experience
+- [ ] Progress indicators are visually clear
+- [ ] Time estimates are reasonably accurate
+- [ ] Status messages are informative
+- [ ] Error messages are helpful
+- [ ] Output is properly formatted
+- [ ] Logging doesn't interfere with progress display
+
+## 7. Testing Checklist
+
+### 7.1 Unit Tests
 - [ ] Command has unit tests
 - [ ] All public methods are tested
 - [ ] Edge cases are covered
@@ -183,7 +227,7 @@ alwaysApply: true
 - [ ] Configuration loading is tested
 - [ ] CSV output generation is tested
 
-### 6.2 Integration Tests
+### 7.2 Integration Tests
 - [ ] Command works with main CLI
 - [ ] Command works with subcommands
 - [ ] Command works with configuration files
@@ -192,64 +236,64 @@ alwaysApply: true
 - [ ] CSV files are generated correctly
 - [ ] CSV content matches expected results
 
-## 7. Documentation Checklist
+## 8. Documentation Checklist
 
-### 7.1 Command Documentation
+### 8.1 Command Documentation
 - [ ] Command has dedicated documentation file
 - [ ] Documentation includes usage examples
 - [ ] Documentation includes parameter descriptions
 - [ ] Documentation includes configuration examples
 - [ ] Documentation includes troubleshooting guide
 
-### 7.2 API Documentation
+### 8.2 API Documentation
 - [ ] All public methods are documented
 - [ ] Method signatures are documented
 - [ ] Return values are documented
 - [ ] Exceptions are documented
 - [ ] Configuration schema is documented
 
-## 8. Performance Checklist
+## 9. Performance Checklist
 
-### 8.1 Execution Performance
+### 9.1 Execution Performance
 - [ ] Command executes within reasonable time
 - [ ] Memory usage is reasonable
 - [ ] No memory leaks
 - [ ] Efficient algorithms are used
 - [ ] Large datasets are handled properly
 
-### 8.2 Resource Management
+### 9.2 Resource Management
 - [ ] Files are properly closed
 - [ ] Temporary files are cleaned up
 - [ ] Network connections are properly managed
 - [ ] System resources are released
 - [ ] Graceful shutdown is implemented
 
-## 9. Security Checklist
+## 10. Security Checklist
 
-### 9.1 Input Validation
+### 10.1 Input Validation
 - [ ] All user inputs are validated
 - [ ] File paths are sanitized
 - [ ] Configuration files are validated
 - [ ] No code injection vulnerabilities
 - [ ] No path traversal vulnerabilities
 
-### 9.2 Error Information
+### 10.2 Error Information
 - [ ] Error messages don't leak sensitive information
 - [ ] Stack traces are not exposed to users
 - [ ] Logging doesn't include sensitive data
 - [ ] Configuration files are properly secured
 - [ ] Temporary files have appropriate permissions
 
-## 10. Maintenance Checklist
+## 11. Maintenance Checklist
 
-### 10.1 Code Maintainability
+### 11.1 Code Maintainability
 - [ ] Code is well-structured and readable
 - [ ] Dependencies are minimal and justified
 - [ ] Code follows DRY principle
 - [ ] Functions are focused and single-purpose
 - [ ] Complex logic is well-documented
 
-### 10.2 Future Extensibility
+### 11.2 Future Extensibility
 - [ ] Command can be easily extended
 - [ ] New subcommands can be added easily
 - [ ] Configuration schema can be extended
