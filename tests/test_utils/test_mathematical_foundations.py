@@ -71,41 +71,45 @@ class TestSkyrmeConstants(unittest.TestCase):
 class TestPauliMatrices(unittest.TestCase):
     """Test PauliMatrices class."""
 
+    def setUp(self) -> None:
+        """Set up test fixtures."""
+        self.pauli = PauliMatrices()
+
     def test_sigma_matrices_properties(self) -> None:
         """Test Pauli matrices properties."""
         # Check that matrices are 2x2
         for i in range(1, 4):
-            sigma = PauliMatrices.get_sigma(i)
+            sigma = self.pauli.get_sigma(i)
             self.assertEqual(sigma.shape, (2, 2))
 
         # Check specific matrices
-        sigma1 = PauliMatrices.SIGMA_1
+        sigma1 = self.pauli.SIGMA_1
         np.testing.assert_array_equal(sigma1, np.array([[0, 1], [1, 0]]))
 
-        sigma2 = PauliMatrices.SIGMA_2
+        sigma2 = self.pauli.SIGMA_2
         np.testing.assert_array_equal(sigma2, np.array([[0, -1j], [1j, 0]]))
 
-        sigma3 = PauliMatrices.SIGMA_3
+        sigma3 = self.pauli.SIGMA_3
         np.testing.assert_array_equal(sigma3, np.array([[1, 0], [0, -1]]))
 
     def test_get_sigma_valid_indices(self) -> None:
         """Test get_sigma with valid indices."""
         for i in range(1, 4):
-            sigma = PauliMatrices.get_sigma(i)
+            sigma = self.pauli.get_sigma(i)
             self.assertIsInstance(sigma, np.ndarray)
             self.assertEqual(sigma.shape, (2, 2))
 
     def test_get_sigma_invalid_index(self) -> None:
         """Test get_sigma with invalid index."""
         with self.assertRaises(ValueError):
-            PauliMatrices.get_sigma(0)
+            self.pauli.get_sigma(0)
 
         with self.assertRaises(ValueError):
-            PauliMatrices.get_sigma(4)
+            self.pauli.get_sigma(4)
 
     def test_get_all_sigmas(self) -> None:
         """Test get_all_sigmas method."""
-        sigmas = PauliMatrices.get_all_sigmas()
+        sigmas = self.pauli.get_all_sigmas()
         self.assertEqual(len(sigmas), 3)
 
         for sigma in sigmas:
@@ -116,9 +120,13 @@ class TestPauliMatrices(unittest.TestCase):
 class TestTensorOperations(unittest.TestCase):
     """Test TensorOperations class."""
 
+    def setUp(self) -> None:
+        """Set up test fixtures."""
+        self.tensor_ops = TensorOperations()
+
     def test_epsilon_tensor_properties(self) -> None:
         """Test epsilon tensor properties."""
-        epsilon = TensorOperations.epsilon_tensor()
+        epsilon = self.tensor_ops.epsilon_tensor()
 
         # Check shape
         self.assertEqual(epsilon.shape, (3, 3, 3))
@@ -138,13 +146,13 @@ class TestTensorOperations(unittest.TestCase):
 
     def test_trace_product_empty_list(self) -> None:
         """Test trace_product with empty list."""
-        result = TensorOperations.trace_product([])
+        result = self.tensor_ops.trace_product([])
         self.assertEqual(result, 0.0)
 
     def test_trace_product_single_matrix(self) -> None:
         """Test trace_product with single matrix."""
         matrix = np.array([[1, 2], [3, 4]])
-        result = TensorOperations.trace_product([matrix])
+        result = self.tensor_ops.trace_product([matrix])
         expected = np.trace(matrix)
         self.assertEqual(result, expected)
 
@@ -152,7 +160,7 @@ class TestTensorOperations(unittest.TestCase):
         """Test trace_product with multiple matrices."""
         A = np.array([[1, 0], [0, 1]])
         B = np.array([[2, 0], [0, 2]])
-        result = TensorOperations.trace_product([A, B])
+        result = self.tensor_ops.trace_product([A, B])
         expected = np.trace(np.dot(A, B))
         self.assertEqual(result, expected)
 
@@ -161,7 +169,7 @@ class TestTensorOperations(unittest.TestCase):
         A = np.array([[1, 0], [0, 2]])
         B = np.array([[0, 1], [1, 0]])
 
-        result = TensorOperations.commutator(A, B)
+        result = self.tensor_ops.commutator(A, B)
         expected = np.dot(A, B) - np.dot(B, A)
 
         np.testing.assert_array_equal(result, expected)
@@ -223,12 +231,16 @@ class TestCoordinateSystem(unittest.TestCase):
 class TestNumericalUtils(unittest.TestCase):
     """Test NumericalUtils class."""
 
+    def setUp(self) -> None:
+        """Set up test fixtures."""
+        self.numerical_utils = NumericalUtils()
+
     def test_gradient_3d_constant_field(self):
         """Test gradient of constant field."""
         field = np.ones((10, 10, 10))
         dx = 0.1
 
-        grad_x, grad_y, grad_z = NumericalUtils.gradient_3d(field, dx)
+        grad_x, grad_y, grad_z = self.numerical_utils.gradient_3d(field, dx)
 
         # Gradient of constant field should be zero
         np.testing.assert_array_almost_equal(grad_x, 0, decimal=10)
@@ -245,7 +257,7 @@ class TestNumericalUtils(unittest.TestCase):
         field = X + Y + Z
 
         dx = 0.1
-        grad_x, grad_y, grad_z = NumericalUtils.gradient_3d(field, dx)
+        grad_x, grad_y, grad_z = self.numerical_utils.gradient_3d(field, dx)
 
         # Gradient should be (1, 1, 1) for linear field
         # Note: numpy.gradient uses finite differences, so expect some variation
@@ -260,7 +272,7 @@ class TestNumericalUtils(unittest.TestCase):
         field_z = np.ones((10, 10, 10))
         dx = 0.1
 
-        div = NumericalUtils.divergence_3d(field_x, field_y, field_z, dx)
+        div = self.numerical_utils.divergence_3d(field_x, field_y, field_z, dx)
 
         # Divergence of constant field should be zero
         np.testing.assert_array_almost_equal(div, 0, decimal=10)
@@ -270,7 +282,7 @@ class TestNumericalUtils(unittest.TestCase):
         field = np.ones((10, 10, 10))
         dx = 0.1
 
-        result = NumericalUtils.integrate_3d(field, dx)
+        result = self.numerical_utils.integrate_3d(field, dx)
 
         expected = 10 * 10 * 10 * dx**3
         self.assertAlmostEqual(result, expected, places=10)
@@ -279,11 +291,15 @@ class TestNumericalUtils(unittest.TestCase):
 class TestValidationUtils(unittest.TestCase):
     """Test ValidationUtils class."""
 
+    def setUp(self) -> None:
+        """Set up test fixtures."""
+        self.validation_utils = ValidationUtils()
+
     def test_check_su2_matrix_valid(self):
         """Test SU(2) matrix validation with valid matrix."""
         # Identity matrix is SU(2)
         U = np.eye(2, dtype=complex)
-        self.assertTrue(ValidationUtils.check_su2_matrix(U))
+        self.assertTrue(self.validation_utils.check_su2_matrix(U))
 
         # Rotation matrix is SU(2)
         theta = np.pi / 4
@@ -291,28 +307,28 @@ class TestValidationUtils(unittest.TestCase):
             [[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]],
             dtype=complex,
         )
-        self.assertTrue(ValidationUtils.check_su2_matrix(U))
+        self.assertTrue(self.validation_utils.check_su2_matrix(U))
 
     def test_check_su2_matrix_invalid(self):
         """Test SU(2) matrix validation with invalid matrix."""
         # Non-unitary matrix
         U = np.array([[1, 2], [0, 1]], dtype=complex)
-        self.assertFalse(ValidationUtils.check_su2_matrix(U))
+        self.assertFalse(self.validation_utils.check_su2_matrix(U))
 
         # Matrix with det != 1
         U = np.array([[2, 0], [0, 1]], dtype=complex)
-        self.assertFalse(ValidationUtils.check_su2_matrix(U))
+        self.assertFalse(self.validation_utils.check_su2_matrix(U))
 
     def test_check_physical_bounds(self) -> None:
         """Test physical bounds checking."""
         # Value within bounds
-        self.assertTrue(ValidationUtils.check_physical_bounds(1.0, 1.0, 0.1))
-        self.assertTrue(ValidationUtils.check_physical_bounds(1.05, 1.0, 0.1))
-        self.assertTrue(ValidationUtils.check_physical_bounds(0.95, 1.0, 0.1))
+        self.assertTrue(self.validation_utils.check_physical_bounds(1.0, 1.0, 0.1))
+        self.assertTrue(self.validation_utils.check_physical_bounds(1.05, 1.0, 0.1))
+        self.assertTrue(self.validation_utils.check_physical_bounds(0.95, 1.0, 0.1))
 
         # Value outside bounds
-        self.assertFalse(ValidationUtils.check_physical_bounds(1.2, 1.0, 0.1))
-        self.assertFalse(ValidationUtils.check_physical_bounds(0.8, 1.0, 0.1))
+        self.assertFalse(self.validation_utils.check_physical_bounds(1.2, 1.0, 0.1))
+        self.assertFalse(self.validation_utils.check_physical_bounds(0.8, 1.0, 0.1))
 
 
 class TestMathematicalFoundations(unittest.TestCase):
