@@ -1,0 +1,18 @@
+# Core dependencies
+numpy>=1.21.0
+scipy>=1.7.0
+matplotlib>=3.5.0
+
+# CLI and configuration
+argparse
+pyyaml>=6.0
+
+# Development dependencies
+black>=22.0.0
+flake8>=4.0.0
+mypy>=0.950
+pytest>=7.0.0
+
+# Optional dependencies for advanced features
+# h5py>=3.0.0  # For HDF5 data storage
+# jupyter>=1.0.0  # For interactive notebooks
