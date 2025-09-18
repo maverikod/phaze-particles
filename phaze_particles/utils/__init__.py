@@ -17,6 +17,15 @@ from .mathematical_foundations import (
     MathematicalFoundations,
 )
 
+from .energy_densities import (
+    EnergyDensity,
+    BaryonDensity,
+    EnergyDensityCalculator,
+    EnergyAnalyzer,
+    EnergyOptimizer,
+    EnergyDensities,
+)
+
 __all__ = [
     "PhysicalConstants",
     "SkyrmeConstants",
@@ -26,4 +35,10 @@ __all__ = [
     "NumericalUtils",
     "ValidationUtils",
     "MathematicalFoundations",
+    "EnergyDensity",
+    "BaryonDensity",
+    "EnergyDensityCalculator",
+    "EnergyAnalyzer",
+    "EnergyOptimizer",
+    "EnergyDensities",
 ]
