@@ -58,6 +58,9 @@ phaze-particles proton static
 
 # Run with custom parameters
 phaze-particles proton static --grid-size 128 --config-type 120deg --verbose
+
+# Run with JSON configuration file
+phaze-particles proton static --config config/proton_static.json
 ```
 
 ### Available Commands
@@ -69,7 +72,7 @@ phaze-particles proton static --grid-size 128 --config-type 120deg --verbose
 
 ```
 phaze-particles/
-├── src/phaze_particles/          # Main package
+├── phaze_particles/              # Main package
 │   ├── cli/                      # Command-line interface
 │   ├── models/                   # Particle models
 │   ├── utils/                    # Utility functions
@@ -79,6 +82,7 @@ phaze-particles/
 │   ├── commands/                 # Command documentation
 │   ├── reports/                  # Model reports and bug reports
 │   └── tech_spec.md              # Technical specifications
+├── config/                       # Configuration examples
 └── scripts/                      # Build and utility scripts
 ```
 

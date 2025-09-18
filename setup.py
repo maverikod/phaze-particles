@@ -17,8 +17,7 @@ setup(
     author="Vasiliy Zdanovskiy",
     author_email="vasilyvz@gmail.com",
     url="https://github.com/vasilyvz/phaze-particles",
-    packages=find_packages(where="src"),
-    package_dir={"": "src"},
+    packages=find_packages(),
     python_requires=">=3.8",
     install_requires=[
         "numpy>=1.21.0",

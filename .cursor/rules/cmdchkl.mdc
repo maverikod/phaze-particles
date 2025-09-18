@@ -13,35 +13,34 @@ alwaysApply: true
 
 ```
 phaze-particles/
-├── phaze_particles/          # Main package
-│      ├── __init__.py
-│      ├── cli/                  # CLI commands
-│      │   ├── __init__.py
-│      │   ├── main.py           # Main CLI entry point
-│      │   ├── base.py           # Base command class
-│      │   └── commands/         # Individual command modules
-│      │       ├── __init__.py
-│      │       ├── proton.py     # Proton modeling commands
-│      │       └── neutron.py    # Neutron modeling commands (future)
-│      ├── models/               # Particle models
-│      │   ├── __init__.py
-│      │   ├── base.py           # Base model class
-│      │   ├── proton.py         # Proton model implementation
-│      │   └── neutron.py        # Neutron model (future)
-│      ├── utils/                # Utility functions
-│      │   ├── __init__.py
-│      │   ├── math.py           # Mathematical utilities
-│      │   └── io.py             # Input/output utilities
-│      └── config/               # Configuration
-│          ├── __init__.py
-│          └── settings.py       # Application settings
+├── src/                          # Source code
+│   ├── phaze_particles/          # Main package
+│   │   ├── __init__.py
+│   │   ├── cli/                  # CLI commands
+│   │   │   ├── __init__.py
+│   │   │   ├── main.py           # Main CLI entry point
+│   │   │   ├── base.py           # Base command class
+│   │   │   └── commands/         # Individual command modules
+│   │   │       ├── __init__.py
+│   │   │       ├── proton.py     # Proton modeling commands
+│   │   │       └── neutron.py    # Neutron modeling commands (future)
+│   │   ├── models/               # Particle models
+│   │   │   ├── __init__.py
+│   │   │   ├── base.py           # Base model class
+│   │   │   ├── proton.py         # Proton model implementation
+│   │   │   └── neutron.py        # Neutron model (future)
+│   │   ├── utils/                # Utility functions
+│   │   │   ├── __init__.py
+│   │   │   ├── math.py           # Mathematical utilities
+│   │   │   └── io.py             # Input/output utilities
+│   │   └── config/               # Configuration
+│   │       ├── __init__.py
+│   │       └── settings.py       # Application settings
 ├── tests/                        # Test suite
 │   ├── __init__.py
 │   ├── test_models/
 │   ├── test_cli/
 │   └── test_utils/
-├── config/                       # configuration files
-│   └── config-[name of cofig].py
 ├── docs/                         # Documentation
 │   ├── commands/                 # Command documentation
 │   │   ├── proton/               # Proton command docs

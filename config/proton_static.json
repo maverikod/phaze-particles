@@ -1,0 +1,23 @@
+{
+  "grid_size": 128,
+  "box_size": 6.0,
+  "config_type": "120deg",
+  "output": "results/proton_120deg",
+  "verbose": true,
+  "save_data": true,
+  "generate_plots": true,
+  "convergence_tolerance": 1e-8,
+  "max_iterations": 2000,
+  "physical_constants": {
+    "proton_mass": 938.272,
+    "proton_radius": 0.84,
+    "proton_magnetic_moment": 2.793,
+    "electron_charge": 1.0
+  },
+  "numerical_parameters": {
+    "relaxation_method": "gradient_descent",
+    "step_size": 0.01,
+    "monitor_energy_balance": true,
+    "target_energy_balance": 50.0
+  }
+}

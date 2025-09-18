@@ -9,29 +9,28 @@
 
 ```
 phaze-particles/
-├── src/                          # Source code
-│   ├── phaze_particles/          # Main package
+├── phaze_particles/              # Main package
+│   ├── __init__.py
+│   ├── cli/                      # CLI commands
 │   │   ├── __init__.py
-│   │   ├── cli/                  # CLI commands
-│   │   │   ├── __init__.py
-│   │   │   ├── main.py           # Main CLI entry point
-│   │   │   ├── base.py           # Base command class
-│   │   │   └── commands/         # Individual command modules
-│   │   │       ├── __init__.py
-│   │   │       ├── proton.py     # Proton modeling commands
-│   │   │       └── neutron.py    # Neutron modeling commands (future)
-│   │   ├── models/               # Particle models
-│   │   │   ├── __init__.py
-│   │   │   ├── base.py           # Base model class
-│   │   │   ├── proton.py         # Proton model implementation
-│   │   │   └── neutron.py        # Neutron model (future)
-│   │   ├── utils/                # Utility functions
-│   │   │   ├── __init__.py
-│   │   │   ├── math.py           # Mathematical utilities
-│   │   │   └── io.py             # Input/output utilities
-│   │   └── config/               # Configuration
+│   │   ├── main.py               # Main CLI entry point
+│   │   ├── base.py               # Base command class
+│   │   └── commands/             # Individual command modules
 │   │       ├── __init__.py
-│   │       └── settings.py       # Application settings
+│   │       ├── proton.py         # Proton modeling commands
+│   │       └── neutron.py        # Neutron modeling commands (future)
+│   ├── models/                   # Particle models
+│   │   ├── __init__.py
+│   │   ├── base.py               # Base model class
+│   │   ├── proton.py             # Proton model implementation
+│   │   └── neutron.py            # Neutron model (future)
+│   ├── utils/                    # Utility functions
+│   │   ├── __init__.py
+│   │   ├── math.py               # Mathematical utilities
+│   │   └── io.py                 # Input/output utilities
+│   └── config/                   # Configuration
+│       ├── __init__.py
+│       └── settings.py           # Application settings
 ├── tests/                        # Test suite
 │   ├── __init__.py
 │   ├── test_models/
@@ -58,11 +57,11 @@ phaze-particles/
 
 ### 1.2 Directory Purposes
 
-- **src/phaze_particles/**: Main application package
-- **src/phaze_particles/cli/**: Command-line interface implementation
-- **src/phaze_particles/models/**: Particle model implementations
-- **src/phaze_particles/utils/**: Shared utility functions
-- **src/phaze_particles/config/**: Configuration management
+- **phaze_particles/**: Main application package
+- **phaze_particles/cli/**: Command-line interface implementation
+- **phaze_particles/models/**: Particle model implementations
+- **phaze_particles/utils/**: Shared utility functions
+- **phaze_particles/config/**: Configuration management
 - **tests/**: Unit and integration tests
 - **docs/**: All project documentation
 - **docs/commands/**: Command-specific documentation (one subdirectory per command)
@@ -182,7 +181,35 @@ Each command documentation should include:
 - **Technical details**: Implementation specifics
 - **References**: Related technical specifications
 
-## 7. Project Naming and Branding
+## 7. Command Interface Requirements
+
+### 7.1 Required Methods
+
+Every command must implement:
+- `get_subcommands()`: Returns list of available subcommands
+- `get_help()`: Returns detailed help text
+- `load_config()`: Loads JSON configuration file
+- `validate_config()`: Validates configuration parameters
+
+### 7.2 JSON Configuration Support
+
+- Commands must support JSON configuration files
+- Configuration can override command-line arguments
+- Configuration validation is mandatory
+- Default configuration values must be provided
+- Configuration schema must be documented
+
+### 7.3 Code Quality Checklist
+
+See `docs/code_checklist.md` for comprehensive code quality requirements including:
+- File structure and organization
+- Naming conventions
+- Documentation standards
+- Command properties validation
+- CLI integration requirements
+- Testing requirements
+
+## 8. Project Naming and Branding
 
 - **Project name**: `phaze-particles`
 - **Package name**: `phaze_particles`

@@ -67,7 +67,7 @@ For more information, visit: https://github.com/vasilyvz/phaze-particles
             cmd_parser = subparsers.add_parser(
                 cmd_name,
                 help=cmd_instance.description,
-                description=cmd_instance.description,
+                description=cmd_instance.get_help(),
             )
             cmd_instance.add_arguments(cmd_parser)
 

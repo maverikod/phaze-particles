@@ -7,10 +7,12 @@ Email: vasilyvz@gmail.com
 """
 
 import argparse
+import json
 import signal
 import sys
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 class BaseCommand(ABC):
@@ -32,6 +34,7 @@ class BaseCommand(ABC):
         self.name = name
         self.description = description
         self._shutdown_requested = False
+        self._config: Dict[str, Any] = {}
         self._setup_signal_handlers()
 
     def _setup_signal_handlers(self) -> None:
@@ -78,6 +81,76 @@ class BaseCommand(ABC):
             Exit code (0 for success, non-zero for error)
         """
         pass
+
+    def get_subcommands(self) -> List[str]:
+        """
+        Get list of available subcommands.
+
+        Returns:
+            List of subcommand names
+        """
+        return []
+
+    def get_help(self) -> str:
+        """
+        Get detailed help text for the command.
+
+        Returns:
+            Help text string
+        """
+        return self.description
+
+    def load_config(self, config_path: str) -> None:
+        """
+        Load configuration from JSON file.
+
+        Args:
+            config_path: Path to JSON configuration file
+        """
+        config_file = Path(config_path)
+        if not config_file.exists():
+            raise FileNotFoundError(f"Configuration file not found: {config_path}")
+
+        if config_file.suffix.lower() != ".json":
+            raise ValueError(f"Configuration file must be JSON format: {config_path}")
+
+        try:
+            with open(config_file, "r", encoding="utf-8") as f:
+                self._config = json.load(f)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON in configuration file: {e}")
+
+    def get_config(self, key: str, default: Any = None) -> Any:
+        """
+        Get configuration value by key.
+
+        Args:
+            key: Configuration key
+            default: Default value if key not found
+
+        Returns:
+            Configuration value or default
+        """
+        return self._config.get(key, default)
+
+    def set_config(self, key: str, value: Any) -> None:
+        """
+        Set configuration value.
+
+        Args:
+            key: Configuration key
+            value: Configuration value
+        """
+        self._config[key] = value
+
+    def validate_config(self) -> bool:
+        """
+        Validate current configuration.
+
+        Returns:
+            True if configuration is valid, False otherwise
+        """
+        return True
 
     def create_parser(self) -> argparse.ArgumentParser:
         """
