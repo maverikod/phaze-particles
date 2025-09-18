@@ -1,6 +1,7 @@
 ---
 alwaysApply: true
 ---
+
 # Project Standards for Phaze-Particles
 
 **Author:** Vasiliy Zdanovskiy  
@@ -190,6 +191,33 @@ results/
 - **Results data**: All calculated values as columns
 - **Metadata**: Model version, execution time, etc.
 - **Validation flags**: Success/failure indicators
+- **Experimental comparison**: Comparison with experimental values
+- **Physical validation**: Validation against known physical constants
+
+### 4.4 Physical Analysis and Validation Standards
+
+- **Post-execution analysis**: Every command must perform physical analysis after execution
+- **Experimental comparison**: Compare calculated values with experimental data
+- **Physical validation**: Validate against known physical constants and laws
+- **Error reporting**: Report deviations from experimental values
+- **Quality assessment**: Assess model quality based on physical accuracy
+
+#### 4.4.1 Required Physical Parameters for Proton Model
+
+- **Electric charge**: Q = +1.0 (exact)
+- **Baryon number**: B = 1.0 (exact)
+- **Mass**: Mp = 938.272 ± 0.006 MeV (experimental)
+- **Radius**: rE = 0.841 ± 0.019 fm (experimental)
+- **Magnetic moment**: μp = 2.793 ± 0.001 μN (experimental)
+- **Energy balance**: E2/E4 = 50/50 ± 5% (virial condition)
+
+#### 4.4.2 Analysis Output Requirements
+
+- **Comparison table**: Calculated vs experimental values
+- **Deviation analysis**: Percentage deviations from experimental data
+- **Quality metrics**: Model quality assessment (excellent/good/fair/poor)
+- **Recommendations**: Suggestions for model improvement
+- **Validation status**: Pass/fail based on physical criteria
 
 ## 5. Development Workflow
 

@@ -1,6 +1,7 @@
 ---
 alwaysApply: true
 ---
+
 # Code Quality and Command Properties Checklist
 
 **Author:** Vasiliy Zdanovskiy  
@@ -81,6 +82,17 @@ alwaysApply: true
 - [ ] Timestamp is included in ISO 8601 format
 - [ ] Missing values are handled consistently
 
+### 2.6 Physical Analysis and Validation Requirements
+- [ ] Command performs post-execution physical analysis
+- [ ] Calculated values are compared with experimental data
+- [ ] Physical validation against known constants is performed
+- [ ] Deviation analysis from experimental values is calculated
+- [ ] Quality assessment based on physical accuracy is provided
+- [ ] Comparison table (calculated vs experimental) is generated
+- [ ] Validation status (pass/fail) is determined
+- [ ] Recommendations for model improvement are provided
+- [ ] All physical parameters meet experimental tolerances
+
 ## 3. CLI Integration Checklist
 
 ### 3.1 Main CLI Integration
@@ -130,9 +142,40 @@ alwaysApply: true
 - [ ] File size is reasonable for data volume
 - [ ] CSV can be imported into analysis tools
 
-## 5. Testing Checklist
+## 5. Physical Analysis Checklist
 
-### 5.1 Unit Tests
+### 5.1 Experimental Comparison
+- [ ] Electric charge compared with Q = +1.0 (exact)
+- [ ] Baryon number compared with B = 1.0 (exact)
+- [ ] Mass compared with Mp = 938.272 ± 0.006 MeV
+- [ ] Radius compared with rE = 0.841 ± 0.019 fm
+- [ ] Magnetic moment compared with μp = 2.793 ± 0.001 μN
+- [ ] Energy balance compared with E2/E4 = 50/50 ± 5%
+
+### 5.2 Deviation Analysis
+- [ ] Percentage deviations calculated for all parameters
+- [ ] Deviations within experimental tolerances
+- [ ] Large deviations (>10%) are flagged and explained
+- [ ] Systematic errors are identified
+- [ ] Random errors are quantified
+
+### 5.3 Quality Assessment
+- [ ] Model quality rated (excellent/good/fair/poor)
+- [ ] Quality based on physical accuracy criteria
+- [ ] Quality assessment is documented and justified
+- [ ] Recommendations for improvement are provided
+- [ ] Validation status (pass/fail) is determined
+
+### 5.4 Analysis Output
+- [ ] Comparison table generated (calculated vs experimental)
+- [ ] Deviation analysis included in output
+- [ ] Quality assessment reported
+- [ ] Validation status clearly indicated
+- [ ] Recommendations provided for model improvement
+
+## 6. Testing Checklist
+
+### 6.1 Unit Tests
 - [ ] Command has unit tests
 - [ ] All public methods are tested
 - [ ] Edge cases are covered
@@ -140,7 +183,7 @@ alwaysApply: true
 - [ ] Configuration loading is tested
 - [ ] CSV output generation is tested
 
-### 5.2 Integration Tests
+### 6.2 Integration Tests
 - [ ] Command works with main CLI
 - [ ] Command works with subcommands
 - [ ] Command works with configuration files
@@ -149,64 +192,64 @@ alwaysApply: true
 - [ ] CSV files are generated correctly
 - [ ] CSV content matches expected results
 
-## 6. Documentation Checklist
+## 7. Documentation Checklist
 
-### 6.1 Command Documentation
+### 7.1 Command Documentation
 - [ ] Command has dedicated documentation file
 - [ ] Documentation includes usage examples
 - [ ] Documentation includes parameter descriptions
 - [ ] Documentation includes configuration examples
 - [ ] Documentation includes troubleshooting guide
 
-### 6.2 API Documentation
+### 7.2 API Documentation
 - [ ] All public methods are documented
 - [ ] Method signatures are documented
 - [ ] Return values are documented
 - [ ] Exceptions are documented
 - [ ] Configuration schema is documented
 
-## 7. Performance Checklist
+## 8. Performance Checklist
 
-### 7.1 Execution Performance
+### 8.1 Execution Performance
 - [ ] Command executes within reasonable time
 - [ ] Memory usage is reasonable
 - [ ] No memory leaks
 - [ ] Efficient algorithms are used
 - [ ] Large datasets are handled properly
 
-### 6.2 Resource Management
+### 8.2 Resource Management
 - [ ] Files are properly closed
 - [ ] Temporary files are cleaned up
 - [ ] Network connections are properly managed
 - [ ] System resources are released
 - [ ] Graceful shutdown is implemented
 
-## 7. Security Checklist
+## 9. Security Checklist
 
-### 7.1 Input Validation
+### 9.1 Input Validation
 - [ ] All user inputs are validated
 - [ ] File paths are sanitized
 - [ ] Configuration files are validated
 - [ ] No code injection vulnerabilities
 - [ ] No path traversal vulnerabilities
 
-### 7.2 Error Information
+### 9.2 Error Information
 - [ ] Error messages don't leak sensitive information
 - [ ] Stack traces are not exposed to users
 - [ ] Logging doesn't include sensitive data
 - [ ] Configuration files are properly secured
 - [ ] Temporary files have appropriate permissions
 
-## 8. Maintenance Checklist
+## 10. Maintenance Checklist
 
-### 8.1 Code Maintainability
+### 10.1 Code Maintainability
 - [ ] Code is well-structured and readable
 - [ ] Dependencies are minimal and justified
 - [ ] Code follows DRY principle
 - [ ] Functions are focused and single-purpose
 - [ ] Complex logic is well-documented
 
-### 8.2 Future Extensibility
+### 10.2 Future Extensibility
 - [ ] Command can be easily extended
 - [ ] New subcommands can be added easily
 - [ ] Configuration schema can be extended
