@@ -1,7 +1,6 @@
 ---
 alwaysApply: true
 ---
-
 # Project Standards for Phaze-Particles
 
 **Author:** Vasiliy Zdanovskiy  
@@ -13,35 +12,33 @@ alwaysApply: true
 
 ```
 phaze-particles/
-├── phaze_particles/          # Main package
-│      ├── __init__.py
-│      ├── cli/                  # CLI commands
-│      │   ├── __init__.py
-│      │   ├── main.py           # Main CLI entry point
-│      │   ├── base.py           # Base command class
-│      │   └── commands/         # Individual command modules
-│      │       ├── __init__.py
-│      │       ├── proton.py     # Proton modeling commands
-│      │       └── neutron.py    # Neutron modeling commands (future)
-│      ├── models/               # Particle models
-│      │   ├── __init__.py
-│      │   ├── base.py           # Base model class
-│      │   ├── proton.py         # Proton model implementation
-│      │   └── neutron.py        # Neutron model (future)
-│      ├── utils/                # Utility functions
-│      │   ├── __init__.py
-│      │   ├── math.py           # Mathematical utilities
-│      │   └── io.py             # Input/output utilities
-│      └── config/               # Configuration
-│          ├── __init__.py
-│          └── settings.py       # Application settings
+├── phaze_particles/              # Main package
+│   ├── __init__.py
+│   ├── cli/                      # CLI commands
+│   │   ├── __init__.py
+│   │   ├── main.py               # Main CLI entry point
+│   │   ├── base.py               # Base command class
+│   │   └── commands/             # Individual command modules
+│   │       ├── __init__.py
+│   │       ├── proton.py         # Proton modeling commands
+│   │       └── neutron.py        # Neutron modeling commands (future)
+│   ├── models/                   # Particle models
+│   │   ├── __init__.py
+│   │   ├── base.py               # Base model class
+│   │   ├── proton.py             # Proton model implementation
+│   │   └── neutron.py            # Neutron model (future)
+│   ├── utils/                    # Utility functions
+│   │   ├── __init__.py
+│   │   ├── math.py               # Mathematical utilities
+│   │   └── io.py                 # Input/output utilities
+│   └── config/                   # Configuration
+│       ├── __init__.py
+│       └── settings.py           # Application settings
 ├── tests/                        # Test suite
 │   ├── __init__.py
 │   ├── test_models/
 │   ├── test_cli/
 │   └── test_utils/
-├── config/                       # configuration files
-│   └── config-[name of cofig].py
 ├── docs/                         # Documentation
 │   ├── commands/                 # Command documentation
 │   │   ├── proton/               # Proton command docs
@@ -52,6 +49,19 @@ phaze-particles/
 │   ├── tech_spec.md              # Technical specifications
 │   ├── project_standards.md      # This file
 │   └── README.md                 # Project overview
+├── results/                      # Generated results (CSV files)
+│   ├── proton/                   # Proton model results
+│   │   ├── static/               # Static proton results
+│   │   │   ├── -grid64-box4.0-all-2024-01-15T14.30.25.csv
+│   │   │   ├── -grid128-box6.0-120deg-2024-01-15T15.45.12.csv
+│   │   │   └── -custom-config-2024-01-15T16.20.33.csv
+│   │   └── dynamic/              # Dynamic proton results (future)
+│   │       └── -collision-sim-2024-01-15T17.10.45.csv
+│   └── neutron/                  # Neutron model results (future)
+│       └── static/
+│           └── -basic-model-2024-01-15T18.00.15.csv
+├── config/                       # Configuration examples
+│   └── proton_static.json        # Example JSON configuration
 ├── scripts/                      # Build and utility scripts
 ├── requirements.txt              # Python dependencies
 ├── pyproject.toml                # Project configuration
@@ -63,15 +73,17 @@ phaze-particles/
 
 ### 1.2 Directory Purposes
 
-- **src/phaze_particles/**: Main application package
-- **src/phaze_particles/cli/**: Command-line interface implementation
-- **src/phaze_particles/models/**: Particle model implementations
-- **src/phaze_particles/utils/**: Shared utility functions
-- **src/phaze_particles/config/**: Configuration management
+- **phaze_particles/**: Main application package
+- **phaze_particles/cli/**: Command-line interface implementation
+- **phaze_particles/models/**: Particle model implementations
+- **phaze_particles/utils/**: Shared utility functions
+- **phaze_particles/config/**: Configuration management
 - **tests/**: Unit and integration tests
 - **docs/**: All project documentation
 - **docs/commands/**: Command-specific documentation (one subdirectory per command)
 - **docs/reports/**: Model execution reports and bug reports
+- **results/**: Generated CSV results organized by command/subcommand
+- **config/**: Configuration examples and templates
 - **scripts/**: Build, deployment, and utility scripts
 
 ## 2. Coding Standards
@@ -145,6 +157,40 @@ phaze-particles/
 - **Format**: Markdown with tables, graphs, and analysis
 - **Naming**: `YYYY-MM-DD_model-name_report.md`
 
+### 4.3 Results Output Standards
+
+- **CSV files**: All numerical results must be saved in CSV format
+- **Directory structure**: `results/command/subcommand/`
+- **File naming template**: `[-short-desc-of-args]-YYYY-MM-DDThh.mm.ss.csv`
+- **Encoding**: UTF-8 with BOM for Excel compatibility
+- **Headers**: First row must contain column names
+- **Data types**: Consistent data types per column
+- **Missing values**: Use empty strings or "N/A" for missing data
+
+#### 4.3.1 CSV File Naming Examples
+
+```
+results/
+├── proton/
+│   ├── static/
+│   │   ├── -grid64-box4.0-all-2024-01-15T14.30.25.csv
+│   │   ├── -grid128-box6.0-120deg-2024-01-15T15.45.12.csv
+│   │   └── -custom-config-2024-01-15T16.20.33.csv
+│   └── dynamic/
+│       └── -collision-sim-2024-01-15T17.10.45.csv
+└── neutron/
+    └── static/
+        └── -basic-model-2024-01-15T18.00.15.csv
+```
+
+#### 4.3.2 CSV Content Requirements
+
+- **Timestamp column**: ISO 8601 format (YYYY-MM-DDTHH:MM:SS)
+- **Configuration parameters**: All input parameters as columns
+- **Results data**: All calculated values as columns
+- **Metadata**: Model version, execution time, etc.
+- **Validation flags**: Success/failure indicators
+
 ## 5. Development Workflow
 
 ### 5.1 Code Quality
@@ -187,7 +233,35 @@ Each command documentation should include:
 - **Technical details**: Implementation specifics
 - **References**: Related technical specifications
 
-## 7. Project Naming and Branding
+## 7. Command Interface Requirements
+
+### 7.1 Required Methods
+
+Every command must implement:
+- `get_subcommands()`: Returns list of available subcommands
+- `get_help()`: Returns detailed help text
+- `load_config()`: Loads JSON configuration file
+- `validate_config()`: Validates configuration parameters
+
+### 7.2 JSON Configuration Support
+
+- Commands must support JSON configuration files
+- Configuration can override command-line arguments
+- Configuration validation is mandatory
+- Default configuration values must be provided
+- Configuration schema must be documented
+
+### 7.3 Code Quality Checklist
+
+See `docs/code_checklist.md` for comprehensive code quality requirements including:
+- File structure and organization
+- Naming conventions
+- Documentation standards
+- Command properties validation
+- CLI integration requirements
+- Testing requirements
+
+## 8. Project Naming and Branding
 
 - **Project name**: `phaze-particles`
 - **Package name**: `phaze_particles`
