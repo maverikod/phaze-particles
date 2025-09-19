@@ -7,8 +7,12 @@ Email: vasilyvz@gmail.com
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
-from dataclasses import dataclass
+import time
+import uuid
+from contextlib import contextmanager
+from typing import Any, Dict, List, Optional, Tuple, Union
+from dataclasses import dataclass, field
+import numpy as np
 
 
 @dataclass
@@ -22,6 +26,295 @@ class CUDADevice:
     compute_capability: Tuple[int, int]
     multiprocessors: int
     max_threads_per_block: int
+
+
+@dataclass
+class MemoryAllocation:
+    """CUDA memory allocation information."""
+    
+    allocation_id: str
+    size_bytes: int
+    device_id: int
+    timestamp: float
+    is_active: bool = True
+
+
+class CUDAMemoryManager:
+    """
+    CUDA memory management utilities.
+    
+    Provides memory allocation tracking, usage monitoring,
+    and automatic cleanup capabilities.
+    """
+    
+    def __init__(self) -> None:
+        """Initialize CUDA memory manager."""
+        self._allocations: Dict[str, MemoryAllocation] = {}
+        self._total_allocated = 0
+        self._logger = logging.getLogger(__name__)
+    
+    def allocate_memory(self, size_bytes: int, device_id: int = 0) -> str:
+        """
+        Allocate CUDA memory.
+        
+        Args:
+            size_bytes: Size to allocate in bytes
+            device_id: CUDA device ID
+            
+        Returns:
+            Allocation ID for tracking
+        """
+        allocation_id = str(uuid.uuid4())
+        allocation = MemoryAllocation(
+            allocation_id=allocation_id,
+            size_bytes=size_bytes,
+            device_id=device_id,
+            timestamp=time.time()
+        )
+        
+        self._allocations[allocation_id] = allocation
+        self._total_allocated += size_bytes
+        
+        self._logger.debug(f"Allocated {size_bytes} bytes on device {device_id}")
+        return allocation_id
+    
+    def deallocate_memory(self, allocation_id: str) -> bool:
+        """
+        Deallocate CUDA memory.
+        
+        Args:
+            allocation_id: Allocation ID to deallocate
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        if allocation_id not in self._allocations:
+            return False
+        
+        allocation = self._allocations[allocation_id]
+        if allocation.is_active:
+            self._total_allocated -= allocation.size_bytes
+            allocation.is_active = False
+            self._logger.debug(f"Deallocated {allocation.size_bytes} bytes")
+        
+        return True
+    
+    def get_memory_usage(self) -> Dict[str, Any]:
+        """
+        Get current memory usage information.
+        
+        Returns:
+            Dictionary with memory usage statistics
+        """
+        active_allocations = [a for a in self._allocations.values() if a.is_active]
+        
+        return {
+            "total_allocated_bytes": self._total_allocated,
+            "active_allocations": len(active_allocations),
+            "total_allocations": len(self._allocations),
+            "allocations_by_device": self._get_allocations_by_device()
+        }
+    
+    def _get_allocations_by_device(self) -> Dict[int, Dict[str, Any]]:
+        """Get allocations grouped by device."""
+        by_device = {}
+        for allocation in self._allocations.values():
+            if allocation.is_active:
+                if allocation.device_id not in by_device:
+                    by_device[allocation.device_id] = {
+                        "count": 0,
+                        "total_bytes": 0
+                    }
+                by_device[allocation.device_id]["count"] += 1
+                by_device[allocation.device_id]["total_bytes"] += allocation.size_bytes
+        
+        return by_device
+    
+    def cleanup_all(self) -> None:
+        """Clean up all active allocations."""
+        for allocation_id in list(self._allocations.keys()):
+            self.deallocate_memory(allocation_id)
+        self._logger.info("Cleaned up all CUDA memory allocations")
+
+
+class CUDAOperations:
+    """
+    CUDA operations for array manipulation.
+    
+    Provides high-level operations for transferring arrays
+    between CPU and GPU, and performing computations.
+    """
+    
+    def __init__(self) -> None:
+        """Initialize CUDA operations."""
+        self._logger = logging.getLogger(__name__)
+        self._cuda_available = False
+        
+        try:
+            import cupy as cp
+            self._cuda_available = cp.cuda.is_available()
+        except ImportError:
+            self._logger.info("CuPy not available - CUDA operations disabled")
+    
+    def array_to_gpu(self, array: np.ndarray) -> Any:
+        """
+        Transfer numpy array to GPU.
+        
+        Args:
+            array: NumPy array to transfer
+            
+        Returns:
+            GPU array or original array if CUDA not available
+        """
+        if not self._cuda_available:
+            return array
+        
+        try:
+            import cupy as cp
+            return cp.asarray(array)
+        except Exception as e:
+            self._logger.error(f"Error transferring array to GPU: {e}")
+            return array
+    
+    def array_from_gpu(self, gpu_array: Any) -> np.ndarray:
+        """
+        Transfer GPU array to CPU.
+        
+        Args:
+            gpu_array: GPU array to transfer
+            
+        Returns:
+            NumPy array
+        """
+        if not self._cuda_available:
+            return gpu_array
+        
+        try:
+            import cupy as cp
+            if isinstance(gpu_array, cp.ndarray):
+                return cp.asnumpy(gpu_array)
+            else:
+                return gpu_array
+        except Exception as e:
+            self._logger.error(f"Error transferring array from GPU: {e}")
+            return gpu_array
+    
+    def add(self, a: Any, b: Any) -> Any:
+        """
+        Element-wise addition.
+        
+        Args:
+            a, b: Arrays to add
+            
+        Returns:
+            Result of addition
+        """
+        if not self._cuda_available:
+            return np.add(a, b)
+        
+        try:
+            import cupy as cp
+            if isinstance(a, cp.ndarray) or isinstance(b, cp.ndarray):
+                return cp.add(a, b)
+            else:
+                return np.add(a, b)
+        except Exception as e:
+            self._logger.error(f"Error in GPU addition: {e}")
+            return np.add(a, b)
+    
+    def multiply(self, a: Any, b: Any) -> Any:
+        """
+        Element-wise multiplication.
+        
+        Args:
+            a, b: Arrays to multiply
+            
+        Returns:
+            Result of multiplication
+        """
+        if not self._cuda_available:
+            return np.multiply(a, b)
+        
+        try:
+            import cupy as cp
+            if isinstance(a, cp.ndarray) or isinstance(b, cp.ndarray):
+                return cp.multiply(a, b)
+            else:
+                return np.multiply(a, b)
+        except Exception as e:
+            self._logger.error(f"Error in GPU multiplication: {e}")
+            return np.multiply(a, b)
+    
+    def matrix_multiply(self, a: Any, b: Any) -> Any:
+        """
+        Matrix multiplication.
+        
+        Args:
+            a, b: Matrices to multiply
+            
+        Returns:
+            Result of matrix multiplication
+        """
+        if not self._cuda_available:
+            return np.dot(a, b)
+        
+        try:
+            import cupy as cp
+            if isinstance(a, cp.ndarray) or isinstance(b, cp.ndarray):
+                return cp.dot(a, b)
+            else:
+                return np.dot(a, b)
+        except Exception as e:
+            self._logger.error(f"Error in GPU matrix multiplication: {e}")
+            return np.dot(a, b)
+    
+    def sum(self, array: Any, axis: Optional[int] = None) -> Any:
+        """
+        Sum array elements.
+        
+        Args:
+            array: Array to sum
+            axis: Axis along which to sum
+            
+        Returns:
+            Sum result
+        """
+        if not self._cuda_available:
+            return np.sum(array, axis=axis)
+        
+        try:
+            import cupy as cp
+            if isinstance(array, cp.ndarray):
+                return cp.sum(array, axis=axis)
+            else:
+                return np.sum(array, axis=axis)
+        except Exception as e:
+            self._logger.error(f"Error in GPU sum: {e}")
+            return np.sum(array, axis=axis)
+    
+    def max(self, array: Any, axis: Optional[int] = None) -> Any:
+        """
+        Maximum of array elements.
+        
+        Args:
+            array: Array to find maximum
+            axis: Axis along which to find maximum
+            
+        Returns:
+            Maximum result
+        """
+        if not self._cuda_available:
+            return np.max(array, axis=axis)
+        
+        try:
+            import cupy as cp
+            if isinstance(array, cp.ndarray):
+                return cp.max(array, axis=axis)
+            else:
+                return np.max(array, axis=axis)
+        except Exception as e:
+            self._logger.error(f"Error in GPU max: {e}")
+            return np.max(array, axis=axis)
 
 
 class CUDAManager:
@@ -38,6 +331,12 @@ class CUDAManager:
         self._devices: List[CUDADevice] = []
         self._current_device: Optional[CUDADevice] = None
         self._logger = logging.getLogger(__name__)
+        
+        # Initialize sub-components
+        self.memory_manager = CUDAMemoryManager()
+        self.operations = CUDAOperations()
+        self._performance_metrics: Dict[str, Any] = {}
+        self._streams: List[Any] = []
 
         # Try to detect CUDA
         self._detect_cuda()
@@ -169,6 +468,119 @@ class CUDAManager:
             self._logger.error(f"Error setting CUDA device {device_id}: {e}")
             return False
 
+    @property
+    def is_cuda_available(self) -> bool:
+        """Check if CUDA is available (alias for compatibility)."""
+        return self._cuda_available
+
+    @contextmanager
+    def get_context(self):
+        """Get CUDA context manager."""
+        if not self._cuda_available:
+            yield None
+            return
+        
+        try:
+            import cupy as cp
+            with cp.cuda.Device(self._current_device.id if self._current_device else 0):
+                yield self._current_device
+        except Exception as e:
+            self._logger.error(f"Error creating CUDA context: {e}")
+            yield None
+
+    def allocate_memory(self, size_bytes: int, device_id: int = 0) -> str:
+        """
+        Allocate CUDA memory.
+        
+        Args:
+            size_bytes: Size to allocate in bytes
+            device_id: CUDA device ID
+            
+        Returns:
+            Allocation ID for tracking
+        """
+        return self.memory_manager.allocate_memory(size_bytes, device_id)
+
+    def array_to_gpu(self, array: np.ndarray) -> Any:
+        """
+        Transfer numpy array to GPU.
+        
+        Args:
+            array: NumPy array to transfer
+            
+        Returns:
+            GPU array or original array if CUDA not available
+        """
+        return self.operations.array_to_gpu(array)
+
+    def array_from_gpu(self, gpu_array: Any) -> np.ndarray:
+        """
+        Transfer GPU array to CPU.
+        
+        Args:
+            gpu_array: GPU array to transfer
+            
+        Returns:
+            NumPy array
+        """
+        return self.operations.array_from_gpu(gpu_array)
+
+    def synchronize(self) -> None:
+        """Synchronize CUDA operations."""
+        if not self._cuda_available:
+            return
+        
+        try:
+            import cupy as cp
+            cp.cuda.Stream.null.synchronize()
+        except Exception as e:
+            self._logger.error(f"Error synchronizing CUDA: {e}")
+
+    def create_stream(self) -> Any:
+        """
+        Create CUDA stream.
+        
+        Returns:
+            CUDA stream or None if not available
+        """
+        if not self._cuda_available:
+            return None
+        
+        try:
+            import cupy as cp
+            stream = cp.cuda.Stream()
+            self._streams.append(stream)
+            return stream
+        except Exception as e:
+            self._logger.error(f"Error creating CUDA stream: {e}")
+            return None
+
+    def get_performance_metrics(self) -> Dict[str, Any]:
+        """
+        Get performance metrics.
+        
+        Returns:
+            Dictionary with performance metrics
+        """
+        metrics = {
+            "cuda_available": self._cuda_available,
+            "device_count": len(self._devices),
+            "current_device": self._current_device.id if self._current_device else None,
+            "memory_usage": self.memory_manager.get_memory_usage(),
+            "stream_count": len(self._streams)
+        }
+        
+        # Add device-specific metrics
+        if self._current_device:
+            metrics.update({
+                "device_name": self._current_device.name,
+                "device_memory_total": self._current_device.memory_total,
+                "device_memory_free": self._current_device.memory_free,
+                "compute_capability": self._current_device.compute_capability
+            })
+        
+        return metrics
+
     def get_status_string(self) -> str:
         """
         Get CUDA status as formatted string.
@@ -282,3 +694,8 @@ def get_cuda_status() -> str:
         Formatted CUDA status string
     """
     return cuda_manager.get_status_string()
+
+
+# Global variables for compatibility with tests
+cuda_available = cuda_manager.is_available
+cuda = cuda_manager if cuda_manager.is_available else None

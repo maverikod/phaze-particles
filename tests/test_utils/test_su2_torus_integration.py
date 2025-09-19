@@ -44,12 +44,13 @@ class TestSU2TorusIntegration(unittest.TestCase):
         validation_results = self.su2_fields.validate_field(field)
         
         # Check results
-        self.assertIsInstance(field, type(self.su2_fields.builder.build_field(
-            np.zeros((self.grid_size, self.grid_size, self.grid_size)),
-            np.zeros((self.grid_size, self.grid_size, self.grid_size)),
-            np.ones((self.grid_size, self.grid_size, self.grid_size)),
+        test_field = self.su2_fields.builder.build_field(
+            (np.zeros((self.grid_size, self.grid_size, self.grid_size)),
+             np.zeros((self.grid_size, self.grid_size, self.grid_size)),
+             np.ones((self.grid_size, self.grid_size, self.grid_size))),
             RadialProfile("skyrmion", 1.0, backend=self.su2_fields.backend)
-        )))
+        )
+        self.assertIsInstance(field, type(test_field))
         
         # Field should be valid
         self.assertTrue(validation_results["unitary"])

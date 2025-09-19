@@ -302,9 +302,12 @@ class SU2FieldBuilder:
             n_x = field_direction.n_x
             n_y = field_direction.n_y
             n_z = field_direction.n_z
-        else:
-            # Assume field_direction is a tuple of (n_x, n_y, n_z)
+        elif isinstance(field_direction, (tuple, list)) and len(field_direction) == 3:
+            # field_direction is a tuple/list of (n_x, n_y, n_z)
             n_x, n_y, n_z = field_direction
+        else:
+            # field_direction is a single array - use it for all components
+            n_x = n_y = n_z = field_direction
 
         return self._build_field_components(n_x, n_y, n_z, profile)
 
