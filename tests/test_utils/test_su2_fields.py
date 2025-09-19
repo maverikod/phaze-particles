@@ -222,7 +222,7 @@ class TestSU2FieldBuilder(unittest.TestCase):
         
         profile = RadialProfile("skyrmion", 1.0, math.pi, self.backend)
 
-        field = self.builder.build_field(n_x, n_y, n_z, profile)
+        field = self.builder.build_field((n_x, n_y, n_z), profile=profile)
 
         self.assertIsInstance(field, SU2Field)
         self.assertEqual(field.grid_size, self.grid_size)

@@ -111,6 +111,10 @@ class RadialProfile:
             center_value: Value at center f(0)
             backend: Array backend (CUDA-aware or NumPy)
         """
+        # Ensure profile_type is a string
+        if not isinstance(profile_type, str):
+            raise ValueError(f"profile_type must be a string, got {type(profile_type)}: {profile_type}")
+        
         self.profile_type = profile_type
         self.scale = scale
         self.center_value = center_value
@@ -126,14 +130,17 @@ class RadialProfile:
         Returns:
             Profile values f(r)
         """
-        if self.profile_type == "skyrmion":
+        # Ensure profile_type is a string
+        profile_type_str = str(self.profile_type)
+        
+        if profile_type_str == "skyrmion":
             return self._skyrmion_profile(r)
-        elif self.profile_type == "exponential":
+        elif profile_type_str == "exponential":
             return self._exponential_profile(r)
-        elif self.profile_type == "polynomial":
+        elif profile_type_str == "polynomial":
             return self._polynomial_profile(r)
         else:
-            raise ValueError(f"Unknown profile type: {self.profile_type}")
+            raise ValueError(f"Unknown profile type: {profile_type_str} (type: {type(self.profile_type)})")
 
     def _skyrmion_profile(self, r: Any) -> Any:
         """
@@ -266,6 +273,7 @@ class SU2FieldBuilder:
     def build_field(
         self,
         field_direction: Any,
+        profile: Optional[RadialProfile] = None,
         profile_type: str = "tanh",
         f_0: float = np.pi,
         f_inf: float = 0.0,
@@ -275,17 +283,19 @@ class SU2FieldBuilder:
         Build SU(2) field from field direction and profile parameters.
 
         Args:
-            field_direction: Field direction configuration
-            profile_type: Profile type
-            f_0: Initial value
-            f_inf: Final value
-            r_scale: Scale parameter
+            field_direction: Field direction configuration or direction components
+            profile: Radial profile object (optional)
+            profile_type: Profile type (used if profile is None)
+            f_0: Initial value (used if profile is None)
+            f_inf: Final value (used if profile is None)
+            r_scale: Scale parameter (used if profile is None)
 
         Returns:
             SU(2) field
         """
-        # Create radial profile
-        profile = RadialProfile(profile_type, f_0, f_inf, r_scale)
+        # Create radial profile if not provided
+        if profile is None:
+            profile = RadialProfile(profile_type, f_0, f_inf, r_scale, self.backend)
 
         # Extract direction components from field_direction
         if hasattr(field_direction, "n_x"):
@@ -293,10 +303,8 @@ class SU2FieldBuilder:
             n_y = field_direction.n_y
             n_z = field_direction.n_z
         else:
-            # Mock direction components
-            n_x = np.ones((self.grid_size, self.grid_size, self.grid_size))
-            n_y = np.zeros((self.grid_size, self.grid_size, self.grid_size))
-            n_z = np.zeros((self.grid_size, self.grid_size, self.grid_size))
+            # Assume field_direction is a tuple of (n_x, n_y, n_z)
+            n_x, n_y, n_z = field_direction
 
         return self._build_field_components(n_x, n_y, n_z, profile)
 
@@ -316,7 +324,7 @@ class SU2FieldBuilder:
         # Get field direction from configuration
         n_x, n_y, n_z = torus_config.get_field_direction(self.X, self.Y, self.Z)
 
-        return self.build_field(n_x, n_y, n_z, profile)
+        return self.build_field((n_x, n_y, n_z), profile=profile)
 
 
 class SU2FieldOperations:
