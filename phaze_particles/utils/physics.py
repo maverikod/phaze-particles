@@ -596,9 +596,45 @@ class MagneticMomentCalculator:
             z = np.linspace(-box_size / 2, box_size / 2, grid_size)
             self.X, self.Y, self.Z = np.meshgrid(x, y, z, indexing="ij")
 
-    def compute_magnetic_moment(self, field: Any, profile: Any, mass: float) -> float:
+    def compute_magnetic_moment(self, field: Any, profile: Any, mass: float, field_derivatives: Dict[str, Any] = None) -> float:
         """
-        Compute magnetic moment.
+        Compute magnetic moment from SU(2) left currents.
+
+        Args:
+            field: SU(2) field
+            profile: Radial profile
+            mass: Proton mass (MeV)
+            field_derivatives: Field derivatives with left currents
+
+        Returns:
+            Magnetic moment μp (μN)
+        """
+        if field_derivatives is None:
+            # Fallback to simplified model if no field derivatives provided
+            return self._compute_magnetic_moment_simplified(field, profile, mass)
+        
+        # Use left currents for more accurate calculation
+        left_currents = field_derivatives.get("left_currents", {})
+        if not left_currents:
+            return self._compute_magnetic_moment_simplified(field, profile, mass)
+        
+        # Compute current density from left currents
+        current_density = self._compute_current_density_from_currents(left_currents)
+
+        # Compute magnetic moment
+        # μ = (1/2) ∫ r × j d³x
+        magnetic_moment = self._compute_moment_integral(current_density)
+
+        # Normalization in μN units
+        # μN = eℏ/(2mp) ≈ 3.152 × 10⁻¹⁴ MeV/T
+        mu_n = 3.152e-14  # MeV/T
+        magnetic_moment *= mu_n
+
+        return magnetic_moment
+
+    def _compute_magnetic_moment_simplified(self, field: Any, profile: Any, mass: float) -> float:
+        """
+        Compute magnetic moment using simplified model (fallback).
 
         Args:
             field: SU(2) field
@@ -608,9 +644,6 @@ class MagneticMomentCalculator:
         Returns:
             Magnetic moment μp (μN)
         """
-        # For simplification, use approximation
-        # μp = (e/2Mp) * <p,↑|∫ r×j(x) d³x |p,↑>
-
         # Compute current density (simplified model)
         current_density = self._compute_current_density(field, profile)
 
@@ -624,6 +657,55 @@ class MagneticMomentCalculator:
         magnetic_moment *= mu_n
 
         return magnetic_moment
+
+    def _compute_current_density_from_currents(self, left_currents: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Compute current density from left currents L_i.
+
+        Args:
+            left_currents: Left currents dictionary
+
+        Returns:
+            Current density components
+        """
+        xp = self.backend.get_array_module() if self.backend else np
+        
+        # Extract left currents
+        l_x = left_currents['x']
+        l_y = left_currents['y']
+        l_z = left_currents['z']
+        
+        # Current density from left currents
+        # j_i = (1/2i) Tr(σ_i L_j) for spatial components
+        # This is a simplified model - in full theory would use Noether currents
+        
+        # j_x component
+        j_x = (1j / 2) * (
+            l_x['l_01'] + l_x['l_10'] +  # σ_x component
+            l_y['l_01'] + l_y['l_10'] +  # σ_y component  
+            l_z['l_01'] + l_z['l_10']    # σ_z component
+        )
+        
+        # j_y component
+        j_y = (1 / 2) * (
+            l_x['l_01'] - l_x['l_10'] +  # σ_x component
+            l_y['l_01'] - l_y['l_10'] +  # σ_y component
+            l_z['l_01'] - l_z['l_10']    # σ_z component
+        )
+        
+        # j_z component
+        j_z = (1j / 2) * (
+            l_x['l_00'] - l_x['l_11'] +  # σ_x component
+            l_y['l_00'] - l_y['l_11'] +  # σ_y component
+            l_z['l_00'] - l_z['l_11']    # σ_z component
+        )
+        
+        # Convert to real arrays and ensure proper backend
+        j_x_real = xp.real(j_x).astype(xp.float64)
+        j_y_real = xp.real(j_y).astype(xp.float64)
+        j_z_real = xp.real(j_z).astype(xp.float64)
+        
+        return {"x": j_x_real, "y": j_y_real, "z": j_z_real}
 
     def _compute_current_density(
         self, field: Any, profile: Any
@@ -824,7 +906,7 @@ class PhysicalQuantitiesCalculator:
 
         # Magnetic moment
         magnetic_moment = self.magnetic_calculator.compute_magnetic_moment(
-            field, profile, mass
+            field, profile, mass, field_derivatives
         )
 
         # Energy balance (mock for now)

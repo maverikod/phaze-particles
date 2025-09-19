@@ -184,6 +184,41 @@ class ProtonStaticCommand(BaseCommand):
             "--generate-plots", action="store_true", help="Generate visualization plots"
         )
 
+        # CUDA options (CLI > config > env)
+        parser.add_argument(
+            "--cuda-mem-target",
+            type=float,
+            default=None,
+            help=(
+                "Target fraction of total VRAM to reserve in memory pool (e.g., 0.8). "
+                "Env: PHAZE_CUDA_MEM_TARGET"
+            ),
+        )
+        parser.add_argument(
+            "--cuda-free-cap-frac",
+            type=float,
+            default=None,
+            help=(
+                "Fraction of currently free VRAM allowed for reservation (e.g., 0.75). "
+                "Env: PHAZE_CUDA_FREE_CAP_FRAC"
+            ),
+        )
+        parser.add_argument(
+            "--cuda-safety-mb",
+            type=int,
+            default=None,
+            help=(
+                "Safety margin in MB to avoid OOM during reservation (e.g., 128). "
+                "Env: PHAZE_CUDA_SAFETY_MB"
+            ),
+        )
+        parser.add_argument(
+            "--cuda-device-id",
+            type=int,
+            default=None,
+            help="CUDA device id to use (default: 0). Env: PHAZE_CUDA_DEVICE_ID",
+        )
+
     def get_subcommands(self) -> List[str]:
         """
         Get list of available subcommands.
@@ -310,6 +345,69 @@ class ProtonStaticCommand(BaseCommand):
                 # Display model CUDA status
                 print(f"Model CUDA Status: {model.get_cuda_status()}")
 
+                # Apply CUDA configuration (priority: CLI > config > env > defaults)
+                try:
+                    from ...utils.cuda import get_cuda_manager
+
+                    cm = get_cuda_manager()
+                    # Device selection
+                    cuda_device_id = None
+                    # from CLI
+                    if args.cuda_device_id is not None:
+                        cuda_device_id = args.cuda_device_id
+                    # from config
+                    elif getattr(model_config, "cuda_device_id", None) is not None:
+                        cuda_device_id = getattr(model_config, "cuda_device_id")
+                    # from env
+                    elif os.environ.get("PHAZE_CUDA_DEVICE_ID") is not None:
+                        try:
+                            cuda_device_id = int(os.environ.get("PHAZE_CUDA_DEVICE_ID"))
+                        except Exception:
+                            cuda_device_id = None
+                    if cuda_device_id is not None:
+                        cm.set_device(cuda_device_id)
+
+                    # Memory pool tuning
+                    def _pick_float(cli_val, cfg_val, env_key):
+                        if cli_val is not None:
+                            return float(cli_val)
+                        if cfg_val is not None:
+                            return float(cfg_val)
+                        if os.environ.get(env_key) is not None:
+                            try:
+                                return float(os.environ.get(env_key))
+                            except Exception:
+                                return None
+                        return None
+
+                    def _pick_int(cli_val, cfg_val, env_key):
+                        if cli_val is not None:
+                            return int(cli_val)
+                        if cfg_val is not None:
+                            return int(cfg_val)
+                        if os.environ.get(env_key) is not None:
+                            try:
+                                return int(os.environ.get(env_key))
+                            except Exception:
+                                return None
+                        return None
+
+                    cfg_cuda = getattr(model_config, "cuda", {}) or {}
+                    tf = _pick_float(args.cuda_mem_target, cfg_cuda.get("mem_target"), "PHAZE_CUDA_MEM_TARGET")
+                    fcf = _pick_float(
+                        args.cuda_free_cap_frac,
+                        cfg_cuda.get("free_cap_frac"),
+                        "PHAZE_CUDA_FREE_CAP_FRAC",
+                    )
+                    sm = _pick_int(args.cuda_safety_mb, cfg_cuda.get("safety_mb"), "PHAZE_CUDA_SAFETY_MB")
+
+                    if tf is not None or fcf is not None or sm is not None:
+                        cm.reconfigure_memory_pools(
+                            target_fraction=tf, free_cap_frac=fcf, safety_mb=sm
+                        )
+                except Exception:
+                    pass
+
                 # Run model with progress tracking
                 print("Starting proton model calculation...")
                 results = model.run()
@@ -344,6 +442,13 @@ class ProtonStaticCommand(BaseCommand):
             print(f"  Baryon number: {results.baryon_number:.3f}")
             print(f"  Energy balance: {results.energy_balance:.3f}")
             print(f"  Total energy: {results.total_energy:.3f} MeV")
+
+            # Print detailed energy report
+            if hasattr(model, 'get_energy_report'):
+                print("\n" + "="*60)
+                print("DETAILED ENERGY ANALYSIS")
+                print("="*60)
+                print(model.get_energy_report())
 
             # Print validation results
             if results.validation_status:

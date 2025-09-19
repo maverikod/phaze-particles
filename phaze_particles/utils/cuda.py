@@ -7,11 +7,12 @@ Email: vasilyvz@gmail.com
 """
 
 import logging
+import os
 import time
 import uuid
 from contextlib import contextmanager
-from typing import Any, Dict, List, Optional, Tuple, Union
-from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Tuple
+from dataclasses import dataclass
 import numpy as np
 
 
@@ -434,6 +435,12 @@ class CUDAManager:
 
         # Try to detect CUDA
         self._detect_cuda()
+        # Configure memory pools to improve GPU memory utilization
+        if self._cuda_available:
+            try:
+                self._setup_memory_pools(target_fraction=0.80, safety_mb=128)
+            except Exception as e:
+                self._logger.warning(f"Failed to setup CUDA memory pools: {e}")
 
     def _detect_cuda(self) -> None:
         """Detect CUDA availability and devices."""
@@ -498,6 +505,185 @@ class CUDAManager:
                 multiprocessors=props["multiProcessorCount"],
                 max_threads_per_block=props["maxThreadsPerBlock"],
             )
+
+    def _setup_memory_pools(
+        self,
+        target_fraction: float = 0.8,
+        safety_mb: int = 128,
+        free_cap_frac: Optional[float] = None,
+    ) -> None:
+        """
+        Setup CuPy memory pools and pre-reserve GPU memory to target utilization.
+
+        Args:
+            target_fraction: Target fraction of total VRAM to reserve in pool
+            safety_mb: Safety margin to avoid OOM (in MB)
+        """
+        import cupy as cp
+
+        # Env overrides
+        try:
+            env_target = os.environ.get("PHAZE_CUDA_MEM_TARGET")
+            if env_target is not None:
+                target_fraction = max(0.0, min(0.98, float(env_target)))
+        except Exception:
+            pass
+
+        try:
+            env_safety = os.environ.get("PHAZE_CUDA_SAFETY_MB")
+            if env_safety is not None:
+                safety_mb = max(16, int(env_safety))
+        except Exception:
+            pass
+
+        # Create and set default device memory pool
+        self._memory_pool = cp.cuda.MemoryPool()
+        cp.cuda.set_allocator(self._memory_pool.malloc)
+
+        # Create and set pinned memory pool for faster H2D/D2H transfers
+        self._pinned_memory_pool = cp.cuda.PinnedMemoryPool()
+        cp.cuda.set_pinned_memory_allocator(self._pinned_memory_pool.malloc)
+
+        # Determine target bytes to pre-reserve
+        free_bytes, total_bytes = cp.cuda.runtime.memGetInfo()
+        safety_bytes = safety_mb * 1024 * 1024
+        target_bytes = int(total_bytes * max(0.0, min(1.0, target_fraction)))
+        # Do not exceed a portion of current free memory to avoid OOM during computation
+        # Use more conservative defaults to prevent cudaErrorIllegalAddress
+        free_cap_frac_val = 0.6  # Reduced from 0.75 to be more conservative
+        if free_cap_frac is not None:
+            free_cap_frac_val = max(0.2, min(0.85, float(free_cap_frac)))  # Reduced max from 0.98
+        else:
+            try:
+                env_cap = os.environ.get("PHAZE_CUDA_FREE_CAP_FRAC")
+                if env_cap is not None:
+                    free_cap_frac_val = max(0.2, min(0.85, float(env_cap)))  # Reduced max from 0.98
+            except Exception:
+                pass
+        free_cap_bytes = max(0, int(free_bytes * free_cap_frac_val) - safety_bytes)
+        target_bytes = min(target_bytes, free_cap_bytes)
+
+        if target_bytes <= 0:
+            self._logger.info("Skipping memory pre-reservation: not enough free VRAM")
+            return
+
+        # Pre-reserve by allocating a large buffer and releasing it to the pool
+        # Use a decreasing strategy to avoid OOM and illegal address errors
+        attempt_bytes = target_bytes
+        succeeded = False
+        max_attempts = 5
+        attempt = 0
+        
+        while attempt_bytes > safety_bytes and attempt < max_attempts:
+            try:
+                # Force synchronization before allocation to avoid illegal address
+                cp.cuda.Stream.null.synchronize()
+                _ = cp.empty((attempt_bytes,), dtype=cp.uint8)
+                # Immediately release to pool and synchronize
+                del _
+                cp.cuda.Stream.null.synchronize()
+                succeeded = True
+                break
+            except Exception as e:
+                self._logger.debug(f"Memory pre-reservation attempt {attempt+1} failed: {e}")
+                # Reduce attempt size by 20% and retry
+                attempt_bytes = int(attempt_bytes * 0.8)
+                attempt += 1
+
+        if succeeded:
+            msg = (
+                "CUDA memory pool reserved: "
+                + "target="
+                + f"{target_bytes/1024/1024:.0f}MB, "
+                + "reserved="
+                + f"{self._memory_pool.total_bytes()/1024/1024:.0f}MB, "
+                + "used="
+                + f"{self._memory_pool.used_bytes()/1024/1024:.0f}MB"
+            )
+            self._logger.info(msg)
+        else:
+            self._logger.warning("Could not reserve target VRAM for memory pool")
+
+    def reconfigure_memory_pools(
+        self,
+        target_fraction: Optional[float] = None,
+        free_cap_frac: Optional[float] = None,
+        safety_mb: Optional[int] = None,
+    ) -> None:
+        """
+        Reconfigure CuPy memory pools with provided parameters.
+
+        Args:
+            target_fraction: Desired fraction of total VRAM to reserve
+            free_cap_frac: Fraction of currently free VRAM allowed to use
+            safety_mb: Safety margin in MB
+        """
+        if not self._cuda_available:
+            return
+
+        # Use current defaults if not provided
+        tf = 0.8 if target_fraction is None else float(target_fraction)
+        sm = 128 if safety_mb is None else int(safety_mb)
+        try:
+            # Clear existing pools first to avoid conflicts
+            if hasattr(self, '_memory_pool') and self._memory_pool is not None:
+                try:
+                    self._memory_pool.free_all_blocks()
+                except Exception:
+                    pass
+            if hasattr(self, '_pinned_memory_pool') and self._pinned_memory_pool is not None:
+                try:
+                    self._pinned_memory_pool.free_all_blocks()
+                except Exception:
+                    pass
+            
+            self._setup_memory_pools(
+                target_fraction=tf, safety_mb=sm, free_cap_frac=free_cap_frac
+            )
+        except Exception as e:
+            self._logger.warning(f"Failed to reconfigure CUDA memory pools: {e}")
+            # Fallback: create minimal pools without pre-reservation
+            try:
+                import cupy as cp
+                self._memory_pool = cp.cuda.MemoryPool()
+                cp.cuda.set_allocator(self._memory_pool.malloc)
+                self._pinned_memory_pool = cp.cuda.PinnedMemoryPool()
+                cp.cuda.set_pinned_memory_allocator(self._pinned_memory_pool.malloc)
+                self._logger.info("Created minimal CUDA memory pools without pre-reservation")
+            except Exception as fallback_e:
+                self._logger.error(f"Failed to create fallback memory pools: {fallback_e}")
+
+    def get_memory_pool_stats(self) -> Dict[str, int]:
+        """
+        Get current memory pool statistics in bytes.
+
+        Returns:
+            Dict with reserved and used bytes for device and pinned pools
+        """
+        stats = {
+            "device_pool_reserved_bytes": 0,
+            "device_pool_used_bytes": 0,
+            "pinned_pool_reserved_bytes": 0,
+            "pinned_pool_used_bytes": 0,
+        }
+        try:
+            import cupy as cp  # noqa: F401
+            if hasattr(self, "_memory_pool") and self._memory_pool is not None:
+                stats["device_pool_reserved_bytes"] = self._memory_pool.total_bytes()
+                stats["device_pool_used_bytes"] = self._memory_pool.used_bytes()
+            if (
+                hasattr(self, "_pinned_memory_pool")
+                and self._pinned_memory_pool is not None
+            ):
+                stats["pinned_pool_reserved_bytes"] = (
+                    self._pinned_memory_pool.total_bytes()
+                )
+                stats["pinned_pool_used_bytes"] = (
+                    self._pinned_memory_pool.used_bytes()
+                )
+        except Exception:
+            pass
+        return stats
 
     @property
     def is_available(self) -> bool:
@@ -725,6 +911,13 @@ class CUDAManager:
                     "compute_capability": self._current_device.compute_capability,
                 }
             )
+
+        # Add memory pool stats
+        try:
+            pool_stats = self.get_memory_pool_stats()
+            metrics.update(pool_stats)
+        except Exception:
+            pass
 
         return metrics
 

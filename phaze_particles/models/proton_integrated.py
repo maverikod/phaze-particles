@@ -8,7 +8,7 @@ Email: vasilyvz@gmail.com
 
 import numpy as np
 from typing import List, Dict, Any, Optional
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, fields
 from enum import Enum
 import json
 import time
@@ -87,6 +87,10 @@ class ModelConfig:
     save_reports: bool = True
     output_dir: str = "results"
 
+    # CUDA configuration (optional)
+    cuda_device_id: Optional[int] = None
+    cuda: Optional[Dict[str, Any]] = None
+
     @classmethod
     def from_file(cls, config_path: str) -> "ModelConfig":
         """
@@ -101,7 +105,20 @@ class ModelConfig:
         with open(config_path, "r") as f:
             config_data = json.load(f)
 
-        return cls(**config_data)
+        # Filter only known fields to avoid errors on extra keys
+        known_field_names = {f.name for f in fields(cls)}
+        filtered: Dict[str, Any] = {}
+        for key, value in config_data.items():
+            if key in known_field_names:
+                filtered[key] = value
+            # Map common aliases
+            elif key == "config_type":
+                filtered["torus_config"] = value
+            elif key == "convergence_tolerance":
+                filtered["convergence_tol"] = value
+            elif key == "output":
+                filtered["output_dir"] = value
+        return cls(**filtered)
 
     def save_to_file(self, config_path: str) -> None:
         """
@@ -518,6 +535,47 @@ class ProtonModel:
 
             traceback.print_exc()
             return False
+
+    def get_energy_report(self) -> str:
+        """
+        Get detailed energy analysis report.
+
+        Returns:
+            Energy analysis report string
+        """
+        if not hasattr(self, 'energy_density') or self.energy_density is None:
+            return "Energy density not calculated yet."
+        
+        from phaze_particles.utils.energy_densities import EnergyAnalyzer
+        analyzer = EnergyAnalyzer()
+        analysis = analyzer.analyze_energy(self.energy_density)
+        
+        # Get energy report from EnergyDensities class
+        from phaze_particles.utils.energy_densities import EnergyDensities
+        energy_densities = EnergyDensities()
+        energy_report = energy_densities.get_energy_report(self.energy_density)
+        
+        # Add additional analysis
+        additional_info = f"""
+ADDITIONAL ANALYSIS
+===================
+
+Virial Residual: {analysis.get('virial_residual', 0.0):.6f}
+Positivity Check: {'✓ PASS' if analysis.get('positivity', {}).get('total_energy_positive', True) else '✗ FAIL'}
+
+Energy Components:
+  E₂: {analysis['components']['E2']:.6f}
+  E₄: {analysis['components']['E4']:.6f}
+  E₆: {analysis['components']['E6']:.6f}
+  Total: {analysis['components']['E_total']:.6f}
+
+Quality Assessment:
+  Overall: {analysis['quality']['overall_quality'].upper()}
+  Balance: {analysis['quality']['balance_quality'].upper()}
+  Virial: {analysis['quality'].get('virial_quality', 'unknown').upper()}
+"""
+        
+        return energy_report + additional_info
 
     def validate(self) -> bool:
         """

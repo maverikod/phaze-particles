@@ -510,14 +510,23 @@ class ValidationReportGenerator:
         """
         # Convert numpy arrays to lists for JSON serialization
         def convert_for_json(value):
-            if hasattr(value, 'tolist'):  # numpy array
-                return value.tolist()
-            elif hasattr(value, 'get'):  # CuPy array
-                return value.get().tolist()
-            elif isinstance(value, complex):  # complex number
-                return {"real": value.real, "imag": value.imag}
-            else:
-                return value
+            try:
+                if hasattr(value, 'tolist'):  # numpy array
+                    return value.tolist()
+                elif hasattr(value, 'get'):  # CuPy array
+                    return value.get().tolist()
+                elif isinstance(value, (complex, np.complex128, np.complex64)):  # complex number
+                    return {"real": float(value.real), "imag": float(value.imag)}
+                elif hasattr(value, 'dtype') and 'complex' in str(value.dtype):  # numpy complex array
+                    return value.tolist()
+                elif hasattr(value, 'dtype') and hasattr(value, 'get') and 'complex' in str(value.dtype):  # CuPy complex array
+                    return value.get().tolist()
+                else:
+                    return value
+            except Exception as e:
+                # Fallback: try to convert to string representation
+                print(f"Warning: Failed to convert value {type(value)} to JSON: {e}")
+                return str(value)
 
         report_data = {
             "timestamp": self.timestamp.isoformat(),
@@ -532,20 +541,68 @@ class ValidationReportGenerator:
         }
 
         for result in validation_results:
-            
-            report_data["validation_results"].append(
-                {
-                    "parameter_name": result.parameter_name,
-                    "calculated_value": convert_for_json(result.calculated_value),
-                    "experimental_value": convert_for_json(result.experimental_value),
-                    "experimental_error": convert_for_json(result.experimental_error),
-                    "deviation": convert_for_json(result.deviation),
-                    "deviation_percent": convert_for_json(result.deviation_percent),
-                    "within_tolerance": bool(result.within_tolerance),
-                    "status": result.status.value,
-                }
-            )
+            try:
+                report_data["validation_results"].append(
+                    {
+                        "parameter_name": result.parameter_name,
+                        "calculated_value": convert_for_json(result.calculated_value),
+                        "experimental_value": convert_for_json(result.experimental_value),
+                        "experimental_error": convert_for_json(result.experimental_error),
+                        "deviation": convert_for_json(result.deviation),
+                        "deviation_percent": convert_for_json(result.deviation_percent),
+                        "within_tolerance": bool(result.within_tolerance),
+                        "status": result.status.value,
+                    }
+                )
+            except Exception as e:
+                print(f"Error processing validation result for {result.parameter_name}: {e}")
+                print(f"  calculated_value type: {type(result.calculated_value)}")
+                print(f"  experimental_value type: {type(result.experimental_value)}")
+                print(f"  deviation type: {type(result.deviation)}")
+                # Add a simplified version
+                report_data["validation_results"].append(
+                    {
+                        "parameter_name": result.parameter_name,
+                        "calculated_value": str(result.calculated_value),
+                        "experimental_value": str(result.experimental_value),
+                        "experimental_error": str(result.experimental_error),
+                        "deviation": str(result.deviation),
+                        "deviation_percent": str(result.deviation_percent),
+                        "within_tolerance": bool(result.within_tolerance),
+                        "status": result.status.value,
+                    }
+                )
 
+        # Debug: check for complex numbers in report_data
+        def check_for_complex(obj, path=""):
+            if isinstance(obj, (complex, np.complex128, np.complex64)):
+                print(f"Found complex number at {path}: {obj}")
+                return True
+            elif isinstance(obj, dict):
+                for k, v in obj.items():
+                    if check_for_complex(v, f"{path}.{k}"):
+                        return True
+            elif isinstance(obj, (list, tuple)):
+                for i, v in enumerate(obj):
+                    if check_for_complex(v, f"{path}[{i}]"):
+                        return True
+            return False
+        
+        if check_for_complex(report_data, "report_data"):
+            print("Complex numbers found in report_data, converting...")
+            # Recursively convert all complex numbers
+            def convert_all_complex(obj):
+                if isinstance(obj, (complex, np.complex128, np.complex64)):
+                    return {"real": float(obj.real), "imag": float(obj.imag)}
+                elif isinstance(obj, dict):
+                    return {k: convert_all_complex(v) for k, v in obj.items()}
+                elif isinstance(obj, (list, tuple)):
+                    return [convert_all_complex(v) for v in obj]
+                else:
+                    return obj
+            
+            report_data = convert_all_complex(report_data)
+        
         return json.dumps(report_data, indent=2, ensure_ascii=False)
 
     def generate_plots(
@@ -566,7 +623,13 @@ class ValidationReportGenerator:
         fig, ax = plt.subplots(figsize=(12, 8))
 
         param_names = [r.parameter_name for r in validation_results]
-        deviations = [r.deviation_percent for r in validation_results]
+        # Convert CuPy arrays to NumPy for matplotlib
+        deviations = []
+        for r in validation_results:
+            if hasattr(r.deviation_percent, 'get'):
+                deviations.append(float(r.deviation_percent.get()))
+            else:
+                deviations.append(float(r.deviation_percent))
         colors = ["green" if r.within_tolerance else "red" for r in validation_results]
 
         bars = ax.bar(param_names, deviations, color=colors, alpha=0.7)
@@ -599,9 +662,29 @@ class ValidationReportGenerator:
         x = np.arange(len(param_names))
         width = 0.35
 
-        calculated_values = [r.calculated_value for r in validation_results]
-        experimental_values = [r.experimental_value for r in validation_results]
-        experimental_errors = [r.experimental_error for r in validation_results]
+        # Convert CuPy arrays to NumPy for matplotlib
+        calculated_values = []
+        experimental_values = []
+        experimental_errors = []
+        
+        for r in validation_results:
+            # Handle calculated_value
+            if hasattr(r.calculated_value, 'get'):
+                calculated_values.append(float(r.calculated_value.get()))
+            else:
+                calculated_values.append(float(r.calculated_value))
+            
+            # Handle experimental_value
+            if hasattr(r.experimental_value, 'get'):
+                experimental_values.append(float(r.experimental_value.get()))
+            else:
+                experimental_values.append(float(r.experimental_value))
+            
+            # Handle experimental_error
+            if hasattr(r.experimental_error, 'get'):
+                experimental_errors.append(float(r.experimental_error.get()))
+            else:
+                experimental_errors.append(float(r.experimental_error))
 
         ax.bar(
             x - width / 2,

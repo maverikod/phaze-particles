@@ -1,0 +1,18 @@
+{
+  "grid_size": 32,
+  "box_size": 2.0,
+  "config_type": "120deg",
+  "output": "test_output/proton_quick",
+  "verbose": true,
+  "save_data": true,
+  "generate_plots": false,
+  "max_iterations": 5,
+  "convergence_tolerance": 1e-6,
+  "cuda_device_id": 0,
+  "cuda": {
+    "mem_target": 0.5,
+    "free_cap_frac": 0.6,
+    "safety_mb": 32
+  }
+}
+

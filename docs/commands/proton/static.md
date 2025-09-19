@@ -32,6 +32,34 @@ None - all parameters have default values.
 - `--save-data`: Save numerical data to files
 - `--generate-plots`: Generate visualization plots
 
+### CUDA Configuration (Unified: CLI, Config, or Environment)
+
+CUDA memory pool and device selection can be configured via:
+- CLI flags
+- JSON config file (see `config/proton_static.json`)
+- Environment variables
+
+Priority: CLI > Config > Env > Defaults
+
+Supported options:
+- `--cuda-device-id` (Env: `PHAZE_CUDA_DEVICE_ID`) — CUDA device id (default: 0)
+- `--cuda-mem-target` (Env: `PHAZE_CUDA_MEM_TARGET`) — fraction of total VRAM to reserve in pool (e.g., 0.8)
+- `--cuda-free-cap-frac` (Env: `PHAZE_CUDA_FREE_CAP_FRAC`) — fraction of currently free VRAM allowed to reserve (e.g., 0.75)
+- `--cuda-safety-mb` (Env: `PHAZE_CUDA_SAFETY_MB`) — safety margin in MB (e.g., 128)
+
+JSON config structure:
+
+```json
+{
+  "cuda_device_id": 0,
+  "cuda": {
+    "mem_target": 0.8,
+    "free_cap_frac": 0.9,
+    "safety_mb": 128
+  }
+}
+```
+
 ## Examples
 
 ### Basic Usage
@@ -58,6 +86,10 @@ phaze-particles proton static --output results/proton_analysis --verbose
 
 # Generate plots and save data
 phaze-particles proton static --generate-plots --save-data
+
+# Tune CUDA from CLI (example)
+PHAZE_CUDA_DEVICE_ID=0 phaze-particles proton static \
+  --cuda-mem-target 0.9 --cuda-free-cap-frac 0.95 --cuda-safety-mb 64
 ```
 
 ## Output

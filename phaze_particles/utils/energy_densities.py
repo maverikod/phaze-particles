@@ -68,17 +68,23 @@ class EnergyDensity:
         total = components["E_total"]
 
         if total == 0:
-            return {"E2_ratio": 0.0, "E4_ratio": 0.0, "E6_ratio": 0.0}
+            return {
+                "E2_ratio": 0.0, 
+                "E4_ratio": 0.0, 
+                "E6_ratio": 0.0,
+                "virial_residual": 0.0
+            }
 
         return {
             "E2_ratio": components["E2"] / total,
             "E4_ratio": components["E4"] / total,
             "E6_ratio": components["E6"] / total,
+            "virial_residual": self.get_virial_residual(),
         }
 
     def check_virial_condition(self, tolerance: float = 0.05) -> bool:
         """
-        Check virial condition E₂ = E₄.
+        Check virial condition: -E₂ + E₄ + 3E₆ = 0.
 
         Args:
             tolerance: Allowed deviation
@@ -89,12 +95,70 @@ class EnergyDensity:
         components = self.get_energy_components()
         E2 = components["E2"]
         E4 = components["E4"]
+        E6 = components["E6"]
 
-        if E2 == 0 and E4 == 0:
+        # Virial condition: -E₂ + E₄ + 3E₆ = 0
+        virial_residual = -E2 + E4 + 3*E6
+        total_energy = E2 + E4 + E6
+
+        if total_energy == 0:
             return True
 
-        ratio = abs(E2 - E4) / max(E2, E4)
-        return ratio <= tolerance
+        # Normalize by total energy
+        normalized_residual = abs(virial_residual) / total_energy
+        return normalized_residual <= tolerance
+
+    def get_virial_residual(self) -> float:
+        """
+        Get virial residual: (-E₂ + E₄ + 3E₆)/E_total.
+
+        Returns:
+            Virial residual
+        """
+        components = self.get_energy_components()
+        E2 = components["E2"]
+        E4 = components["E4"]
+        E6 = components["E6"]
+        total_energy = E2 + E4 + E6
+
+        if total_energy == 0:
+            return 0.0
+
+        return (-E2 + E4 + 3*E6) / total_energy
+
+    def check_positivity(self) -> Dict[str, Any]:
+        """
+        Check energy positivity and provide statistics.
+
+        Returns:
+            Dictionary with positivity analysis
+        """
+        # Check total energy
+        total_energy = self.get_total_energy()
+        is_positive = total_energy >= 0
+        
+        # Check density components
+        c2_negative = np.any(self.c2_term < 0)
+        c4_negative = np.any(self.c4_term < 0)
+        c6_negative = np.any(self.c6_term < 0)
+        total_negative = np.any(self.total_density < 0)
+        
+        # Statistics
+        min_density = float(np.min(self.total_density))
+        max_density = float(np.max(self.total_density))
+        mean_density = float(np.mean(self.total_density))
+        
+        return {
+            "total_energy_positive": is_positive,
+            "total_energy": total_energy,
+            "c2_has_negative": c2_negative,
+            "c4_has_negative": c4_negative,
+            "c6_has_negative": c6_negative,
+            "total_has_negative": total_negative,
+            "min_density": min_density,
+            "max_density": max_density,
+            "mean_density": mean_density,
+        }
 
 
 class BaryonDensity:
@@ -184,7 +248,8 @@ class BaryonDensity:
         )
 
         xp = self.backend.get_array_module() if self.backend else np
-        return trace.astype(xp.float64)
+        # Extract real part before converting to float64
+        return xp.real(trace).astype(xp.float64)
 
 
 class EnergyDensityCalculator:
@@ -487,30 +552,99 @@ class EnergyDensityCalculator:
         
         for direction in ['x', 'y', 'z']:
             l = left_currents[direction]
-            # Tr(L_i L_i) = l_00^2 + l_01*l_10 + l_10*l_01 + l_11^2
-            trace_i = (l['l_00'] * l['l_00'] + 
-                      l['l_01'] * l['l_10'] + 
-                      l['l_10'] * l['l_01'] + 
-                      l['l_11'] * l['l_11'])
-            # Extract real part and convert to float64
-            trace_i_real = xp.real(trace_i).astype(xp.float64)
+            # Tr(L_i L_i) = |l_00|^2 + |l_01|^2 + |l_10|^2 + |l_11|^2 (positive definite)
+            trace_i = (xp.abs(l['l_00'])**2 + 
+                      xp.abs(l['l_01'])**2 + 
+                      xp.abs(l['l_10'])**2 + 
+                      xp.abs(l['l_11'])**2)
+            # Convert to float64 (already real and positive)
+            trace_i_real = trace_i.astype(xp.float64)
             l_squared += trace_i_real
         
-        # Compute Tr([L_i, L_j]^2) - simplified version
-        comm_squared = xp.zeros((self.grid_size, self.grid_size, self.grid_size), dtype=xp.float64)
-        
-        # For now, use a simplified computation
-        # TODO: Implement full commutator calculation
-        comm_squared = l_squared * 0.1  # Placeholder
+        # Compute Tr([L_i, L_j]^2) - TRUE COMMUTATOR IMPLEMENTATION
+        comm_squared = self._compute_commutator_traces(left_currents)
         
         return {
             "l_squared": l_squared,
             "comm_squared": comm_squared,
         }
 
+    def _compute_commutator_traces(self, left_currents: Dict[str, Dict[str, Any]]) -> Any:
+        """
+        Compute Tr([L_i, L_j]^2) using true commutators.
+
+        Args:
+            left_currents: Left currents dictionary
+
+        Returns:
+            Commutator trace array
+        """
+        xp = self.backend.get_array_module() if self.backend else np
+        
+        l_x = left_currents['x']
+        l_y = left_currents['y']
+        l_z = left_currents['z']
+        
+        # Compute commutators [L_i, L_j]
+        comm_xy = self._compute_commutator(l_x, l_y)
+        comm_yz = self._compute_commutator(l_y, l_z)
+        comm_zx = self._compute_commutator(l_z, l_x)
+        
+        # Compute Tr([L_i, L_j]^2) for each commutator (positive definite)
+        trace_xy = (xp.abs(comm_xy['comm_00'])**2 + 
+                   xp.abs(comm_xy['comm_01'])**2 + 
+                   xp.abs(comm_xy['comm_10'])**2 + 
+                   xp.abs(comm_xy['comm_11'])**2)
+        
+        trace_yz = (xp.abs(comm_yz['comm_00'])**2 + 
+                   xp.abs(comm_yz['comm_01'])**2 + 
+                   xp.abs(comm_yz['comm_10'])**2 + 
+                   xp.abs(comm_yz['comm_11'])**2)
+        
+        trace_zx = (xp.abs(comm_zx['comm_00'])**2 + 
+                   xp.abs(comm_zx['comm_01'])**2 + 
+                   xp.abs(comm_zx['comm_10'])**2 + 
+                   xp.abs(comm_zx['comm_11'])**2)
+        
+        # Sum all commutator traces
+        comm_squared = trace_xy + trace_yz + trace_zx
+        
+        # Extract real part and convert to float64
+        return xp.real(comm_squared).astype(xp.float64)
+
+    def _compute_commutator(self, l1: Dict[str, Any], l2: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Compute commutator [L1, L2] = L1*L2 - L2*L1.
+
+        Args:
+            l1, l2: Left currents
+
+        Returns:
+            Commutator components
+        """
+        # L1*L2
+        l1l2_00 = l1["l_00"] * l2["l_00"] + l1["l_01"] * l2["l_10"]
+        l1l2_01 = l1["l_00"] * l2["l_01"] + l1["l_01"] * l2["l_11"]
+        l1l2_10 = l1["l_10"] * l2["l_00"] + l1["l_11"] * l2["l_10"]
+        l1l2_11 = l1["l_10"] * l2["l_01"] + l1["l_11"] * l2["l_11"]
+
+        # L2*L1
+        l2l1_00 = l2["l_00"] * l1["l_00"] + l2["l_01"] * l1["l_10"]
+        l2l1_01 = l2["l_00"] * l1["l_01"] + l2["l_01"] * l1["l_11"]
+        l2l1_10 = l2["l_10"] * l1["l_00"] + l2["l_11"] * l1["l_10"]
+        l2l1_11 = l2["l_10"] * l1["l_01"] + l2["l_11"] * l1["l_11"]
+
+        # [L1, L2] = L1*L2 - L2*L1
+        return {
+            "comm_00": l1l2_00 - l2l1_00,
+            "comm_01": l1l2_01 - l2l1_01,
+            "comm_10": l1l2_10 - l2l1_10,
+            "comm_11": l1l2_11 - l2l1_11,
+        }
+
     def _compute_baryon_density(self, left_currents: Dict[str, Dict[str, Any]]) -> Any:
         """
-        Compute baryon density b_0.
+        Compute baryon density b_0 using triple-trace formula.
 
         Args:
             left_currents: Left currents dictionary
@@ -520,26 +654,70 @@ class EnergyDensityCalculator:
         """
         xp = self.backend.get_array_module() if self.backend else np
         
-        # b_0 = (1/24π²) ε^{ijk} Tr(L_i [L_j, L_k])
-        # For now, use a simplified computation
-        # TODO: Implement full baryon density calculation
+        # b_0 = -1/(24π²) ε^{ijk} Tr(L_i L_j L_k)
+        epsilon = self._get_epsilon_tensor()
         
-        # Placeholder: use sum of traces as approximation
-        l_squared = xp.zeros((self.grid_size, self.grid_size, self.grid_size), dtype=xp.float64)
-        for direction in ['x', 'y', 'z']:
-            l = left_currents[direction]
-            trace_i = (l['l_00'] * l['l_00'] + 
-                      l['l_01'] * l['l_10'] + 
-                      l['l_10'] * l['l_01'] + 
-                      l['l_11'] * l['l_11'])
-            # Extract real part and convert to float64
-            trace_i_real = xp.real(trace_i).astype(xp.float64)
-            l_squared += trace_i_real
+        l_x = left_currents['x']
+        l_y = left_currents['y']
+        l_z = left_currents['z']
         
-        # Normalize to get reasonable baryon density
-        baryon_density = l_squared / (24 * np.pi**2)
+        # Calculate Tr(L_i L_j L_k) for all combinations
+        trace_xyz = self._compute_triple_trace(l_x, l_y, l_z)
+        trace_yzx = self._compute_triple_trace(l_y, l_z, l_x)
+        trace_zxy = self._compute_triple_trace(l_z, l_x, l_y)
         
-        return baryon_density
+        # Sum with antisymmetric tensor
+        baryon_density = (
+            epsilon[0, 1, 2] * trace_xyz
+            + epsilon[1, 2, 0] * trace_yzx
+            + epsilon[2, 0, 1] * trace_zxy
+        )
+        
+        # Normalization
+        baryon_density *= -1.0 / (24 * math.pi**2)
+        
+        # Extract real part and convert to float64
+        return xp.real(baryon_density).astype(xp.float64)
+
+    def _get_epsilon_tensor(self) -> np.ndarray:
+        """Get antisymmetric tensor ε^{ijk}."""
+        epsilon = np.zeros((3, 3, 3))
+        epsilon[0, 1, 2] = epsilon[1, 2, 0] = epsilon[2, 0, 1] = 1
+        epsilon[0, 2, 1] = epsilon[2, 1, 0] = epsilon[1, 0, 2] = -1
+        return epsilon
+
+    def _compute_triple_trace(
+        self,
+        l1: Dict[str, Any],
+        l2: Dict[str, Any],
+        l3: Dict[str, Any],
+    ) -> Any:
+        """
+        Calculate Tr(L₁ L₂ L₃).
+
+        Args:
+            l1, l2, l3: Left currents
+
+        Returns:
+            Trace of product
+        """
+        # L₁ L₂
+        l1l2_00 = l1["l_00"] * l2["l_00"] + l1["l_01"] * l2["l_10"]
+        l1l2_01 = l1["l_00"] * l2["l_01"] + l1["l_01"] * l2["l_11"]
+        l1l2_10 = l1["l_10"] * l2["l_00"] + l1["l_11"] * l2["l_10"]
+        l1l2_11 = l1["l_10"] * l2["l_01"] + l1["l_11"] * l2["l_11"]
+
+        # (L₁ L₂) L₃
+        trace = (
+            l1l2_00 * l3["l_00"]
+            + l1l2_01 * l3["l_10"]
+            + l1l2_10 * l3["l_01"]
+            + l1l2_11 * l3["l_11"]
+        )
+
+        xp = self.backend.get_array_module() if self.backend else np
+        # Extract real part before converting to float64
+        return xp.real(trace).astype(xp.float64)
 
 
 class EnergyAnalyzer:
@@ -576,6 +754,12 @@ class EnergyAnalyzer:
         analysis["virial_condition"] = energy_density.check_virial_condition(
             self.tolerance
         )
+        
+        # Virial residual
+        analysis["virial_residual"] = energy_density.get_virial_residual()
+
+        # Positivity check
+        analysis["positivity"] = energy_density.check_positivity()
 
         # Density statistics
         analysis["density_stats"] = self._compute_density_statistics(energy_density)
@@ -619,6 +803,8 @@ class EnergyAnalyzer:
         """
         balance = energy_density.get_energy_balance()
         virial_ok = energy_density.check_virial_condition(self.tolerance)
+        positivity = energy_density.check_positivity()
+        virial_residual = abs(balance.get("virial_residual", 0.0))
 
         # Assess E₂/E₄ balance
         e2_ratio = balance["E2_ratio"]
@@ -633,12 +819,24 @@ class EnergyAnalyzer:
         else:
             balance_quality = "poor"
 
-        # Overall assessment
-        if virial_ok and balance_quality in ["excellent", "good"]:
+        # Assess virial quality
+        if virial_residual < 0.01:
+            virial_quality = "excellent"
+        elif virial_residual < 0.05:
+            virial_quality = "good"
+        elif virial_residual < 0.1:
+            virial_quality = "fair"
+        else:
+            virial_quality = "poor"
+
+        # Overall assessment considering positivity
+        if not positivity["total_energy_positive"]:
+            overall_quality = "poor"  # Negative energy is critical failure
+        elif virial_ok and balance_quality in ["excellent", "good"] and virial_quality in ["excellent", "good"]:
             overall_quality = "excellent"
-        elif virial_ok and balance_quality == "fair":
+        elif virial_ok and balance_quality in ["excellent", "good", "fair"] and virial_quality in ["excellent", "good", "fair"]:
             overall_quality = "good"
-        elif not virial_ok and balance_quality in ["excellent", "good"]:
+        elif virial_ok or balance_quality in ["excellent", "good"] or virial_quality in ["excellent", "good"]:
             overall_quality = "fair"
         else:
             overall_quality = "poor"
@@ -646,12 +844,15 @@ class EnergyAnalyzer:
         return {
             "overall_quality": overall_quality,
             "balance_quality": balance_quality,
+            "virial_quality": virial_quality,
             "virial_condition": virial_ok,
-            "recommendations": self._get_energy_recommendations(balance, virial_ok),
+            "virial_residual": virial_residual,
+            "positivity_ok": positivity["total_energy_positive"],
+            "recommendations": self._get_energy_recommendations(balance, virial_ok, positivity),
         }
 
     def _get_energy_recommendations(
-        self, balance: Dict[str, float], virial_ok: bool
+        self, balance: Dict[str, float], virial_ok: bool, positivity: Dict[str, Any]
     ) -> List[str]:
         """
         Get energy improvement recommendations.
@@ -659,19 +860,34 @@ class EnergyAnalyzer:
         Args:
             balance: Energy balance
             virial_ok: Virial condition satisfaction
+            positivity: Positivity analysis
 
         Returns:
             List of recommendations
         """
         recommendations = []
 
+        # Critical: negative energy
+        if not positivity["total_energy_positive"]:
+            recommendations.append("CRITICAL: Fix negative energy - check sign conventions in Tr(L_i L_i)")
+            if positivity["c2_has_negative"]:
+                recommendations.append("c₂ term has negative values - check trace computation")
+            if positivity["c4_has_negative"]:
+                recommendations.append("c₄ term has negative values - check commutator computation")
+            if positivity["c6_has_negative"]:
+                recommendations.append("c₆ term has negative values - check baryon density computation")
+
+        # Virial condition
         if not virial_ok:
+            virial_residual = abs(balance.get("virial_residual", 0.0))
             recommendations.append(
-                "Adjust Skyrme constants to satisfy virial condition E₂ = E₄"
+                f"Adjust Skyrme constants to satisfy virial condition: "
+                f"virial residual = {virial_residual:.3f} (target: < 0.05)"
             )
 
         e2_ratio = balance["E2_ratio"]
         e4_ratio = balance["E4_ratio"]
+        e6_ratio = balance["E6_ratio"]
 
         if e2_ratio > 0.6:
             recommendations.append("Reduce c₂ constant to decrease E₂ contribution")
@@ -683,7 +899,7 @@ class EnergyAnalyzer:
         elif e4_ratio < 0.4:
             recommendations.append("Increase c₄ constant to increase E₄ contribution")
 
-        if balance["E6_ratio"] > 0.1:
+        if e6_ratio > 0.1:
             recommendations.append("Reduce c₆ constant to decrease E₆ contribution")
 
         return recommendations
@@ -862,6 +1078,9 @@ class EnergyDensities:
         quality = analysis["quality"]
         virial_status = "✓ PASS" if analysis["virial_condition"] else "✗ FAIL"
 
+        virial_residual = balance.get('virial_residual', 0.0)
+        positivity_status = "✓ PASS" if quality.get('positivity_ok', True) else "✗ FAIL"
+        
         report = f"""
 ENERGY DENSITY ANALYSIS
 =======================
@@ -877,11 +1096,16 @@ Energy Balance:
   E₄/E_total: {balance['E4_ratio']:.3f} (target: 0.500)
   E₆/E_total: {balance['E6_ratio']:.3f}
 
-Virial Condition (E₂ = E₄): {virial_status}
+Virial Analysis:
+  Virial Condition (-E₂ + E₄ + 3E₆ = 0): {virial_status}
+  Virial Residual: {virial_residual:.6f} (target: < 0.05)
+
+Positivity Check: {positivity_status}
 
 Quality Assessment:
   Overall Quality: {quality['overall_quality'].upper()}
   Balance Quality: {quality['balance_quality'].upper()}
+  Virial Quality: {quality.get('virial_quality', 'unknown').upper()}
 
 Recommendations:
 """

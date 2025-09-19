@@ -6,6 +6,12 @@
   "verbose": true,
   "save_data": true,
   "generate_plots": true,
+  "cuda_device_id": 0,
+  "cuda": {
+    "mem_target": 0.8,
+    "free_cap_frac": 0.9,
+    "safety_mb": 128
+  },
   "convergence_tolerance": 1e-8,
   "max_iterations": 2000,
   "physical_constants": {

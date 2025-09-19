@@ -1,0 +1,2 @@
+﻿timestamp,grid_size,box_size,config_type,status,execution_time,iterations,converged,proton_mass,charge_radius,magnetic_moment,electric_charge,baryon_number,energy_balance,total_energy,validation_status,validation_score
+2025-09-19T17:07:39.026846,32,2.0,120deg,validated,1.7195487022399902,5,False,-87.48841470125353,0.8809982689114264,1.691602572139689e-14,1.0,(-2.230284919246669e-05-6.321501720377293e-06j),0.5,-87.48841470125353,poor,0.35
