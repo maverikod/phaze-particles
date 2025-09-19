@@ -501,6 +501,18 @@ class CUDAManager:
         """
         return self.memory_manager.allocate_memory(size_bytes, device_id)
 
+    def deallocate_memory(self, allocation_id: str) -> bool:
+        """
+        Deallocate CUDA memory.
+        
+        Args:
+            allocation_id: Allocation ID to deallocate
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        return self.memory_manager.deallocate_memory(allocation_id)
+
     def array_to_gpu(self, array: np.ndarray) -> Any:
         """
         Transfer numpy array to GPU.

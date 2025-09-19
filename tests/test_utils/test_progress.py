@@ -16,6 +16,8 @@ from phaze_particles.utils.progress import (
     PerformanceMonitor,
     create_progress_bar,
     create_performance_monitor,
+    TimeEstimator,
+    ProgressCallback,
 )
 
 
@@ -80,7 +82,7 @@ class TestProgressBar(unittest.TestCase):
         """Test progress string representation."""
         self.progress_bar.update(50)
         progress_str = str(self.progress_bar)
-        self.assertIn("50%", progress_str)
+        self.assertIn("50.0%", progress_str)
         self.assertIn("Test Progress", progress_str)
 
     def test_progress_bar_with_callback(self):
@@ -88,16 +90,16 @@ class TestProgressBar(unittest.TestCase):
         callback_called = False
         callback_value = None
 
-        def test_callback(progress):
+        def test_callback(current, total, percentage):
             nonlocal callback_called, callback_value
             callback_called = True
-            callback_value = progress
+            callback_value = current
 
         progress_bar = ProgressBar(total=100, callback=test_callback)
         progress_bar.update(50)
 
         self.assertTrue(callback_called)
-        self.assertEqual(callback_value, 50.0)
+        self.assertEqual(callback_value, 50)
 
 
 class TestTimeEstimator(unittest.TestCase):
@@ -168,6 +170,7 @@ class TestPerformanceMonitor(unittest.TestCase):
 
     def test_monitor_initialization(self):
         """Test monitor initialization."""
+        self.monitor.start()
         self.assertIsNotNone(self.monitor.start_time)
         self.assertEqual(len(self.monitor.metrics), 0)
 
@@ -274,12 +277,13 @@ class TestPerformanceMonitor(unittest.TestCase):
 
     def test_context_manager(self):
         """Test monitor as context manager."""
-        with self.monitor.timing("context_operation"):
+        with self.monitor:
             time.sleep(0.1)
 
         # Check that timing was recorded
-        self.assertIn("context_operation", self.monitor.metrics)
-        self.assertGreater(self.monitor.metrics["context_operation"], 0.09)
+        self.assertIsNotNone(self.monitor.start_time)
+        self.assertIsNotNone(self.monitor.end_time)
+        self.assertGreater(self.monitor.metrics.get("duration", 0), 0.09)
 
 
 class TestProgressCallback(unittest.TestCase):

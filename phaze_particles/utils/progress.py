@@ -63,7 +63,7 @@ class ProgressBar:
         Args:
             increment: Number of items completed
         """
-        self.current = min(self.current + increment, self.total)
+        self.current = max(0, min(self.current + increment, self.total))
         self._display()
 
     def set_progress(self, current: int) -> None:
@@ -73,7 +73,7 @@ class ProgressBar:
         Args:
             current: Current progress value
         """
-        self.current = min(max(current, 0), self.total)  # Ensure non-negative and not exceeding total
+        self.current = max(0, min(current, self.total))  # Ensure non-negative and not exceeding total
         self._display()
 
     def increment(self, amount: int = 1) -> None:
@@ -383,6 +383,18 @@ class PerformanceMonitor:
         self.metrics[f"{name}_duration"] = duration
         return duration
 
+    def end_timing(self, name: str) -> float:
+        """
+        End timing a specific operation (alias for stop_timing).
+        
+        Args:
+            name: Name of the operation
+            
+        Returns:
+            Duration in seconds
+        """
+        return self.stop_timing(name)
+
     def record_metric(self, name: str, value: Any) -> None:
         """
         Record a performance metric.
@@ -393,12 +405,12 @@ class PerformanceMonitor:
         """
         self.metrics[name] = value
 
-    def record_memory_usage(self) -> None:
+    def record_memory_usage(self, name: str = "memory") -> None:
         """Record current memory usage."""
         try:
             process = psutil.Process()
             memory_info = process.memory_info()
-            self.metrics["memory_usage_mb"] = memory_info.rss / 1024 / 1024
+            self.metrics[f"{name}_usage_mb"] = memory_info.rss / 1024 / 1024
         except Exception:
             pass  # Ignore memory monitoring errors
 
@@ -406,6 +418,21 @@ class PerformanceMonitor:
     def timing(self) -> Dict[str, float]:
         """Get timing metrics."""
         return {k: v for k, v in self.metrics.items() if k.endswith('_duration')}
+
+    def generate_report(self) -> str:
+        """
+        Generate performance report.
+        
+        Returns:
+            Formatted performance report
+        """
+        return self.get_report()
+
+    def reset(self) -> None:
+        """Reset monitor."""
+        self.start_time = None
+        self.end_time = None
+        self.metrics.clear()
 
 
 class TimeEstimator:

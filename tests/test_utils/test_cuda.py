@@ -14,6 +14,8 @@ from phaze_particles.utils.cuda import (
     CUDAManager,
     get_cuda_manager,
     CUDADevice,
+    CUDAMemoryManager,
+    CUDAOperations,
 )
 
 
@@ -22,28 +24,49 @@ class TestCUDADevice(unittest.TestCase):
 
     def test_device_initialization(self):
         """Test device initialization."""
-        device = CUDADevice(device_id=0)
-        self.assertEqual(device.device_id, 0)
-        self.assertIsNone(device.name)
-        self.assertIsNone(device.compute_capability)
-        self.assertIsNone(device.total_memory)
+        device = CUDADevice(
+            id=0,
+            name="Test GPU",
+            memory_total=8192,
+            memory_free=4096,
+            compute_capability=(7, 5),
+            multiprocessors=64,
+            max_threads_per_block=1024
+        )
+        self.assertEqual(device.id, 0)
+        self.assertEqual(device.name, "Test GPU")
+        self.assertEqual(device.compute_capability, (7, 5))
+        self.assertEqual(device.memory_total, 8192)
 
     def test_device_properties(self):
         """Test device properties."""
-        device = CUDADevice(device_id=0)
+        device = CUDADevice(
+            id=0,
+            name="Test GPU",
+            memory_total=8192,
+            memory_free=4096,
+            compute_capability=(7, 5),
+            multiprocessors=64,
+            max_threads_per_block=1024
+        )
         
         # Test property access
-        self.assertEqual(device.device_id, 0)
-        self.assertIsNone(device.name)
-        self.assertIsNone(device.compute_capability)
-        self.assertIsNone(device.total_memory)
+        self.assertEqual(device.id, 0)
+        self.assertEqual(device.name, "Test GPU")
+        self.assertEqual(device.compute_capability, (7, 5))
+        self.assertEqual(device.memory_total, 8192)
 
     def test_device_string_representation(self):
         """Test device string representation."""
-        device = CUDADevice(device_id=0)
-        device.name = "Test GPU"
-        device.compute_capability = (7, 5)
-        device.total_memory = 8192
+        device = CUDADevice(
+            id=0,
+            name="Test GPU",
+            memory_total=8192,
+            memory_free=4096,
+            compute_capability=(7, 5),
+            multiprocessors=64,
+            max_threads_per_block=1024
+        )
         
         device_str = str(device)
         self.assertIn("Test GPU", device_str)
@@ -208,7 +231,7 @@ class TestCUDAManager(unittest.TestCase):
     @patch('phaze_particles.utils.cuda.cuda_available', return_value=False)
     def test_cuda_availability_check(self, mock_cuda_available):
         """Test CUDA availability check."""
-        self.assertFalse(self.cuda_manager.is_cuda_available())
+        self.assertFalse(self.cuda_manager.is_cuda_available)
         mock_cuda_available.assert_called_once()
 
     @patch('phaze_particles.utils.cuda.cuda_available', return_value=True)

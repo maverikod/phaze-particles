@@ -20,6 +20,13 @@ from phaze_particles.utils.io import (
     load_config,
     ensure_output_directory,
     generate_report_filename,
+    CSVWriter,
+    JSONWriter,
+    ResultsManager,
+    ConfigLoader,
+    FileManager,
+    DataExporter,
+    DataImporter,
 )
 
 
@@ -39,13 +46,13 @@ class TestCSVWriter(unittest.TestCase):
     def test_csv_writer_initialization(self):
         """Test CSV writer initialization."""
         writer = CSVWriter(self.csv_file)
-        self.assertEqual(writer.filepath, self.csv_file)
-        self.assertIsNone(writer.file_handle)
+        self.assertEqual(str(writer.file_path), str(self.csv_file))
+        self.assertIsNone(writer._file)
 
     def test_csv_writer_context_manager(self):
         """Test CSV writer as context manager."""
         with CSVWriter(self.csv_file) as writer:
-            self.assertIsNotNone(writer.file_handle)
+            self.assertIsNotNone(writer._file)
             self.assertTrue(os.path.exists(self.csv_file))
 
     def test_csv_writer_write_header(self):
