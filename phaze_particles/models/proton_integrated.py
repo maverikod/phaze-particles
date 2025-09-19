@@ -15,7 +15,10 @@ import time
 
 # Import all modules
 from phaze_particles.utils.mathematical_foundations import MathematicalFoundations
-from phaze_particles.utils.torus_geometries import TorusGeometryManager, TorusGeometries, TorusConfiguration
+from phaze_particles.utils.torus_geometries import (
+    TorusGeometries,
+    TorusConfiguration,
+)
 from phaze_particles.utils.su2_fields import SU2FieldBuilder
 from phaze_particles.utils.energy_densities import EnergyDensityCalculator
 from phaze_particles.utils.physics import PhysicalQuantitiesCalculator
@@ -24,9 +27,13 @@ from phaze_particles.utils.numerical_methods import (
     RelaxationConfig,
     ConstraintConfig,
 )
-from phaze_particles.utils.validation import ValidationSystem, ExperimentalData, CalculatedData
+from phaze_particles.utils.validation import (
+    ValidationSystem,
+    ExperimentalData,
+    CalculatedData,
+)
 from phaze_particles.utils.cuda import get_cuda_manager
-from phaze_particles.utils.progress import create_progress_bar, create_performance_monitor
+from phaze_particles.utils.progress import create_progress_bar
 
 
 class ModelStatus(Enum):

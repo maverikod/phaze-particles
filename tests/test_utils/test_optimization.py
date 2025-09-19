@@ -229,21 +229,30 @@ class TestAdaptiveParameterOptimizer:
     def test_tolerance_optimization(self):
         """Test tolerance optimization."""
         # Very small error - should increase tolerance
-        new_tolerance = self.optimizer.optimize_tolerance(1e-6, 1e-8)  # error < tolerance * 0.1
+        new_tolerance = self.optimizer.optimize_tolerance(
+            1e-6, 1e-8
+        )  # error < tolerance * 0.1
         assert new_tolerance > 1e-6
 
         # Large error - should decrease tolerance
-        new_tolerance = self.optimizer.optimize_tolerance(1e-6, 1e-4)  # error > tolerance * 10
+        new_tolerance = self.optimizer.optimize_tolerance(
+            1e-6, 1e-4
+        )  # error > tolerance * 10
         assert new_tolerance < 1e-6
 
         # Normal error - should stay same
-        new_tolerance = self.optimizer.optimize_tolerance(1e-6, 5e-6)  # tolerance * 0.1 < error < tolerance * 10
+        new_tolerance = self.optimizer.optimize_tolerance(
+            1e-6, 5e-6
+        )  # tolerance * 0.1 < error < tolerance * 10
         assert new_tolerance == 1e-6
 
     def test_constraints_optimization(self):
         """Test constraints optimization."""
         constraints = {"constraint1": 1.0, "constraint2": 2.0}
-        violations = {"constraint1": 0.2, "constraint2": 0.005}  # constraint2 violation < 0.01
+        violations = {
+            "constraint1": 0.2,
+            "constraint2": 0.005,
+        }  # constraint2 violation < 0.01
 
         new_constraints = self.optimizer.optimize_constraints(constraints, violations)
 

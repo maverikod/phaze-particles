@@ -207,23 +207,28 @@ class TestPerformanceMonitor(unittest.TestCase):
 
         # Check that timing was recorded
         self.assertIn("test_operation_duration", self.monitor.metrics)
-        self.assertGreater(self.monitor.metrics["test_operation_duration"], 0.09)  # Should be ~100ms
+        self.assertGreater(
+            self.monitor.metrics["test_operation_duration"], 0.09
+        )  # Should be ~100ms
 
     def test_nested_timing(self):
         """Test nested timing operations."""
         self.monitor.start_timing("outer_operation")
         time.sleep(0.05)
-        
+
         self.monitor.start_timing("inner_operation")
         time.sleep(0.05)
         self.monitor.end_timing("inner_operation")
-        
+
         self.monitor.end_timing("outer_operation")
 
         # Both operations should be recorded
         self.assertIn("outer_operation_duration", self.monitor.metrics)
         self.assertIn("inner_operation_duration", self.monitor.metrics)
-        self.assertGreater(self.monitor.metrics["outer_operation_duration"], self.monitor.metrics["inner_operation_duration"])
+        self.assertGreater(
+            self.monitor.metrics["outer_operation_duration"],
+            self.monitor.metrics["inner_operation_duration"],
+        )
 
     def test_memory_usage_tracking(self):
         """Test memory usage tracking."""
@@ -246,7 +251,7 @@ class TestPerformanceMonitor(unittest.TestCase):
         """Test performance report generation."""
         # Start monitoring
         self.monitor.start()
-        
+
         # Record some metrics
         self.monitor.record_metric("cpu_usage", 75.5)
         self.monitor.record_metric("memory_usage", 512.0)
@@ -352,6 +357,7 @@ class TestProgressCallback(unittest.TestCase):
 
     def test_callback_error_handling(self):
         """Test callback error handling."""
+
         def error_callback(current, total, percentage):
             raise ValueError("Test error")
 
@@ -372,7 +378,7 @@ class TestCreateProgressBar(unittest.TestCase):
     def test_create_progress_bar(self):
         """Test progress bar creation."""
         progress_bar = create_progress_bar(total=100, description="Test")
-        
+
         self.assertIsInstance(progress_bar, ProgressBar)
         self.assertEqual(progress_bar.total, 100)
         self.assertEqual(progress_bar.description, "Test")
@@ -386,11 +392,9 @@ class TestCreateProgressBar(unittest.TestCase):
             callback_called = True
 
         progress_bar = create_progress_bar(
-            total=100, 
-            description="Test", 
-            callback=test_callback
+            total=100, description="Test", callback=test_callback
         )
-        
+
         self.assertIsInstance(progress_bar, ProgressBar)
         progress_bar.update(50)
         self.assertTrue(callback_called)
@@ -402,14 +406,14 @@ class TestCreatePerformanceMonitor(unittest.TestCase):
     def test_create_performance_monitor(self):
         """Test performance monitor creation."""
         monitor = create_performance_monitor()
-        
+
         self.assertIsInstance(monitor, PerformanceMonitor)
         self.assertIsNotNone(monitor.start_time)
 
     def test_create_performance_monitor_with_name(self):
         """Test performance monitor creation with name."""
         monitor = create_performance_monitor(name="Test Monitor")
-        
+
         self.assertIsInstance(monitor, PerformanceMonitor)
         self.assertEqual(monitor.name, "Test Monitor")
 
@@ -421,14 +425,14 @@ class TestProgressIntegration(unittest.TestCase):
         """Test progress bar with time estimator."""
         progress_bar = ProgressBar(total=100, description="Test")
         time_estimator = TimeEstimator()
-        
+
         # Start timing
         time_estimator.start()
-        
+
         # Update progress
         progress_bar.update(50)
         time_estimator.update_progress(0.5)
-        
+
         # Check that both work together
         self.assertEqual(progress_bar.percentage, 50.0)
         self.assertIsNotNone(time_estimator.estimated_remaining_time)
@@ -437,14 +441,14 @@ class TestProgressIntegration(unittest.TestCase):
         """Test performance monitor with progress bar."""
         monitor = PerformanceMonitor()
         progress_bar = ProgressBar(total=100, description="Test")
-        
+
         # Record progress in monitor
         monitor.record_metric("progress", progress_bar.percentage)
-        
+
         # Update progress
         progress_bar.update(75)
         monitor.record_metric("progress", progress_bar.percentage)
-        
+
         # Check that both work together
         self.assertEqual(progress_bar.percentage, 75.0)
         self.assertEqual(monitor.metrics["progress"], 75.0)
@@ -453,20 +457,20 @@ class TestProgressIntegration(unittest.TestCase):
         """Test callback with monitor."""
         monitor = PerformanceMonitor()
         callback = ProgressCallback()
-        
+
         def progress_callback(current, total, percentage):
             monitor.record_metric("current_progress", current)
-        
+
         callback.add_callback(progress_callback)
         progress_bar = ProgressBar(total=100, callback=callback.execute_callbacks)
-        
+
         # Update progress
         progress_bar.update(60)
-        
+
         # Check that callback updated monitor
         self.assertIn("current_progress", monitor.metrics)
         self.assertEqual(monitor.metrics["current_progress"], 60.0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

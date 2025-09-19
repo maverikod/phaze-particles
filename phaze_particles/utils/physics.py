@@ -233,7 +233,10 @@ class PhysicsAnalyzer:
         table = "\n" + "=" * 80 + "\n"
         table += "PHYSICAL PARAMETER ANALYSIS\n"
         table += "=" * 80 + "\n"
-        table += f"{'Parameter':<20} {'Calculated':<12} {'Experimental':<12} {'Deviation':<10} {'Status':<8} {'Quality':<10}\n"
+        table += (
+            f"{'Parameter':<20} {'Calculated':<12} {'Experimental':<12} "
+            f"{'Deviation':<10} {'Status':<8} {'Quality':<10}\n"
+        )
         table += "-" * 80 + "\n"
 
         for result in self.results:
@@ -270,7 +273,8 @@ class PhysicsAnalyzer:
         poor_params = [r for r in self.results if r.quality_rating == "poor"]
         if poor_params:
             recommendations.append(
-                f"Improve accuracy for {len(poor_params)} parameters with poor quality: "
+                f"Improve accuracy for {len(poor_params)} parameters with "
+                f"poor quality: "
                 f"{', '.join(p.parameter.description for p in poor_params)}"
             )
 
@@ -670,7 +674,6 @@ class MagneticMomentCalculator:
 
         j_x = current_density["x"]
         j_y = current_density["y"]
-        j_z = current_density["z"]
 
         # z-component of magnetic moment
         mu_z = (1 / 2) * np.sum((self.X * j_y - self.Y * j_x) * self.dx**3)
@@ -918,10 +921,18 @@ Calculated Values:
   Mass: {quantities.mass:.6f} MeV (target: 938.272 ± 0.006 MeV)
 
 Validation Status:
-  Electric Charge: {'✓ PASS' if validation['validation']['electric_charge'] else '✗ FAIL'}
-  Baryon Number: {'✓ PASS' if validation['validation']['baryon_number'] else '✗ FAIL'}
-  Charge Radius: {'✓ PASS' if validation['validation']['charge_radius'] else '✗ FAIL'}
-  Magnetic Moment: {'✓ PASS' if validation['validation']['magnetic_moment'] else '✗ FAIL'}
+    Electric Charge: " + (
+        validation["validation"]["electric_charge"] and "✓ PASS" or "✗ FAIL"
+    ) + "
+    Baryon Number: " + (
+        validation["validation"]["baryon_number"] and "✓ PASS" or "✗ FAIL"
+    ) + "
+    Charge Radius: " + (
+        validation["validation"]["charge_radius"] and "✓ PASS" or "✗ FAIL"
+    ) + "
+    Magnetic Moment: " + (
+        validation["validation"]["magnetic_moment"] and "✓ PASS" or "✗ FAIL"
+    ) + "
 
 Deviations from Experimental:
   Electric Charge: {validation['deviations']['electric_charge']:.2%}

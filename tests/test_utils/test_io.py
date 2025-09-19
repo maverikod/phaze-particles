@@ -41,6 +41,7 @@ class TestCSVWriter(unittest.TestCase):
     def tearDown(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir)
 
     def test_csv_writer_initialization(self):
@@ -58,12 +59,12 @@ class TestCSVWriter(unittest.TestCase):
     def test_csv_writer_write_header(self):
         """Test writing CSV header."""
         headers = ["column1", "column2", "column3"]
-        
+
         with CSVWriter(self.csv_file) as writer:
             writer.write_header(headers)
-        
+
         # Check file content
-        with open(self.csv_file, 'r', encoding='utf-8-sig') as f:
+        with open(self.csv_file, "r", encoding="utf-8-sig") as f:
             content = f.read()
             self.assertIn("column1", content)
             self.assertIn("column2", content)
@@ -73,13 +74,13 @@ class TestCSVWriter(unittest.TestCase):
         """Test writing CSV row."""
         headers = ["column1", "column2", "column3"]
         row_data = ["value1", "value2", "value3"]
-        
+
         with CSVWriter(self.csv_file) as writer:
             writer.write_header(headers)
             writer.write_row(row_data)
-        
+
         # Check file content
-        with open(self.csv_file, 'r', encoding='utf-8-sig') as f:
+        with open(self.csv_file, "r", encoding="utf-8-sig") as f:
             content = f.read()
             self.assertIn("value1", content)
             self.assertIn("value2", content)
@@ -91,16 +92,16 @@ class TestCSVWriter(unittest.TestCase):
         rows_data = [
             ["value1", "value2", "value3"],
             ["value4", "value5", "value6"],
-            ["value7", "value8", "value9"]
+            ["value7", "value8", "value9"],
         ]
-        
+
         with CSVWriter(self.csv_file) as writer:
             writer.write_header(headers)
             for row in rows_data:
                 writer.write_row(row)
-        
+
         # Check file content
-        with open(self.csv_file, 'r', encoding='utf-8-sig') as f:
+        with open(self.csv_file, "r", encoding="utf-8-sig") as f:
             content = f.read()
             for row in rows_data:
                 for value in row:
@@ -110,13 +111,13 @@ class TestCSVWriter(unittest.TestCase):
         """Test writing numeric data."""
         headers = ["int_value", "float_value", "scientific_value"]
         row_data = [42, 3.14159, 1.23e-4]
-        
+
         with CSVWriter(self.csv_file) as writer:
             writer.write_header(headers)
             writer.write_row(row_data)
-        
+
         # Check file content
-        with open(self.csv_file, 'r', encoding='utf-8-sig') as f:
+        with open(self.csv_file, "r", encoding="utf-8-sig") as f:
             content = f.read()
             self.assertIn("42", content)
             self.assertIn("3.14159", content)
@@ -126,13 +127,13 @@ class TestCSVWriter(unittest.TestCase):
         """Test writing unicode data."""
         headers = ["unicode_column"]
         row_data = ["тест", "αβγ", "🚀"]
-        
+
         with CSVWriter(self.csv_file) as writer:
             writer.write_header(headers)
             writer.write_row(row_data)
-        
+
         # Check file content
-        with open(self.csv_file, 'r', encoding='utf-8-sig') as f:
+        with open(self.csv_file, "r", encoding="utf-8-sig") as f:
             content = f.read()
             self.assertIn("тест", content)
             self.assertIn("αβγ", content)
@@ -142,18 +143,18 @@ class TestCSVWriter(unittest.TestCase):
         """Test writing missing values."""
         headers = ["column1", "column2", "column3"]
         row_data = ["value1", None, "value3"]
-        
+
         with CSVWriter(self.csv_file) as writer:
             writer.write_header(headers)
             writer.write_row(row_data)
-        
+
         # Check file content
-        with open(self.csv_file, 'r', encoding='utf-8-sig') as f:
+        with open(self.csv_file, "r", encoding="utf-8-sig") as f:
             content = f.read()
             self.assertIn("value1", content)
             self.assertIn("value3", content)
             # Check that None is handled properly
-            lines = content.strip().split('\n')
+            lines = content.strip().split("\n")
             self.assertEqual(len(lines), 2)  # Header + 1 data row
 
 
@@ -168,6 +169,7 @@ class TestJSONWriter(unittest.TestCase):
     def tearDown(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir)
 
     def test_json_writer_initialization(self):
@@ -182,14 +184,14 @@ class TestJSONWriter(unittest.TestCase):
             "int_value": 42,
             "float_value": 3.14159,
             "list_value": [1, 2, 3],
-            "nested_dict": {"key": "value"}
+            "nested_dict": {"key": "value"},
         }
-        
+
         writer = JSONWriter(self.json_file)
         writer.write_data(test_data)
-        
+
         # Check file content
-        with open(self.json_file, 'r') as f:
+        with open(self.json_file, "r") as f:
             loaded_data = json.load(f)
             self.assertEqual(loaded_data, test_data)
 
@@ -198,14 +200,14 @@ class TestJSONWriter(unittest.TestCase):
         test_data = {
             "numpy_array": np.array([1, 2, 3, 4, 5]),
             "numpy_float": np.float64(3.14159),
-            "numpy_int": np.int32(42)
+            "numpy_int": np.int32(42),
         }
-        
+
         writer = JSONWriter(self.json_file)
         writer.write_data(test_data)
-        
+
         # Check file content
-        with open(self.json_file, 'r') as f:
+        with open(self.json_file, "r") as f:
             loaded_data = json.load(f)
             self.assertEqual(loaded_data["numpy_array"], [1, 2, 3, 4, 5])
             self.assertEqual(loaded_data["numpy_float"], 3.14159)
@@ -214,16 +216,16 @@ class TestJSONWriter(unittest.TestCase):
     def test_json_writer_pretty_formatting(self):
         """Test JSON pretty formatting."""
         test_data = {"key1": "value1", "key2": "value2"}
-        
+
         writer = JSONWriter(self.json_file, pretty=True)
         writer.write_data(test_data)
-        
+
         # Check file content
-        with open(self.json_file, 'r') as f:
+        with open(self.json_file, "r") as f:
             content = f.read()
             # Pretty formatting should include newlines and indentation
-            self.assertIn('\n', content)
-            self.assertIn('  ', content)  # Indentation
+            self.assertIn("\n", content)
+            self.assertIn("  ", content)  # Indentation
 
 
 class TestResultsManager(unittest.TestCase):
@@ -237,6 +239,7 @@ class TestResultsManager(unittest.TestCase):
     def tearDown(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir)
 
     def test_results_manager_initialization(self):
@@ -248,9 +251,9 @@ class TestResultsManager(unittest.TestCase):
         """Test creating results directory."""
         command = "proton"
         subcommand = "static"
-        
+
         results_dir = self.results_manager.create_results_directory(command, subcommand)
-        
+
         expected_path = os.path.join(self.temp_dir, command, subcommand)
         self.assertEqual(str(results_dir), str(expected_path))
         self.assertTrue(os.path.exists(results_dir))
@@ -260,11 +263,9 @@ class TestResultsManager(unittest.TestCase):
         command = "proton"
         subcommand = "static"
         short_desc = "grid64-box4.0-all"
-        
-        filename = self.results_manager.generate_filename(
-            short_desc
-        )
-        
+
+        filename = self.results_manager.generate_filename(short_desc)
+
         # Check filename format
         self.assertIn("grid64-box4.0-all", filename)
         self.assertIn(".csv", filename)
@@ -275,23 +276,21 @@ class TestResultsManager(unittest.TestCase):
         command = "proton"
         subcommand = "static"
         short_desc = "test"
-        
+
         results_data = {
             "proton_mass": 938.272,
             "charge_radius": 0.841,
             "magnetic_moment": 2.793,
             "electric_charge": 1.0,
-            "baryon_number": 1.0
+            "baryon_number": 1.0,
         }
-        
-        filepath = self.results_manager.save_results_csv(
-            results_data, short_desc
-        )
-        
+
+        filepath = self.results_manager.save_results_csv(results_data, short_desc)
+
         self.assertTrue(os.path.exists(filepath))
-        
+
         # Check CSV content
-        with open(filepath, 'r', encoding='utf-8-sig') as f:
+        with open(filepath, "r", encoding="utf-8-sig") as f:
             content = f.read()
             self.assertIn("proton_mass", content)
             self.assertIn("938.272", content)
@@ -301,23 +300,21 @@ class TestResultsManager(unittest.TestCase):
         command = "proton"
         subcommand = "static"
         short_desc = "test"
-        
+
         results_data = {
             "proton_mass": 938.272,
             "charge_radius": 0.841,
             "magnetic_moment": 2.793,
             "electric_charge": 1.0,
-            "baryon_number": 1.0
+            "baryon_number": 1.0,
         }
-        
-        filepath = self.results_manager.save_results_json(
-            results_data, short_desc
-        )
-        
+
+        filepath = self.results_manager.save_results_json(results_data, short_desc)
+
         self.assertTrue(os.path.exists(filepath))
-        
+
         # Check JSON content
-        with open(filepath, 'r') as f:
+        with open(filepath, "r") as f:
             loaded_data = json.load(f)
             self.assertEqual(loaded_data, results_data)
 
@@ -330,9 +327,9 @@ class TestResultsManager(unittest.TestCase):
         self.results_manager.save_results_csv(
             {"mass": 938.272}, "test2", "proton", "static"
         )
-        
+
         results = self.results_manager.list_results("proton", "static")
-        
+
         self.assertEqual(len(results), 2)
         self.assertTrue(all("test" in str(result) for result in results))
 
@@ -342,10 +339,10 @@ class TestResultsManager(unittest.TestCase):
         self.results_manager.save_results_csv(
             {"mass": 938.272}, "test1", "proton", "static"
         )
-        
+
         # Cleanup old results (older than 0 days)
         self.results_manager.cleanup_old_results(days=0)
-        
+
         # Results should be cleaned up
         results = self.results_manager.list_results("proton", "static")
         self.assertEqual(len(results), 0)
@@ -362,6 +359,7 @@ class TestConfigLoader(unittest.TestCase):
     def tearDown(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir)
 
     def test_config_loader_initialization(self):
@@ -375,36 +373,33 @@ class TestConfigLoader(unittest.TestCase):
             "grid_size": 64,
             "box_size": 4.0,
             "max_iterations": 1000,
-            "validation_enabled": True
+            "validation_enabled": True,
         }
-        
-        with open(self.config_file, 'w') as f:
+
+        with open(self.config_file, "w") as f:
             json.dump(test_config, f)
-        
+
         loader = ConfigLoader()
         loaded_config = loader.load_config(self.config_file)
-        
+
         self.assertEqual(loaded_config, test_config)
 
     def test_load_config_with_defaults(self):
         """Test loading config with defaults."""
-        test_config = {
-            "grid_size": 64,
-            "box_size": 4.0
-        }
-        
-        with open(self.config_file, 'w') as f:
+        test_config = {"grid_size": 64, "box_size": 4.0}
+
+        with open(self.config_file, "w") as f:
             json.dump(test_config, f)
-        
+
         defaults = {
             "max_iterations": 1000,
             "validation_enabled": True,
-            "tolerance": 1e-6
+            "tolerance": 1e-6,
         }
-        
+
         loader = ConfigLoader()
         loaded_config = loader.load_config(self.config_file, defaults=defaults)
-        
+
         self.assertEqual(loaded_config["grid_size"], 64)
         self.assertEqual(loaded_config["box_size"], 4.0)
         self.assertEqual(loaded_config["max_iterations"], 1000)
@@ -414,60 +409,49 @@ class TestConfigLoader(unittest.TestCase):
     def test_load_config_file_not_found(self):
         """Test loading config from non-existent file."""
         loader = ConfigLoader()
-        
+
         with self.assertRaises(FileNotFoundError):
             loader.load_config("nonexistent_config.json")
 
     def test_load_config_invalid_json(self):
         """Test loading config from invalid JSON file."""
-        with open(self.config_file, 'w') as f:
+        with open(self.config_file, "w") as f:
             f.write("invalid json content")
-        
+
         loader = ConfigLoader()
-        
+
         with self.assertRaises(json.JSONDecodeError):
             loader.load_config(self.config_file)
 
     def test_validate_config(self):
         """Test config validation."""
         loader = ConfigLoader()
-        
+
         # Valid config
-        valid_config = {
-            "grid_size": 64,
-            "box_size": 4.0,
-            "max_iterations": 1000
-        }
-        
+        valid_config = {"grid_size": 64, "box_size": 4.0, "max_iterations": 1000}
+
         schema = {"grid_size": int, "box_size": float}
         self.assertTrue(loader.validate_config(valid_config, schema))
-        
+
         # Invalid config
-        invalid_config = {
-            "grid_size": -1,  # Invalid negative value
-            "box_size": 4.0
+        invalid_config = {"grid_size": -1, "box_size": 4.0}  # Invalid negative value
+
+        schema = {
+            "type": "object",
+            "properties": {"grid_size": {"type": "integer", "minimum": 0}},
         }
-        
-        schema = {"type": "object", "properties": {"grid_size": {"type": "integer", "minimum": 0}}}
         self.assertFalse(loader.validate_config(invalid_config, schema))
 
     def test_merge_configs(self):
         """Test merging configs."""
         loader = ConfigLoader()
-        
-        base_config = {
-            "grid_size": 64,
-            "box_size": 4.0,
-            "max_iterations": 1000
-        }
-        
-        override_config = {
-            "grid_size": 128,
-            "validation_enabled": True
-        }
-        
+
+        base_config = {"grid_size": 64, "box_size": 4.0, "max_iterations": 1000}
+
+        override_config = {"grid_size": 128, "validation_enabled": True}
+
         merged_config = loader.merge_configs(base_config, override_config)
-        
+
         self.assertEqual(merged_config["grid_size"], 128)  # Overridden
         self.assertEqual(merged_config["box_size"], 4.0)  # From base
         self.assertEqual(merged_config["max_iterations"], 1000)  # From base
@@ -485,6 +469,7 @@ class TestFileManager(unittest.TestCase):
     def tearDown(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir)
 
     def test_file_manager_initialization(self):
@@ -495,45 +480,45 @@ class TestFileManager(unittest.TestCase):
     def test_create_directory(self):
         """Test directory creation."""
         dir_path = os.path.join(self.temp_dir, "test_dir")
-        
+
         self.file_manager.create_directory(dir_path)
-        
+
         self.assertTrue(os.path.exists(dir_path))
         self.assertTrue(os.path.isdir(dir_path))
 
     def test_create_nested_directory(self):
         """Test nested directory creation."""
         dir_path = os.path.join(self.temp_dir, "level1", "level2", "level3")
-        
+
         self.file_manager.create_directory(dir_path)
-        
+
         self.assertTrue(os.path.exists(dir_path))
         self.assertTrue(os.path.isdir(dir_path))
 
     def test_file_exists(self):
         """Test file existence check."""
         test_file = os.path.join(self.temp_dir, "test.txt")
-        
+
         # File doesn't exist
         self.assertFalse(self.file_manager.file_exists(test_file))
-        
+
         # Create file
-        with open(test_file, 'w') as f:
+        with open(test_file, "w") as f:
             f.write("test content")
-        
+
         # File exists
         self.assertTrue(self.file_manager.file_exists(test_file))
 
     def test_directory_exists(self):
         """Test directory existence check."""
         test_dir = os.path.join(self.temp_dir, "test_dir")
-        
+
         # Directory doesn't exist
         self.assertFalse(self.file_manager.directory_exists(test_dir))
-        
+
         # Create directory
         os.makedirs(test_dir)
-        
+
         # Directory exists
         self.assertTrue(self.file_manager.directory_exists(test_dir))
 
@@ -541,12 +526,12 @@ class TestFileManager(unittest.TestCase):
         """Test getting file size."""
         test_file = os.path.join(self.temp_dir, "test.txt")
         test_content = "test content"
-        
-        with open(test_file, 'w') as f:
+
+        with open(test_file, "w") as f:
             f.write(test_content)
-        
+
         file_size = self.file_manager.get_file_size(test_file)
-        
+
         self.assertEqual(file_size, len(test_content))
 
     def test_list_files(self):
@@ -555,11 +540,11 @@ class TestFileManager(unittest.TestCase):
         test_files = ["file1.txt", "file2.txt", "file3.txt"]
         for filename in test_files:
             filepath = os.path.join(self.temp_dir, filename)
-            with open(filepath, 'w') as f:
+            with open(filepath, "w") as f:
                 f.write("test content")
-        
+
         listed_files = self.file_manager.list_files(self.temp_dir)
-        
+
         self.assertEqual(len(listed_files), 3)
         for filename in test_files:
             self.assertTrue(any(str(f).endswith(filename) for f in listed_files))
@@ -571,9 +556,9 @@ class TestFileManager(unittest.TestCase):
         for dirname in test_dirs:
             dirpath = os.path.join(self.temp_dir, dirname)
             os.makedirs(dirpath)
-        
+
         listed_dirs = self.file_manager.list_directories(self.temp_dir)
-        
+
         self.assertEqual(len(listed_dirs), 3)
         for dirname in test_dirs:
             self.assertTrue(any(str(d).endswith(dirname) for d in listed_dirs))
@@ -583,14 +568,14 @@ class TestFileManager(unittest.TestCase):
         # Create some test files and directories
         test_file = os.path.join(self.temp_dir, "test.txt")
         test_dir = os.path.join(self.temp_dir, "test_dir")
-        
-        with open(test_file, 'w') as f:
+
+        with open(test_file, "w") as f:
             f.write("test content")
         os.makedirs(test_dir)
-        
+
         # Cleanup directory
         self.file_manager.cleanup_directory(self.temp_dir)
-        
+
         # Directory should be empty
         self.assertEqual(len(os.listdir(self.temp_dir)), 0)
 
@@ -598,17 +583,17 @@ class TestFileManager(unittest.TestCase):
         """Test file backup."""
         test_file = os.path.join(self.temp_dir, "test.txt")
         test_content = "test content"
-        
-        with open(test_file, 'w') as f:
+
+        with open(test_file, "w") as f:
             f.write(test_content)
-        
+
         backup_path = self.file_manager.backup_file(test_file)
-        
+
         self.assertTrue(os.path.exists(backup_path))
         self.assertTrue(os.path.exists(test_file))  # Original should still exist
-        
+
         # Check backup content
-        with open(backup_path, 'r') as f:
+        with open(backup_path, "r") as f:
             backup_content = f.read()
             self.assertEqual(backup_content, test_content)
 
@@ -624,6 +609,7 @@ class TestDataExporter(unittest.TestCase):
     def tearDown(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir)
 
     def test_data_exporter_initialization(self):
@@ -634,11 +620,11 @@ class TestDataExporter(unittest.TestCase):
     def test_export_numpy_array(self):
         """Test exporting numpy array."""
         test_array = np.array([1, 2, 3, 4, 5])
-        
+
         filepath = self.exporter.export_numpy_array(test_array, "test_array")
-        
+
         self.assertTrue(os.path.exists(filepath))
-        
+
         # Load and check data
         loaded_array = np.load(filepath)
         np.testing.assert_array_equal(loaded_array, test_array)
@@ -646,18 +632,18 @@ class TestDataExporter(unittest.TestCase):
     def test_export_dataframe(self):
         """Test exporting dataframe."""
         import pandas as pd
-        
+
         test_data = {
             "column1": [1, 2, 3, 4, 5],
             "column2": ["a", "b", "c", "d", "e"],
-            "column3": [1.1, 2.2, 3.3, 4.4, 5.5]
+            "column3": [1.1, 2.2, 3.3, 4.4, 5.5],
         }
         df = pd.DataFrame(test_data)
-        
+
         filepath = self.exporter.export_dataframe(df, "test_dataframe")
-        
+
         self.assertTrue(os.path.exists(filepath))
-        
+
         # Load and check data
         loaded_df = pd.read_csv(filepath)
         pd.testing.assert_frame_equal(loaded_df, df)
@@ -665,15 +651,15 @@ class TestDataExporter(unittest.TestCase):
     def test_export_plot(self):
         """Test exporting plot."""
         import matplotlib.pyplot as plt
-        
+
         # Create simple plot
         fig, ax = plt.subplots()
         ax.plot([1, 2, 3, 4, 5], [1, 4, 9, 16, 25])
-        
+
         filepath = self.exporter.export_plot(fig, "test_plot")
-        
+
         self.assertTrue(os.path.exists(filepath))
-        
+
         plt.close(fig)
 
     def test_export_metadata(self):
@@ -681,18 +667,15 @@ class TestDataExporter(unittest.TestCase):
         metadata = {
             "experiment_name": "test_experiment",
             "timestamp": "2024-01-15T14:30:25",
-            "parameters": {
-                "grid_size": 64,
-                "box_size": 4.0
-            }
+            "parameters": {"grid_size": 64, "box_size": 4.0},
         }
-        
+
         filepath = self.exporter.export_metadata(metadata, "test_metadata")
-        
+
         self.assertTrue(os.path.exists(filepath))
-        
+
         # Load and check data
-        with open(filepath, 'r') as f:
+        with open(filepath, "r") as f:
             loaded_metadata = json.load(f)
             self.assertEqual(loaded_metadata, metadata)
 
@@ -708,6 +691,7 @@ class TestDataImporter(unittest.TestCase):
     def tearDown(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir)
 
     def test_data_importer_initialization(self):
@@ -719,29 +703,29 @@ class TestDataImporter(unittest.TestCase):
         """Test importing numpy array."""
         test_array = np.array([1, 2, 3, 4, 5])
         filepath = os.path.join(self.temp_dir, "test_array.npy")
-        
+
         np.save(filepath, test_array)
-        
+
         loaded_array = self.importer.import_numpy_array("test_array.npy")
-        
+
         np.testing.assert_array_equal(loaded_array, test_array)
 
     def test_import_dataframe(self):
         """Test importing dataframe."""
         import pandas as pd
-        
+
         test_data = {
             "column1": [1, 2, 3, 4, 5],
             "column2": ["a", "b", "c", "d", "e"],
-            "column3": [1.1, 2.2, 3.3, 4.4, 5.5]
+            "column3": [1.1, 2.2, 3.3, 4.4, 5.5],
         }
         df = pd.DataFrame(test_data)
         filepath = os.path.join(self.temp_dir, "test_dataframe.csv")
-        
+
         df.to_csv(filepath, index=False)
-        
+
         loaded_df = self.importer.import_dataframe("test_dataframe.csv")
-        
+
         pd.testing.assert_frame_equal(loaded_df, df)
 
     def test_import_metadata(self):
@@ -749,18 +733,15 @@ class TestDataImporter(unittest.TestCase):
         metadata = {
             "experiment_name": "test_experiment",
             "timestamp": "2024-01-15T14:30:25",
-            "parameters": {
-                "grid_size": 64,
-                "box_size": 4.0
-            }
+            "parameters": {"grid_size": 64, "box_size": 4.0},
         }
         filepath = os.path.join(self.temp_dir, "test_metadata.json")
-        
-        with open(filepath, 'w') as f:
+
+        with open(filepath, "w") as f:
             json.dump(metadata, f)
-        
+
         loaded_metadata = self.importer.import_metadata("test_metadata.json")
-        
+
         self.assertEqual(loaded_metadata, metadata)
 
     def test_import_file_not_found(self):
@@ -771,12 +752,12 @@ class TestDataImporter(unittest.TestCase):
     def test_import_invalid_file(self):
         """Test importing invalid file."""
         filepath = os.path.join(self.temp_dir, "invalid.txt")
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             f.write("invalid content")
-        
+
         with self.assertRaises(ValueError):
             self.importer.import_numpy_array("invalid.txt")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

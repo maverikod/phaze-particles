@@ -206,7 +206,7 @@ class TestProtonModel(unittest.TestCase):
         )
 
     @patch("phaze_particles.models.proton_integrated.MathematicalFoundations")
-    @patch("phaze_particles.models.proton_integrated.TorusGeometryManager")
+    @patch("phaze_particles.models.proton_integrated.TorusGeometries")
     @patch("phaze_particles.models.proton_integrated.SU2FieldBuilder")
     @patch("phaze_particles.models.proton_integrated.EnergyDensityCalculator")
     @patch("phaze_particles.models.proton_integrated.PhysicalQuantitiesCalculator")
@@ -261,7 +261,7 @@ class TestProtonModel(unittest.TestCase):
         self.assertIn("Configuration validation failed", str(context.exception))
 
     @patch("phaze_particles.models.proton_integrated.MathematicalFoundations")
-    @patch("phaze_particles.models.proton_integrated.TorusGeometryManager")
+    @patch("phaze_particles.models.proton_integrated.TorusGeometries")
     @patch("phaze_particles.models.proton_integrated.SU2FieldBuilder")
     @patch("phaze_particles.models.proton_integrated.EnergyDensityCalculator")
     @patch("phaze_particles.models.proton_integrated.PhysicalQuantitiesCalculator")
@@ -309,7 +309,7 @@ class TestProtonModel(unittest.TestCase):
         self.assertEqual(model.status, ModelStatus.FAILED)
 
     @patch("phaze_particles.models.proton_integrated.MathematicalFoundations")
-    @patch("phaze_particles.models.proton_integrated.TorusGeometryManager")
+    @patch("phaze_particles.models.proton_integrated.TorusGeometries")
     @patch("phaze_particles.models.proton_integrated.SU2FieldBuilder")
     @patch("phaze_particles.models.proton_integrated.EnergyDensityCalculator")
     @patch("phaze_particles.models.proton_integrated.PhysicalQuantitiesCalculator")
@@ -362,7 +362,7 @@ class TestProtonModel(unittest.TestCase):
         self.assertEqual(model.status, ModelStatus.FAILED)
 
     @patch("phaze_particles.models.proton_integrated.MathematicalFoundations")
-    @patch("phaze_particles.models.proton_integrated.TorusGeometryManager")
+    @patch("phaze_particles.models.proton_integrated.TorusGeometries")
     @patch("phaze_particles.models.proton_integrated.SU2FieldBuilder")
     @patch("phaze_particles.models.proton_integrated.EnergyDensityCalculator")
     @patch("phaze_particles.models.proton_integrated.PhysicalQuantitiesCalculator")
@@ -413,7 +413,7 @@ class TestProtonModel(unittest.TestCase):
         self.assertEqual(model.status, ModelStatus.ENERGY_CALCULATED)
 
     @patch("phaze_particles.models.proton_integrated.MathematicalFoundations")
-    @patch("phaze_particles.models.proton_integrated.TorusGeometryManager")
+    @patch("phaze_particles.models.proton_integrated.TorusGeometries")
     @patch("phaze_particles.models.proton_integrated.SU2FieldBuilder")
     @patch("phaze_particles.models.proton_integrated.EnergyDensityCalculator")
     @patch("phaze_particles.models.proton_integrated.PhysicalQuantitiesCalculator")
@@ -468,7 +468,7 @@ class TestProtonModel(unittest.TestCase):
         self.assertEqual(model.status, ModelStatus.PHYSICS_CALCULATED)
 
     @patch("phaze_particles.models.proton_integrated.MathematicalFoundations")
-    @patch("phaze_particles.models.proton_integrated.TorusGeometryManager")
+    @patch("phaze_particles.models.proton_integrated.TorusGeometries")
     @patch("phaze_particles.models.proton_integrated.SU2FieldBuilder")
     @patch("phaze_particles.models.proton_integrated.EnergyDensityCalculator")
     @patch("phaze_particles.models.proton_integrated.PhysicalQuantitiesCalculator")
@@ -538,7 +538,7 @@ class TestProtonModel(unittest.TestCase):
         self.assertEqual(model.status, ModelStatus.OPTIMIZED)
 
     @patch("phaze_particles.models.proton_integrated.MathematicalFoundations")
-    @patch("phaze_particles.models.proton_integrated.TorusGeometryManager")
+    @patch("phaze_particles.models.proton_integrated.TorusGeometries")
     @patch("phaze_particles.models.proton_integrated.SU2FieldBuilder")
     @patch("phaze_particles.models.proton_integrated.EnergyDensityCalculator")
     @patch("phaze_particles.models.proton_integrated.PhysicalQuantitiesCalculator")
@@ -610,7 +610,7 @@ class TestProtonModel(unittest.TestCase):
         self.assertEqual(model.status, ModelStatus.OPTIMIZED)
 
     @patch("phaze_particles.models.proton_integrated.MathematicalFoundations")
-    @patch("phaze_particles.models.proton_integrated.TorusGeometryManager")
+    @patch("phaze_particles.models.proton_integrated.TorusGeometries")
     @patch("phaze_particles.models.proton_integrated.SU2FieldBuilder")
     @patch("phaze_particles.models.proton_integrated.EnergyDensityCalculator")
     @patch("phaze_particles.models.proton_integrated.PhysicalQuantitiesCalculator")
@@ -695,7 +695,7 @@ class TestProtonModel(unittest.TestCase):
             with patch(
                 "phaze_particles.models.proton_integrated.MathematicalFoundations"
             ), patch(
-                "phaze_particles.models.proton_integrated.TorusGeometryManager"
+                "phaze_particles.models.proton_integrated.TorusGeometries"
             ), patch(
                 "phaze_particles.models.proton_integrated.SU2FieldBuilder"
             ), patch(
@@ -729,7 +729,7 @@ class TestProtonModel(unittest.TestCase):
             with patch(
                 "phaze_particles.models.proton_integrated.MathematicalFoundations"
             ), patch(
-                "phaze_particles.models.proton_integrated.TorusGeometryManager"
+                "phaze_particles.models.proton_integrated.TorusGeometries"
             ), patch(
                 "phaze_particles.models.proton_integrated.SU2FieldBuilder"
             ), patch(

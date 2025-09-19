@@ -160,9 +160,7 @@ class ParameterValidator:
             status=status,
         )
 
-    def validate_magnetic_moment(
-        self, calculated_moment: float
-    ) -> ValidationResult:
+    def validate_magnetic_moment(self, calculated_moment: float) -> ValidationResult:
         """
         Validate magnetic moment.
 
@@ -242,9 +240,7 @@ class ParameterValidator:
             status=status,
         )
 
-    def validate_baryon_number(
-        self, calculated_baryon: float
-    ) -> ValidationResult:
+    def validate_baryon_number(self, calculated_baryon: float) -> ValidationResult:
         """
         Validate baryon number.
 
@@ -284,9 +280,7 @@ class ParameterValidator:
             status=status,
         )
 
-    def validate_energy_balance(
-        self, energy_balance: float
-    ) -> ValidationResult:
+    def validate_energy_balance(self, energy_balance: float) -> ValidationResult:
         """
         Validate energy balance.
 
@@ -435,20 +429,14 @@ class ValidationReportGenerator:
         report.append("=" * 80)
         report.append("PROTON MODEL VALIDATION REPORT")
         report.append("=" * 80)
-        report.append(
-            f"Date and time: {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
-        )
+        report.append(f"Date and time: {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
         report.append("")
 
         # Overall assessment
         report.append("OVERALL ASSESSMENT:")
         report.append("-" * 40)
-        report.append(
-            f"Status: {quality_assessment['overall_status'].value.upper()}"
-        )
-        report.append(
-            f"Weighted score: {quality_assessment['weighted_score']:.3f}"
-        )
+        report.append(f"Status: {quality_assessment['overall_status'].value.upper()}")
+        report.append(f"Weighted score: {quality_assessment['weighted_score']:.3f}")
         passed = quality_assessment["passed_parameters"]
         total = quality_assessment["total_parameters"]
         report.append(f"Passed parameters: {passed}/{total}")
@@ -460,21 +448,16 @@ class ValidationReportGenerator:
 
         for result in validation_results:
             report.append(f"Parameter: {result.parameter_name}")
-            report.append(
-                f"  Calculated value: {result.calculated_value:.6f}"
-            )
+            report.append(f"  Calculated value: {result.calculated_value:.6f}")
             exp_val = result.experimental_value
             exp_err = result.experimental_error
-            report.append(
-                f"  Experimental value: {exp_val:.6f} ± {exp_err:.6f}"
-            )
+            report.append(f"  Experimental value: {exp_val:.6f} ± {exp_err:.6f}")
             report.append(
                 f"  Deviation: {result.deviation:.6f} "
                 f"({result.deviation_percent:.2f}%)"
             )
             report.append(
-                f"  Within tolerance: "
-                f"{'YES' if result.within_tolerance else 'NO'}"
+                f"  Within tolerance: " f"{'YES' if result.within_tolerance else 'NO'}"
             )
             report.append(f"  Status: {result.status.value.upper()}")
             report.append("")
@@ -484,28 +467,23 @@ class ValidationReportGenerator:
         report.append("-" * 40)
 
         failed_params = [
-            r for r in validation_results
-            if r.status == ValidationStatus.FAILED
+            r for r in validation_results if r.status == ValidationStatus.FAILED
         ]
         poor_params = [
-            r for r in validation_results
-            if r.status == ValidationStatus.POOR
+            r for r in validation_results if r.status == ValidationStatus.POOR
         ]
 
         if failed_params:
             report.append("CRITICAL ISSUES:")
             for param in failed_params:
                 report.append(
-                    f"  - {param.parameter_name}: "
-                    f"requires immediate correction"
+                    f"  - {param.parameter_name}: " f"requires immediate correction"
                 )
 
         if poor_params:
             report.append("ISSUES REQUIRING ATTENTION:")
             for param in poor_params:
-                report.append(
-                    f"  - {param.parameter_name}: improvement recommended"
-                )
+                report.append(f"  - {param.parameter_name}: improvement recommended")
 
         if not failed_params and not poor_params:
             report.append("Model meets all validation requirements.")
@@ -535,8 +513,7 @@ class ValidationReportGenerator:
             "overall_status": quality_assessment["overall_status"].value,
             "weighted_score": quality_assessment["weighted_score"],
             "status_counts": {
-                k.value: v
-                for k, v in quality_assessment["status_counts"].items()
+                k.value: v for k, v in quality_assessment["status_counts"].items()
             },
             "total_parameters": quality_assessment["total_parameters"],
             "passed_parameters": quality_assessment["passed_parameters"],
@@ -578,16 +555,11 @@ class ValidationReportGenerator:
 
         param_names = [r.parameter_name for r in validation_results]
         deviations = [r.deviation_percent for r in validation_results]
-        colors = [
-            "green" if r.within_tolerance else "red"
-            for r in validation_results
-        ]
+        colors = ["green" if r.within_tolerance else "red" for r in validation_results]
 
         bars = ax.bar(param_names, deviations, color=colors, alpha=0.7)
         ax.set_ylabel("Deviation (%)")
-        ax.set_title(
-            "Deviations of Calculated Parameters from Experimental Values"
-        )
+        ax.set_title("Deviations of Calculated Parameters from Experimental Values")
         ax.tick_params(axis="x", rotation=45)
 
         # Add values on bars
@@ -615,15 +587,9 @@ class ValidationReportGenerator:
         x = np.arange(len(param_names))
         width = 0.35
 
-        calculated_values = [
-            r.calculated_value for r in validation_results
-        ]
-        experimental_values = [
-            r.experimental_value for r in validation_results
-        ]
-        experimental_errors = [
-            r.experimental_error for r in validation_results
-        ]
+        calculated_values = [r.calculated_value for r in validation_results]
+        experimental_values = [r.experimental_value for r in validation_results]
+        experimental_errors = [r.experimental_error for r in validation_results]
 
         ax.bar(
             x - width / 2,
@@ -651,9 +617,7 @@ class ValidationReportGenerator:
         )
 
         ax.set_ylabel("Parameter Values")
-        ax.set_title(
-            "Comparison of Calculated and Experimental Values"
-        )
+        ax.set_title("Comparison of Calculated and Experimental Values")
         ax.set_xticks(x)
         ax.set_xticklabels(param_names, rotation=45)
         ax.legend()
@@ -678,15 +642,11 @@ class ValidationSystem:
             experimental_data: Experimental data for comparison
         """
         self.experimental_data = experimental_data
-        self.validator = ParameterValidator(
-            experimental_data
-        )
+        self.validator = ParameterValidator(experimental_data)
         self.quality_assessor = ModelQualityAssessor()
         self.report_generator = ValidationReportGenerator()
 
-    def validate_model(
-        self, calculated_data: CalculatedData
-    ) -> Dict[str, Any]:
+    def validate_model(self, calculated_data: CalculatedData) -> Dict[str, Any]:
         """
         Validate model.
 
@@ -700,22 +660,14 @@ class ValidationSystem:
         validation_results = [
             self.validator.validate_mass(calculated_data.proton_mass),
             self.validator.validate_radius(calculated_data.charge_radius),
-            self.validator.validate_magnetic_moment(
-                calculated_data.magnetic_moment
-            ),
+            self.validator.validate_magnetic_moment(calculated_data.magnetic_moment),
             self.validator.validate_charge(calculated_data.electric_charge),
-            self.validator.validate_baryon_number(
-                calculated_data.baryon_number
-            ),
-            self.validator.validate_energy_balance(
-                calculated_data.energy_balance
-            ),
+            self.validator.validate_baryon_number(calculated_data.baryon_number),
+            self.validator.validate_energy_balance(calculated_data.energy_balance),
         ]
 
         # Assess quality
-        quality_assessment = self.quality_assessor.assess_quality(
-            validation_results
-        )
+        quality_assessment = self.quality_assessor.assess_quality(validation_results)
 
         # Generate reports
         text_report = self.report_generator.generate_text_report(
@@ -801,8 +753,7 @@ def validate_proton_model_results(results: Dict[str, Any]) -> Dict[str, Any]:
         electric_charge=results.get("electric_charge", 0.0),
         baryon_number=results.get("baryon_number", 0.0),
         energy_balance=(
-            results.get("energy_balance", {}).get("E2_percentage", 50.0)
-            / 100.0
+            results.get("energy_balance", {}).get("E2_percentage", 50.0) / 100.0
         ),
         total_energy=results.get("total_energy", 0.0),
         execution_time=results.get("execution_time", 0.0),

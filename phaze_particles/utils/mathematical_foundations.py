@@ -220,55 +220,55 @@ class ArrayBackend:
             Backend name ('cuda' or 'cpu')
         """
         return "cuda" if self.is_cuda_available else "cpu"
-    
+
     def zeros_like(self, array: Any) -> Any:
         """
         Create zeros array with same shape as input.
-        
+
         Args:
             array: Input array
-            
+
         Returns:
             Zeros array with same shape
         """
         xp = self.get_array_module()
         return xp.zeros_like(array)
-    
+
     def exp(self, x: Any) -> Any:
         """
         Compute exponential using appropriate backend.
-        
+
         Args:
             x: Input array
-            
+
         Returns:
             Exponential array in appropriate backend
         """
         xp = self.get_array_module()
         return xp.exp(x)
-    
+
     def where(self, condition: Any, x: Any, y: Any) -> Any:
         """
         Compute where condition using appropriate backend.
-        
+
         Args:
             condition: Boolean condition
             x: Value if condition is True
             y: Value if condition is False
-            
+
         Returns:
             Where result in appropriate backend
         """
         xp = self.get_array_module()
         return xp.where(condition, x, y)
-    
+
     def abs(self, x: Any) -> Any:
         """
         Compute absolute value using appropriate backend.
-        
+
         Args:
             x: Input array
-            
+
         Returns:
             Absolute value array in appropriate backend
         """
@@ -569,7 +569,7 @@ class ValidationUtils:
         xp = self.backend.get_array_module()
 
         # Convert to appropriate backend array if needed
-        if hasattr(U, 'get') and self.backend.is_cuda_available:
+        if hasattr(U, "get") and self.backend.is_cuda_available:
             # Already CuPy array
             U_backend = U
         elif self.backend.is_cuda_available:
@@ -583,7 +583,7 @@ class ValidationUtils:
         unitary_check = xp.allclose(
             self.backend.dot(U_backend.conj().T, U_backend),
             self.backend.eye(2),
-            atol=tolerance
+            atol=tolerance,
         )
 
         # Check determinant: det(U) = 1

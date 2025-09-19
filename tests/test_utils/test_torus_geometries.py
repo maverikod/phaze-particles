@@ -92,9 +92,7 @@ class TestTorus120Degrees(unittest.TestCase):
         # Check normalization (allow for small deviations near zero)
         norm = np.sqrt(n_x**2 + n_y**2 + n_z**2)
         # Check that norm is either close to 1.0 or close to 0.0
-        valid_norm = np.logical_or(
-            np.abs(norm - 1.0) < 1e-10, np.abs(norm) < 1e-10
-        )
+        valid_norm = np.logical_or(np.abs(norm - 1.0) < 1e-10, np.abs(norm) < 1e-10)
         self.assertTrue(np.all(valid_norm), "Field normalization failed")
 
     def test_distance_to_torus(self) -> None:
@@ -163,9 +161,7 @@ class TestTorusClover(unittest.TestCase):
         # Check normalization (allow for small deviations near zero)
         norm = np.sqrt(n_x**2 + n_y**2 + n_z**2)
         # Check that norm is either close to 1.0 or close to 0.0
-        valid_norm = np.logical_or(
-            np.abs(norm - 1.0) < 1e-10, np.abs(norm) < 1e-10
-        )
+        valid_norm = np.logical_or(np.abs(norm - 1.0) < 1e-10, np.abs(norm) < 1e-10)
         self.assertTrue(np.all(valid_norm), "Field normalization failed")
 
 
@@ -215,9 +211,7 @@ class TestTorusCartesian(unittest.TestCase):
         # Check normalization (allow for small deviations near zero)
         norm = np.sqrt(n_x**2 + n_y**2 + n_z**2)
         # Check that norm is either close to 1.0 or close to 0.0
-        valid_norm = np.logical_or(
-            np.abs(norm - 1.0) < 1e-10, np.abs(norm) < 1e-10
-        )
+        valid_norm = np.logical_or(np.abs(norm - 1.0) < 1e-10, np.abs(norm) < 1e-10)
         self.assertTrue(np.all(valid_norm), "Field normalization failed")
 
 
@@ -289,9 +283,7 @@ class TestTorusGeometryManager(unittest.TestCase):
     def test_validate_configuration(self) -> None:
         """Test configuration validation."""
         # Valid configuration
-        config = self.manager.create_configuration(
-            TorusConfiguration.CONFIG_120_DEG
-        )
+        config = self.manager.create_configuration(TorusConfiguration.CONFIG_120_DEG)
         self.assertTrue(self.manager.validate_configuration(config))
 
         # Invalid configuration (no tori attribute)
@@ -304,9 +296,7 @@ class TestTorusGeometries(unittest.TestCase):
 
     def setUp(self) -> None:
         """Set up test fixtures."""
-        self.geometries = TorusGeometries(
-            grid_size=16, box_size=2.0, use_cuda=False
-        )
+        self.geometries = TorusGeometries(grid_size=16, box_size=2.0, use_cuda=False)
 
     def test_initialization(self) -> None:
         """Test initialization."""
@@ -347,9 +337,7 @@ class TestTorusGeometries(unittest.TestCase):
         # Check normalization (allow for small deviations near zero)
         norm = np.sqrt(n_x**2 + n_y**2 + n_z**2)
         # Check that norm is either close to 1.0 or close to 0.0
-        valid_norm = np.logical_or(
-            np.abs(norm - 1.0) < 1e-10, np.abs(norm) < 1e-10
-        )
+        valid_norm = np.logical_or(np.abs(norm - 1.0) < 1e-10, np.abs(norm) < 1e-10)
         self.assertTrue(np.all(valid_norm), "Field normalization failed")
 
     def test_create_field_direction_clover(self) -> None:
@@ -367,9 +355,7 @@ class TestTorusGeometries(unittest.TestCase):
         # Check normalization (allow for small deviations near zero)
         norm = np.sqrt(n_x**2 + n_y**2 + n_z**2)
         # Check that norm is either close to 1.0 or close to 0.0
-        valid_norm = np.logical_or(
-            np.abs(norm - 1.0) < 1e-10, np.abs(norm) < 1e-10
-        )
+        valid_norm = np.logical_or(np.abs(norm - 1.0) < 1e-10, np.abs(norm) < 1e-10)
         self.assertTrue(np.all(valid_norm), "Field normalization failed")
 
     def test_create_field_direction_cartesian(self) -> None:
@@ -387,9 +373,7 @@ class TestTorusGeometries(unittest.TestCase):
         # Check normalization (allow for small deviations near zero)
         norm = np.sqrt(n_x**2 + n_y**2 + n_z**2)
         # Check that norm is either close to 1.0 or close to 0.0
-        valid_norm = np.logical_or(
-            np.abs(norm - 1.0) < 1e-10, np.abs(norm) < 1e-10
-        )
+        valid_norm = np.logical_or(np.abs(norm - 1.0) < 1e-10, np.abs(norm) < 1e-10)
         self.assertTrue(np.all(valid_norm), "Field normalization failed")
 
     def test_list_available_configurations(self) -> None:

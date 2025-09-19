@@ -61,17 +61,15 @@ class TestEnergyDensity(unittest.TestCase):
         """Test energy components calculation."""
         components = self.energy_density.get_energy_components()
 
-        expected_e2 = np.sum(self.c2_term) * self.dx ** 3
-        expected_e4 = np.sum(self.c4_term) * self.dx ** 3
-        expected_e6 = np.sum(self.c6_term) * self.dx ** 3
+        expected_e2 = np.sum(self.c2_term) * self.dx**3
+        expected_e4 = np.sum(self.c4_term) * self.dx**3
+        expected_e6 = np.sum(self.c6_term) * self.dx**3
         expected_total = expected_e2 + expected_e4 + expected_e6
 
         self.assertAlmostEqual(components["E2"], expected_e2, places=10)
         self.assertAlmostEqual(components["E4"], expected_e4, places=10)
         self.assertAlmostEqual(components["E6"], expected_e6, places=10)
-        self.assertAlmostEqual(
-            components["E_total"], expected_total, places=10
-        )
+        self.assertAlmostEqual(components["E_total"], expected_total, places=10)
 
     def test_get_energy_balance(self):
         """Test energy balance calculation."""
@@ -84,15 +82,9 @@ class TestEnergyDensity(unittest.TestCase):
         expected_e4_ratio = components["E4"] / total
         expected_e6_ratio = components["E6"] / total
 
-        self.assertAlmostEqual(
-            balance["E2_ratio"], expected_e2_ratio, places=10
-        )
-        self.assertAlmostEqual(
-            balance["E4_ratio"], expected_e4_ratio, places=10
-        )
-        self.assertAlmostEqual(
-            balance["E6_ratio"], expected_e6_ratio, places=10
-        )
+        self.assertAlmostEqual(balance["E2_ratio"], expected_e2_ratio, places=10)
+        self.assertAlmostEqual(balance["E4_ratio"], expected_e4_ratio, places=10)
+        self.assertAlmostEqual(balance["E6_ratio"], expected_e6_ratio, places=10)
 
     def test_check_virial_condition_pass(self):
         """Test virial condition check when condition is satisfied."""
@@ -216,9 +208,7 @@ class TestBaryonDensity(unittest.TestCase):
 
     def test_compute_baryon_density(self):
         """Test baryon density computation."""
-        baryon_density = self.baryon_density.compute_baryon_density(
-            self.left_currents
-        )
+        baryon_density = self.baryon_density.compute_baryon_density(self.left_currents)
 
         # Check that result has correct shape
         self.assertEqual(baryon_density.shape, (2, 2, 2))
@@ -283,9 +273,7 @@ class TestEnergyDensityCalculator(unittest.TestCase):
 
     def test_compute_energy_density(self):
         """Test energy density computation."""
-        energy_density = self.calculator.compute_energy_density(
-            self.field_derivatives
-        )
+        energy_density = self.calculator.compute_energy_density(self.field_derivatives)
 
         # Check that result is EnergyDensity instance
         self.assertIsInstance(energy_density, EnergyDensity)
@@ -299,9 +287,7 @@ class TestEnergyDensityCalculator(unittest.TestCase):
 
         # Check that total density is sum of components
         expected_total = (
-            energy_density.c2_term
-            + energy_density.c4_term
-            + energy_density.c6_term
+            energy_density.c2_term + energy_density.c4_term + energy_density.c6_term
         )
         np.testing.assert_array_almost_equal(
             energy_density.total_density, expected_total
@@ -309,9 +295,7 @@ class TestEnergyDensityCalculator(unittest.TestCase):
 
     def test_compute_baryon_number(self):
         """Test baryon number computation."""
-        baryon_number = self.calculator.compute_baryon_number(
-            self.field_derivatives
-        )
+        baryon_number = self.calculator.compute_baryon_number(self.field_derivatives)
 
         # Check that result is a float
         self.assertIsInstance(baryon_number, float)
@@ -432,9 +416,7 @@ class TestEnergyAnalyzer(unittest.TestCase):
         balance = {"E2_ratio": 0.7, "E4_ratio": 0.3, "E6_ratio": 0.0}
         virial_ok = False
 
-        recommendations = self.analyzer._get_energy_recommendations(
-            balance, virial_ok
-        )
+        recommendations = self.analyzer._get_energy_recommendations(balance, virial_ok)
 
         self.assertIsInstance(recommendations, list)
         self.assertGreater(len(recommendations), 0)
@@ -551,17 +533,13 @@ class TestEnergyDensities(unittest.TestCase):
         self.assertEqual(self.energy_densities.c6, 1.0)
 
         # Check that sub-components are initialized
-        self.assertIsInstance(
-            self.energy_densities.calculator, EnergyDensityCalculator
-        )
+        self.assertIsInstance(self.energy_densities.calculator, EnergyDensityCalculator)
         self.assertIsInstance(self.energy_densities.analyzer, EnergyAnalyzer)
         self.assertIsInstance(self.energy_densities.optimizer, EnergyOptimizer)
 
     def test_compute_energy(self):
         """Test energy computation."""
-        energy_density = self.energy_densities.compute_energy(
-            self.field_derivatives
-        )
+        energy_density = self.energy_densities.compute_energy(self.field_derivatives)
 
         self.assertIsInstance(energy_density, EnergyDensity)
 
@@ -577,9 +555,7 @@ class TestEnergyDensities(unittest.TestCase):
 
     def test_analyze_energy(self):
         """Test energy analysis."""
-        energy_density = self.energy_densities.compute_energy(
-            self.field_derivatives
-        )
+        energy_density = self.energy_densities.compute_energy(self.field_derivatives)
         analysis = self.energy_densities.analyze_energy(energy_density)
 
         self.assertIsInstance(analysis, dict)
@@ -589,9 +565,7 @@ class TestEnergyDensities(unittest.TestCase):
 
     def test_optimize_constants(self):
         """Test constants optimization."""
-        optimized = self.energy_densities.optimize_constants(
-            self.field_derivatives
-        )
+        optimized = self.energy_densities.optimize_constants(self.field_derivatives)
 
         self.assertIsInstance(optimized, dict)
         self.assertIn("c2", optimized)
@@ -600,9 +574,7 @@ class TestEnergyDensities(unittest.TestCase):
 
     def test_get_energy_report(self):
         """Test energy report generation."""
-        energy_density = self.energy_densities.compute_energy(
-            self.field_derivatives
-        )
+        energy_density = self.energy_densities.compute_energy(self.field_derivatives)
         report = self.energy_densities.get_energy_report(energy_density)
 
         self.assertIsInstance(report, str)

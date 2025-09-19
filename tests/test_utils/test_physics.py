@@ -527,7 +527,9 @@ class TestMagneticMomentCalculator(unittest.TestCase):
         profile = Mock()
         profile.evaluate.return_value = np.ones((32, 32, 32))
 
-        magnetic_moment = self.calculator.compute_magnetic_moment(field, profile, 938.272)
+        magnetic_moment = self.calculator.compute_magnetic_moment(
+            field, profile, 938.272
+        )
 
         self.assertIsInstance(magnetic_moment, float)
 
@@ -584,7 +586,9 @@ class TestPhysicalQuantitiesCalculator(unittest.TestCase):
         # Check sub-calculators
         self.assertIsInstance(self.calculator.charge_density, ChargeDensity)
         self.assertIsInstance(self.calculator.baryon_calculator, BaryonNumberCalculator)
-        self.assertIsInstance(self.calculator.magnetic_calculator, MagneticMomentCalculator)
+        self.assertIsInstance(
+            self.calculator.magnetic_calculator, MagneticMomentCalculator
+        )
         self.assertIsInstance(self.calculator.mass_calculator, MassCalculator)
 
     def test_compute_all_quantities(self):

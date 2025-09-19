@@ -31,7 +31,7 @@ class TestCUDADevice(unittest.TestCase):
             memory_free=4096,
             compute_capability=(7, 5),
             multiprocessors=64,
-            max_threads_per_block=1024
+            max_threads_per_block=1024,
         )
         self.assertEqual(device.id, 0)
         self.assertEqual(device.name, "Test GPU")
@@ -47,9 +47,9 @@ class TestCUDADevice(unittest.TestCase):
             memory_free=4096,
             compute_capability=(7, 5),
             multiprocessors=64,
-            max_threads_per_block=1024
+            max_threads_per_block=1024,
         )
-        
+
         # Test property access
         self.assertEqual(device.id, 0)
         self.assertEqual(device.name, "Test GPU")
@@ -65,9 +65,9 @@ class TestCUDADevice(unittest.TestCase):
             memory_free=4096,
             compute_capability=(7, 5),
             multiprocessors=64,
-            max_threads_per_block=1024
+            max_threads_per_block=1024,
         )
-        
+
         device_str = str(device)
         self.assertIn("Test GPU", device_str)
         self.assertIn("(7, 5)", device_str)
@@ -91,7 +91,7 @@ class TestCUDAMemoryManager(unittest.TestCase):
         """Test memory allocation tracking."""
         # Simulate memory allocation
         allocation_id = self.memory_manager.allocate(1024)
-        
+
         self.assertIsNotNone(allocation_id)
         self.assertEqual(self.memory_manager.allocated_memory, 1024)
         self.assertEqual(len(self.memory_manager.allocations), 1)
@@ -101,10 +101,10 @@ class TestCUDAMemoryManager(unittest.TestCase):
         """Test memory deallocation tracking."""
         # Allocate memory
         allocation_id = self.memory_manager.allocate(1024)
-        
+
         # Deallocate memory
         self.memory_manager.deallocate(allocation_id)
-        
+
         self.assertEqual(self.memory_manager.allocated_memory, 0)
         self.assertEqual(len(self.memory_manager._allocations), 0)
         self.assertNotIn(allocation_id, self.memory_manager.allocations)
@@ -114,21 +114,21 @@ class TestCUDAMemoryManager(unittest.TestCase):
         # Allocate some memory
         self.memory_manager.allocate(1024)
         self.memory_manager.allocate(2048)
-        
+
         usage = self.memory_manager.get_memory_usage()
-        
-        self.assertEqual(usage['allocated'], 3072)
-        self.assertEqual(usage['allocations_count'], 2)
+
+        self.assertEqual(usage["allocated"], 3072)
+        self.assertEqual(usage["allocations_count"], 2)
 
     def test_memory_cleanup(self):
         """Test memory cleanup."""
         # Allocate some memory
         self.memory_manager.allocate(1024)
         self.memory_manager.allocate(2048)
-        
+
         # Cleanup all memory
         self.memory_manager.cleanup()
-        
+
         self.assertEqual(self.memory_manager.allocated_memory, 0)
         self.assertEqual(len(self.memory_manager._allocations), 0)
 
@@ -148,7 +148,7 @@ class TestCUDAOperations(unittest.TestCase):
         """Test array transfer to GPU."""
         # Create test array
         test_array = np.array([1, 2, 3, 4, 5], dtype=np.float32)
-        
+
         # Mock CUDA operations
         # Since CUDA is not available in test environment
         # Should fallback to CPU
@@ -159,7 +159,7 @@ class TestCUDAOperations(unittest.TestCase):
         """Test array transfer from GPU."""
         # Create test array
         test_array = np.array([1, 2, 3, 4, 5], dtype=np.float32)
-        
+
         # Mock CUDA operations
         # Since CUDA is not available in test environment
         # Should fallback to CPU
@@ -171,14 +171,14 @@ class TestCUDAOperations(unittest.TestCase):
         # Create test arrays
         a = np.array([1, 2, 3, 4, 5], dtype=np.float32)
         b = np.array([2, 3, 4, 5, 6], dtype=np.float32)
-        
+
         # Mock CUDA operations
         # Since CUDA is not available in test environment
         # Test addition
         result = self.cuda_ops.add(a, b)
         expected = a + b
         np.testing.assert_array_equal(result, expected)
-            
+
         # Test multiplication
         result = self.cuda_ops.multiply(a, b)
         expected = a * b
@@ -188,14 +188,14 @@ class TestCUDAOperations(unittest.TestCase):
         """Test reduction operations."""
         # Create test array
         test_array = np.array([1, 2, 3, 4, 5], dtype=np.float32)
-        
+
         # Mock CUDA operations
         # Since CUDA is not available in test environment
-            # Test sum
+        # Test sum
         result = self.cuda_ops.sum(test_array)
         expected = np.sum(test_array)
         self.assertEqual(result, expected)
-            
+
         # Test mean
         result = self.cuda_ops.mean(test_array)
         expected = np.mean(test_array)
@@ -206,10 +206,10 @@ class TestCUDAOperations(unittest.TestCase):
         # Create test matrices
         a = np.array([[1, 2], [3, 4]], dtype=np.float32)
         b = np.array([[2, 0], [1, 3]], dtype=np.float32)
-        
+
         # Mock CUDA operations
         # Since CUDA is not available in test environment
-            # Test matrix multiplication
+        # Test matrix multiplication
         result = self.cuda_ops.matmul(a, b)
         expected = np.matmul(a, b)
         np.testing.assert_array_equal(result, expected)
@@ -260,10 +260,10 @@ class TestCUDAManager(unittest.TestCase):
         # Test memory allocation
         allocation_id = self.cuda_manager.allocate_memory(1024)
         self.assertIsNotNone(allocation_id)
-        
+
         # Test memory deallocation
         self.cuda_manager.deallocate_memory(allocation_id)
-        
+
         # Test memory cleanup
         self.cuda_manager.cleanup_memory()
 
@@ -271,11 +271,11 @@ class TestCUDAManager(unittest.TestCase):
         """Test operations delegation."""
         # Create test array
         test_array = np.array([1, 2, 3, 4, 5], dtype=np.float32)
-        
+
         # Test operations delegation
         result = self.cuda_manager.array_to_gpu(test_array)
         self.assertIsNotNone(result)
-        
+
         result = self.cuda_manager.array_from_gpu(test_array)
         self.assertIsNotNone(result)
 
@@ -284,7 +284,7 @@ class TestCUDAManager(unittest.TestCase):
         # Test performance metrics
         metrics = self.cuda_manager.get_performance_metrics()
         self.assertIsInstance(metrics, dict)
-        self.assertIn('memory_usage', metrics)
+        self.assertIn("memory_usage", metrics)
         # operations_count not available in test environment
 
     def test_error_handling(self):
@@ -327,7 +327,7 @@ class TestGetCUDAManager(unittest.TestCase):
         """Test that get_cuda_manager returns singleton instance."""
         manager1 = get_cuda_manager()
         manager2 = get_cuda_manager()
-        
+
         self.assertIs(manager1, manager2)
 
     def test_manager_type(self):
@@ -347,7 +347,7 @@ class TestCUDAIntegration(unittest.TestCase):
         """Test integration with NumPy arrays."""
         # Create NumPy array
         test_array = np.array([1, 2, 3, 4, 5], dtype=np.float32)
-        
+
         # Test array operations
         result = self.cuda_manager.operations.add(test_array, test_array)
         expected = test_array + test_array
@@ -358,11 +358,11 @@ class TestCUDAIntegration(unittest.TestCase):
         # Test memory allocation and deallocation
         allocation_id = self.cuda_manager.allocate_memory(1024)
         self.assertIsNotNone(allocation_id)
-        
+
         # Test memory usage reporting
         usage = self.cuda_manager.get_performance_metrics()
-        self.assertIn('memory_usage', usage)
-        
+        self.assertIn("memory_usage", usage)
+
         # Cleanup
         self.cuda_manager.deallocate_memory(allocation_id)
 
@@ -379,17 +379,17 @@ class TestCUDAIntegration(unittest.TestCase):
         """Test performance comparison between CUDA and CPU."""
         # Create test data
         test_array = np.random.rand(1000, 1000).astype(np.float32)
-        
+
         # Test operations
         # Since CUDA is not available in test environment
         # Should work with CPU fallback
         # CPU operations
         cpu_result = self.cuda_manager.operations.sum(test_array)
         self.assertIsNotNone(cpu_result)
-        
+
         # Test that operations complete successfully
         self.assertIsNotNone(cpu_result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

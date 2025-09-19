@@ -30,13 +30,21 @@ class TestSU2Field(unittest.TestCase):
         self.backend = ArrayBackend()
         self.grid_size = 8
         self.box_size = 2.0
-        
+
         # Create simple test field
         xp = self.backend.get_array_module()
-        self.u_00 = xp.ones((self.grid_size, self.grid_size, self.grid_size), dtype=complex)
-        self.u_01 = xp.zeros((self.grid_size, self.grid_size, self.grid_size), dtype=complex)
-        self.u_10 = xp.zeros((self.grid_size, self.grid_size, self.grid_size), dtype=complex)
-        self.u_11 = xp.ones((self.grid_size, self.grid_size, self.grid_size), dtype=complex)
+        self.u_00 = xp.ones(
+            (self.grid_size, self.grid_size, self.grid_size), dtype=complex
+        )
+        self.u_01 = xp.zeros(
+            (self.grid_size, self.grid_size, self.grid_size), dtype=complex
+        )
+        self.u_10 = xp.zeros(
+            (self.grid_size, self.grid_size, self.grid_size), dtype=complex
+        )
+        self.u_11 = xp.ones(
+            (self.grid_size, self.grid_size, self.grid_size), dtype=complex
+        )
 
     def test_su2_field_creation(self) -> None:
         """Test SU2Field creation."""
@@ -49,7 +57,7 @@ class TestSU2Field(unittest.TestCase):
             box_size=self.box_size,
             backend=self.backend,
         )
-        
+
         self.assertEqual(field.grid_size, self.grid_size)
         self.assertEqual(field.box_size, self.box_size)
         self.assertIsInstance(field.backend, ArrayBackend)
@@ -65,7 +73,7 @@ class TestSU2Field(unittest.TestCase):
             box_size=self.box_size,
             backend=self.backend,
         )
-        
+
         # Should be valid SU(2) field (identity matrix)
         self.assertTrue(field._is_su2_field())
 
@@ -80,11 +88,11 @@ class TestSU2Field(unittest.TestCase):
             box_size=self.box_size,
             backend=self.backend,
         )
-        
+
         matrix = field.get_matrix_at_point(0, 0, 0)
         xp = self.backend.get_array_module()
         expected = xp.eye(2, dtype=complex)
-        
+
         self.assertTrue(xp.allclose(matrix, expected))
 
     def test_get_determinant(self) -> None:
@@ -98,10 +106,10 @@ class TestSU2Field(unittest.TestCase):
             box_size=self.box_size,
             backend=self.backend,
         )
-        
+
         det = field.get_determinant()
         xp = self.backend.get_array_module()
-        
+
         # For identity matrix, determinant should be 1
         self.assertTrue(xp.allclose(det, 1.0))
 
@@ -118,44 +126,48 @@ class TestRadialProfile(unittest.TestCase):
     def test_skyrmion_profile(self) -> None:
         """Test skyrmion profile."""
         profile = RadialProfile("skyrmion", self.scale, self.center_value, self.backend)
-        
+
         xp = self.backend.get_array_module()
         r = xp.array([0.0, 1.0, 2.0])
         f_r = profile.evaluate(r)
-        
+
         # At r=0, should be center_value
         self.assertAlmostEqual(float(f_r[0]), self.center_value, places=10)
-        
+
         # Should be decreasing
         self.assertLess(float(f_r[1]), float(f_r[0]))
         self.assertLess(float(f_r[2]), float(f_r[1]))
 
     def test_exponential_profile(self) -> None:
         """Test exponential profile."""
-        profile = RadialProfile("exponential", self.scale, self.center_value, self.backend)
-        
+        profile = RadialProfile(
+            "exponential", self.scale, self.center_value, self.backend
+        )
+
         xp = self.backend.get_array_module()
         r = xp.array([0.0, 1.0, 2.0])
         f_r = profile.evaluate(r)
 
         # At r=0, should be center_value
         self.assertAlmostEqual(float(f_r[0]), self.center_value, places=10)
-        
+
         # Should be decreasing
         self.assertLess(float(f_r[1]), float(f_r[0]))
         self.assertLess(float(f_r[2]), float(f_r[1]))
 
     def test_polynomial_profile(self) -> None:
         """Test polynomial profile."""
-        profile = RadialProfile("polynomial", self.scale, self.center_value, self.backend)
-        
+        profile = RadialProfile(
+            "polynomial", self.scale, self.center_value, self.backend
+        )
+
         xp = self.backend.get_array_module()
         r = xp.array([0.0, 1.0, 2.0])
         f_r = profile.evaluate(r)
 
         # At r=0, should be center_value
         self.assertAlmostEqual(float(f_r[0]), self.center_value, places=10)
-        
+
         # Should be decreasing
         self.assertLess(float(f_r[1]), float(f_r[0]))
         self.assertLess(float(f_r[2]), float(f_r[1]))
@@ -171,13 +183,13 @@ class TestRadialProfile(unittest.TestCase):
     def test_get_derivative(self) -> None:
         """Test derivative calculation."""
         profile = RadialProfile("skyrmion", self.scale, self.center_value, self.backend)
-        
+
         xp = self.backend.get_array_module()
         r = xp.array([1.0, 2.0, 3.0])
         dr = 0.01
-        
+
         derivative = profile.get_derivative(r, dr)
-        
+
         # Should be negative (decreasing function)
         self.assertTrue(xp.all(derivative < 0))
 
@@ -201,25 +213,33 @@ class TestSU2FieldBuilder(unittest.TestCase):
     def test_coordinate_grids(self) -> None:
         """Test coordinate grid creation."""
         xp = self.backend.get_array_module()
-        
+
         # Check grid shapes
-        self.assertEqual(self.builder.X.shape, (self.grid_size, self.grid_size, self.grid_size))
-        self.assertEqual(self.builder.Y.shape, (self.grid_size, self.grid_size, self.grid_size))
-        self.assertEqual(self.builder.Z.shape, (self.grid_size, self.grid_size, self.grid_size))
-        self.assertEqual(self.builder.R.shape, (self.grid_size, self.grid_size, self.grid_size))
-        
+        self.assertEqual(
+            self.builder.X.shape, (self.grid_size, self.grid_size, self.grid_size)
+        )
+        self.assertEqual(
+            self.builder.Y.shape, (self.grid_size, self.grid_size, self.grid_size)
+        )
+        self.assertEqual(
+            self.builder.Z.shape, (self.grid_size, self.grid_size, self.grid_size)
+        )
+        self.assertEqual(
+            self.builder.R.shape, (self.grid_size, self.grid_size, self.grid_size)
+        )
+
         # Check R is non-negative
         self.assertTrue(xp.all(self.builder.R >= 0))
 
     def test_build_field(self) -> None:
         """Test field building."""
         xp = self.backend.get_array_module()
-        
+
         # Create simple direction field
         n_x = xp.zeros((self.grid_size, self.grid_size, self.grid_size))
         n_y = xp.zeros((self.grid_size, self.grid_size, self.grid_size))
         n_z = xp.ones((self.grid_size, self.grid_size, self.grid_size))
-        
+
         profile = RadialProfile("skyrmion", 1.0, math.pi, self.backend)
 
         field = self.builder.build_field((n_x, n_y, n_z), profile=profile)
@@ -237,17 +257,25 @@ class TestSU2FieldOperations(unittest.TestCase):
         self.backend = ArrayBackend()
         self.dx = 0.1
         self.operations = SU2FieldOperations(self.dx, self.backend)
-        
+
         # Create test field
         self.grid_size = 8
         self.box_size = 2.0
         xp = self.backend.get_array_module()
-        
+
         # Simple field: U = I (identity)
-        self.u_00 = xp.ones((self.grid_size, self.grid_size, self.grid_size), dtype=complex)
-        self.u_01 = xp.zeros((self.grid_size, self.grid_size, self.grid_size), dtype=complex)
-        self.u_10 = xp.zeros((self.grid_size, self.grid_size, self.grid_size), dtype=complex)
-        self.u_11 = xp.ones((self.grid_size, self.grid_size, self.grid_size), dtype=complex)
+        self.u_00 = xp.ones(
+            (self.grid_size, self.grid_size, self.grid_size), dtype=complex
+        )
+        self.u_01 = xp.zeros(
+            (self.grid_size, self.grid_size, self.grid_size), dtype=complex
+        )
+        self.u_10 = xp.zeros(
+            (self.grid_size, self.grid_size, self.grid_size), dtype=complex
+        )
+        self.u_11 = xp.ones(
+            (self.grid_size, self.grid_size, self.grid_size), dtype=complex
+        )
 
         self.field = SU2Field(
             u_00=self.u_00,
@@ -302,17 +330,25 @@ class TestSU2FieldValidator(unittest.TestCase):
         """Set up test fixtures."""
         self.backend = ArrayBackend()
         self.validator = SU2FieldValidator(backend=self.backend)
-        
+
         # Create test field
         self.grid_size = 8
         self.box_size = 2.0
         xp = self.backend.get_array_module()
-        
+
         # Identity field
-        self.u_00 = xp.ones((self.grid_size, self.grid_size, self.grid_size), dtype=complex)
-        self.u_01 = xp.zeros((self.grid_size, self.grid_size, self.grid_size), dtype=complex)
-        self.u_10 = xp.zeros((self.grid_size, self.grid_size, self.grid_size), dtype=complex)
-        self.u_11 = xp.ones((self.grid_size, self.grid_size, self.grid_size), dtype=complex)
+        self.u_00 = xp.ones(
+            (self.grid_size, self.grid_size, self.grid_size), dtype=complex
+        )
+        self.u_01 = xp.zeros(
+            (self.grid_size, self.grid_size, self.grid_size), dtype=complex
+        )
+        self.u_10 = xp.zeros(
+            (self.grid_size, self.grid_size, self.grid_size), dtype=complex
+        )
+        self.u_11 = xp.ones(
+            (self.grid_size, self.grid_size, self.grid_size), dtype=complex
+        )
 
         self.field = SU2Field(
             u_00=self.u_00,
@@ -368,7 +404,7 @@ class TestSU2Fields(unittest.TestCase):
         self.assertEqual(self.su2_fields.grid_size, self.grid_size)
         self.assertEqual(self.su2_fields.box_size, self.box_size)
         self.assertEqual(self.su2_fields.dx, self.box_size / self.grid_size)
-        
+
         self.assertIsInstance(self.su2_fields.builder, SU2FieldBuilder)
         self.assertIsInstance(self.su2_fields.operations, SU2FieldOperations)
         self.assertIsInstance(self.su2_fields.validator, SU2FieldValidator)
@@ -387,11 +423,11 @@ class TestSU2Fields(unittest.TestCase):
     def test_get_backend_info(self) -> None:
         """Test backend information."""
         info = self.su2_fields.get_backend_info()
-        
+
         self.assertIn("backend", info)
         self.assertIn("cuda_status", info)
         self.assertIn("cuda_available", info)
-        
+
         self.assertIsInstance(info["backend"], str)
         self.assertIsInstance(info["cuda_status"], str)
         self.assertIsInstance(info["cuda_available"], str)
@@ -404,7 +440,7 @@ class TestSU2Fields(unittest.TestCase):
         u_01 = xp.zeros((self.grid_size, self.grid_size, self.grid_size), dtype=complex)
         u_10 = xp.zeros((self.grid_size, self.grid_size, self.grid_size), dtype=complex)
         u_11 = xp.ones((self.grid_size, self.grid_size, self.grid_size), dtype=complex)
-        
+
         field = SU2Field(
             u_00=u_00,
             u_01=u_01,
@@ -414,7 +450,7 @@ class TestSU2Fields(unittest.TestCase):
             box_size=self.box_size,
             backend=self.su2_fields.backend,
         )
-        
+
         stats = self.su2_fields.get_field_statistics(field)
 
         self.assertIn("mean_determinant", stats)
@@ -442,11 +478,12 @@ class TestSU2FieldsIntegration(unittest.TestCase):
 
     def test_full_workflow(self) -> None:
         """Test complete workflow from field creation to validation."""
+
         # Create mock torus configuration
         class MockTorusConfig:
             def __init__(self, backend):
                 self.backend = backend
-                
+
             def get_field_direction(self, X, Y, Z):
                 xp = self.backend.get_array_module()
                 # Simple radial field
@@ -455,29 +492,27 @@ class TestSU2FieldsIntegration(unittest.TestCase):
                 n_y = Y / (R + 1e-10)
                 n_z = Z / (R + 1e-10)
                 return n_x, n_y, n_z
-        
+
         torus_config = MockTorusConfig(self.su2_fields.backend)
-        
+
         # Create field from torus configuration
-        field = self.su2_fields.create_field_from_torus(
-            torus_config, "skyrmion", 1.0
-        )
-        
+        field = self.su2_fields.create_field_from_torus(torus_config, "skyrmion", 1.0)
+
         # Validate field
         validation_results = self.su2_fields.validate_field(field)
-        
+
         # Compute derivatives
         derivatives = self.su2_fields.compute_field_derivatives(field)
-        
+
         # Get statistics
         stats = self.su2_fields.get_field_statistics(field)
-        
+
         # Check results
         self.assertIsInstance(field, SU2Field)
         self.assertIsInstance(validation_results, dict)
         self.assertIsInstance(derivatives, dict)
         self.assertIsInstance(stats, dict)
-        
+
         # Field should be valid
         self.assertTrue(validation_results["unitary"])
         self.assertTrue(validation_results["determinant"])

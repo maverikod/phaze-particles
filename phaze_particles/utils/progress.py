@@ -36,7 +36,11 @@ class ProgressBar:
     """
 
     def __init__(
-        self, total: int, description: str = "Progress", width: int = 50, callback: Optional[Callable] = None
+        self,
+        total: int,
+        description: str = "Progress",
+        width: int = 50,
+        callback: Optional[Callable] = None,
     ):
         """
         Initialize progress bar.
@@ -73,7 +77,9 @@ class ProgressBar:
         Args:
             current: Current progress value
         """
-        self.current = max(0, min(current, self.total))  # Ensure non-negative and not exceeding total
+        self.current = max(
+            0, min(current, self.total)
+        )  # Ensure non-negative and not exceeding total
         self._display()
 
     def increment(self, amount: int = 1) -> None:
@@ -252,9 +258,7 @@ class ProgressLogger:
 
 
 @contextmanager
-def progress_tracker(
-    total: int, description: str = "Processing", use_bar: bool = True
-):
+def progress_tracker(total: int, description: str = "Processing", use_bar: bool = True):
     """
     Context manager for progress tracking.
 
@@ -351,7 +355,7 @@ class PerformanceMonitor:
         """Enter context manager."""
         self.start()
         return self
-    
+
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Exit context manager."""
         self.stop()
@@ -359,7 +363,7 @@ class PerformanceMonitor:
     def start_timing(self, name: str) -> None:
         """
         Start timing a specific operation.
-        
+
         Args:
             name: Name of the operation
         """
@@ -368,17 +372,17 @@ class PerformanceMonitor:
     def stop_timing(self, name: str) -> float:
         """
         Stop timing a specific operation.
-        
+
         Args:
             name: Name of the operation
-            
+
         Returns:
             Duration in seconds
         """
         start_key = f"{name}_start"
         if start_key not in self.metrics:
             return 0.0
-        
+
         duration = time.time() - self.metrics[start_key]
         self.metrics[f"{name}_duration"] = duration
         return duration
@@ -386,10 +390,10 @@ class PerformanceMonitor:
     def end_timing(self, name: str) -> float:
         """
         End timing a specific operation (alias for stop_timing).
-        
+
         Args:
             name: Name of the operation
-            
+
         Returns:
             Duration in seconds
         """
@@ -398,7 +402,7 @@ class PerformanceMonitor:
     def record_metric(self, name: str, value: Any) -> None:
         """
         Record a performance metric.
-        
+
         Args:
             name: Metric name
             value: Metric value
@@ -417,12 +421,12 @@ class PerformanceMonitor:
     @property
     def timing(self) -> Dict[str, float]:
         """Get timing metrics."""
-        return {k: v for k, v in self.metrics.items() if k.endswith('_duration')}
+        return {k: v for k, v in self.metrics.items() if k.endswith("_duration")}
 
     def generate_report(self) -> str:
         """
         Generate performance report.
-        
+
         Returns:
             Formatted performance report
         """
@@ -438,15 +442,17 @@ class PerformanceMonitor:
 class TimeEstimator:
     """
     Time estimation utility for progress tracking.
-    
+
     Provides accurate time estimation based on current progress
     and historical data.
     """
-    
+
     def __init__(self):
         """Initialize time estimator."""
         self.start_time = time.time()
-        self.checkpoints: List[Tuple[float, float]] = [(0.0, self.start_time)]  # (progress, timestamp)
+        self.checkpoints: List[tuple[float, float]] = [
+            (0.0, self.start_time)
+        ]  # (progress, timestamp)
         self.last_progress = 0.0
         self.last_time = self.start_time
 
@@ -458,86 +464,86 @@ class TimeEstimator:
         self.checkpoints = [(0.0, self.start_time)]
         self.last_progress = 0.0
         self.last_time = self.start_time
-    
+
     def update(self, progress: float) -> None:
         """
         Update progress for time estimation.
-        
+
         Args:
             progress: Current progress (0.0 to 1.0)
         """
         current_time = time.time()
-        
+
         # Only add checkpoint if progress has increased significantly
         if progress > self.last_progress + 0.01:  # 1% threshold
             self.checkpoints.append((progress, current_time))
             self.last_progress = progress
             self.last_time = current_time
-    
+
     def update_progress(self, progress: float) -> None:
         """
         Update progress for time estimation (alias for update).
-        
+
         Args:
             progress: Current progress (0.0 to 1.0)
         """
         self.update(progress)
-    
+
     def estimate_remaining(self, current_progress: float) -> float:
         """
         Estimate remaining time.
-        
+
         Args:
             current_progress: Current progress (0.0 to 1.0)
-            
+
         Returns:
             Estimated remaining time in seconds
         """
         if current_progress <= 0:
             return None
-        
+
         if current_progress >= 1.0:
             return 0.0
-        
+
         current_time = time.time()
         elapsed = current_time - self.start_time
-        
+
         # Simple linear estimation
         if current_progress > 0:
             total_estimated = elapsed / current_progress
             remaining = total_estimated - elapsed
             return max(0, remaining)
-        
+
         return 0.0
-    
+
     @property
     def estimated_remaining_time(self) -> float:
         """Get estimated remaining time."""
         return self.estimate_remaining(self.last_progress)
-    
+
     @property
     def estimated_total_time(self) -> float:
         """Get estimated total time."""
         return self.estimate_total(self.last_progress)
-    
+
     def estimate_total(self, current_progress: float) -> float:
         """
         Estimate total time.
-        
+
         Args:
             current_progress: Current progress (0.0 to 1.0)
-            
+
         Returns:
             Estimated total time in seconds
         """
         if current_progress <= 0:
             return None
-        
+
         current_time = time.time()
         elapsed = current_time - self.start_time
-        
+
         return elapsed / current_progress
-    
+
     def reset(self) -> None:
         """Reset time estimator."""
         self.start_time = time.time()
@@ -549,32 +555,32 @@ class TimeEstimator:
 class ProgressCallback:
     """
     Progress callback system for monitoring progress updates.
-    
+
     Allows registration of multiple callbacks that are called
     when progress is updated.
     """
-    
+
     def __init__(self):
         """Initialize progress callback system."""
         self.callbacks: List[Callable[[int, int, float], None]] = []
         self.error_handlers: List[Callable[[Exception], None]] = []
-    
+
     def add_callback(self, callback: Callable[[int, int, float], None]) -> None:
         """
         Add progress callback.
-        
+
         Args:
             callback: Callback function (current, total, percentage)
         """
         self.callbacks.append(callback)
-    
+
     def remove_callback(self, callback: Callable[[int, int, float], None]) -> bool:
         """
         Remove progress callback.
-        
+
         Args:
             callback: Callback function to remove
-            
+
         Returns:
             True if callback was removed, False if not found
         """
@@ -583,20 +589,22 @@ class ProgressCallback:
             return True
         except ValueError:
             return False
-    
+
     def add_error_handler(self, handler: Callable[[Exception], None]) -> None:
         """
         Add error handler for callback errors.
-        
+
         Args:
             handler: Error handler function
         """
         self.error_handlers.append(handler)
-    
-    def execute_callbacks(self, current: int, total: int = 100, percentage: float = None) -> None:
+
+    def execute_callbacks(
+        self, current: int, total: int = 100, percentage: float = None
+    ) -> None:
         """
         Execute all registered callbacks.
-        
+
         Args:
             current: Current progress
             total: Total progress (default: 100)
@@ -604,7 +612,7 @@ class ProgressCallback:
         """
         if percentage is None:
             percentage = (current / total) * 100.0 if total > 0 else 0.0
-        
+
         for callback in self.callbacks:
             try:
                 callback(current, total, percentage)

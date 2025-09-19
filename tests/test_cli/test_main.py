@@ -61,7 +61,18 @@ def test_proton_static_command():
     cli = PhazeParticlesCLI()
 
     # Test with valid configuration
-    result = cli.run(["proton", "static", "--config-type", "120deg", "--grid-size", "32", "--box-size", "2.0"])
+    result = cli.run(
+        [
+            "proton",
+            "static",
+            "--config-type",
+            "120deg",
+            "--grid-size",
+            "32",
+            "--box-size",
+            "2.0",
+        ]
+    )
     # Command may fail due to model execution issues, but should not crash
     assert result in [0, 1]  # Accept both success and expected failure
 

@@ -99,7 +99,7 @@ class TestPauliMatrices(unittest.TestCase):
         for i in range(1, 4):
             sigma = self.pauli.get_sigma(i)
             # Check that it's either numpy or cupy array
-            self.assertTrue(hasattr(sigma, 'shape') and hasattr(sigma, 'dtype'))
+            self.assertTrue(hasattr(sigma, "shape") and hasattr(sigma, "dtype"))
             self.assertEqual(sigma.shape, (2, 2))
 
     def test_get_sigma_invalid_index(self) -> None:
@@ -117,7 +117,7 @@ class TestPauliMatrices(unittest.TestCase):
 
         for sigma in sigmas:
             # Check that it's either numpy or cupy array
-            self.assertTrue(hasattr(sigma, 'shape') and hasattr(sigma, 'dtype'))
+            self.assertTrue(hasattr(sigma, "shape") and hasattr(sigma, "dtype"))
             self.assertEqual(sigma.shape, (2, 2))
 
 

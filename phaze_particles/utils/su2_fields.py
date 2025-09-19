@@ -113,8 +113,11 @@ class RadialProfile:
         """
         # Ensure profile_type is a string
         if not isinstance(profile_type, str):
-            raise ValueError(f"profile_type must be a string, got {type(profile_type)}: {profile_type}")
-        
+            raise ValueError(
+                f"profile_type must be a string, got {type(profile_type)}: "
+                f"{profile_type}"
+            )
+
         self.profile_type = profile_type
         self.scale = scale
         self.center_value = center_value
@@ -132,7 +135,7 @@ class RadialProfile:
         """
         # Ensure profile_type is a string
         profile_type_str = str(self.profile_type)
-        
+
         if profile_type_str == "skyrmion":
             return self._skyrmion_profile(r)
         elif profile_type_str == "exponential":
@@ -142,7 +145,10 @@ class RadialProfile:
         elif profile_type_str == "tanh":
             return self._tanh_profile(r)
         else:
-            raise ValueError(f"Unknown profile type: {profile_type_str} (type: {type(self.profile_type)})")
+            raise ValueError(
+                f"Unknown profile type: {profile_type_str} "
+                f"(type: {type(self.profile_type)})"
+            )
 
     def _skyrmion_profile(self, r: Any) -> Any:
         """
@@ -179,7 +185,7 @@ class RadialProfile:
             Profile f(r) = center_value * (1 + r/scale)⁻¹
         """
         return self.center_value / (1 + r / self.scale)
-    
+
     def _tanh_profile(self, r: Any) -> Any:
         """
         Hyperbolic tangent profile.
