@@ -8,9 +8,7 @@ Email: vasilyvz@gmail.com
 
 import csv
 import json
-import os
 import shutil
-import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
@@ -27,7 +25,7 @@ def save_results(
     Args:
         results: Results dictionary to save
         output_path: Output file path
-        format: Output format ('json' or 'yaml')
+        format: Output format ('json', 'csv', or 'yaml')
     """
     output_file = Path(output_path)
     output_file.parent.mkdir(parents=True, exist_ok=True)
@@ -35,6 +33,13 @@ def save_results(
     if format.lower() == "json":
         with open(output_file, "w") as f:
             json.dump(results, f, indent=2)
+    elif format.lower() == "csv":
+        # Save as CSV with UTF-8 BOM for Excel compatibility
+        with open(output_file, "w", newline="", encoding="utf-8-sig") as f:
+            if results:
+                writer = csv.DictWriter(f, fieldnames=results.keys())
+                writer.writeheader()
+                writer.writerow(results)
     elif format.lower() == "yaml":
         # TODO: Implement YAML saving when yaml package is available
         raise NotImplementedError("YAML format not yet implemented")

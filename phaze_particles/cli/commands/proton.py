@@ -351,11 +351,10 @@ class ProtonStaticCommand(BaseCommand):
                 if results.validation_score is not None:
                     print(f"Validation Score: {results.validation_score:.3f}")
 
-            # Save results to CSV
-            if save_data:
-                self._save_results_to_csv(
-                    results, output_dir, config_type, grid_size, box_size
-                )
+            # Save results to CSV (always save by default)
+            self._save_results_to_csv(
+                results, output_dir, config_type, grid_size, box_size
+            )
 
             # Save model results
             results_path = os.path.join(output_dir, "model_results.json")
@@ -421,7 +420,7 @@ class ProtonStaticCommand(BaseCommand):
             }
 
             # Save CSV
-            save_results(csv_data, csv_path)
+            save_results(csv_data, csv_path, format="csv")
             print(f"CSV results saved to: {csv_path}")
 
         except Exception as e:

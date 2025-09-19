@@ -1,11 +1,11 @@
 {
   "status": "validated",
-  "execution_time": 1.253166675567627,
+  "execution_time": 1.5122835636138916,
   "iterations": 2,
   "converged": true,
   "proton_mass": 16.08212785803747,
   "charge_radius": 0.8975627961748491,
-  "magnetic_moment": 1.458755736957948e-14,
+  "magnetic_moment": -6.3053228304083454e-21,
   "electric_charge": 1.0,
   "baryon_number": -0.8105694691387022,
   "energy_balance": 0.5,
@@ -15,7 +15,7 @@
   "config": {
     "grid_size": 16,
     "box_size": 2.0,
-    "torus_config": "cartesian",
+    "torus_config": "clover",
     "R_torus": 1.0,
     "r_torus": 0.2,
     "profile_type": "tanh",
