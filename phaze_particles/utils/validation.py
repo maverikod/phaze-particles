@@ -529,7 +529,7 @@ class ValidationReportGenerator:
                     "experimental_error": result.experimental_error,
                     "deviation": result.deviation,
                     "deviation_percent": result.deviation_percent,
-                    "within_tolerance": result.within_tolerance,
+                    "within_tolerance": bool(result.within_tolerance),
                     "status": result.status.value,
                 }
             )

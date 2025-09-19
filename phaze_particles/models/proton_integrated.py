@@ -222,6 +222,11 @@ class ProtonModel:
         # Initialize CUDA manager
         self.cuda_manager = get_cuda_manager()
 
+        # Initialize backend
+        from phaze_particles.utils.mathematical_foundations import ArrayBackend
+
+        self.backend = ArrayBackend()
+
         # Initialize components
         self._initialize_components()
 
@@ -244,7 +249,9 @@ class ProtonModel:
 
             # SU(2) fields
             self.su2_field_builder = SU2FieldBuilder(
-                grid_size=self.config.grid_size, box_size=self.config.box_size
+                grid_size=self.config.grid_size,
+                box_size=self.config.box_size,
+                backend=self.backend,
             )
 
             # Energy densities
@@ -254,11 +261,14 @@ class ProtonModel:
                 c2=self.config.c2,
                 c4=self.config.c4,
                 c6=self.config.c6,
+                backend=self.backend,
             )
 
             # Physical quantities
             self.physics_calculator = PhysicalQuantitiesCalculator(
-                grid_size=self.config.grid_size, box_size=self.config.box_size
+                grid_size=self.config.grid_size,
+                box_size=self.config.box_size,
+                backend=self.backend,
             )
 
             # Numerical methods
@@ -342,13 +352,20 @@ class ProtonModel:
             if self.status != ModelStatus.GEOMETRY_CREATED:
                 raise ValueError("Geometry must be created first")
 
+            # Create profile for field building
+            from phaze_particles.utils.su2_fields import RadialProfile
+
+            self.profile = RadialProfile(
+                self.config.profile_type,
+                self.config.r_scale,
+                self.config.f_0,
+                self.backend,
+            )
+
             # Build SU(2) field
             self.su2_field = self.su2_field_builder.build_field(
                 field_direction=self.field_direction,
-                profile_type=self.config.profile_type,
-                f_0=self.config.f_0,
-                f_inf=self.config.f_inf,
-                r_scale=self.config.r_scale,
+                profile=self.profile,
             )
 
             self.status = ModelStatus.FIELDS_BUILT
@@ -358,6 +375,10 @@ class ProtonModel:
         except Exception as e:
             self.status = ModelStatus.FAILED
             self.error_message = f"Field building error: {str(e)}"
+            print(f"Field building error details: {str(e)}")
+            import traceback
+
+            traceback.print_exc()
             return False
 
     def calculate_energy(self) -> bool:
@@ -371,8 +392,11 @@ class ProtonModel:
             if self.status != ModelStatus.FIELDS_BUILT:
                 raise ValueError("Fields must be built first")
 
-            # Calculate energy density
+            # Calculate energy density and get field derivatives
             self.energy_density = self.energy_calculator.calculate_energy_density(
+                su2_field=self.su2_field
+            )
+            self.field_derivatives = self.energy_calculator.calculate_field_derivatives(
                 su2_field=self.su2_field
             )
 
@@ -383,6 +407,10 @@ class ProtonModel:
         except Exception as e:
             self.status = ModelStatus.FAILED
             self.error_message = f"Energy calculation error: {str(e)}"
+            print(f"Energy calculation error details: {str(e)}")
+            import traceback
+
+            traceback.print_exc()
             return False
 
     def calculate_physics(self) -> bool:
@@ -398,7 +426,10 @@ class ProtonModel:
 
             # Calculate physical quantities
             self.physical_quantities = self.physics_calculator.calculate_quantities(
-                su2_field=self.su2_field, energy_density=self.energy_density
+                su2_field=self.su2_field,
+                energy_density=self.energy_density,
+                profile=self.profile,
+                field_derivatives=self.field_derivatives,
             )
 
             self.status = ModelStatus.PHYSICS_CALCULATED
@@ -408,6 +439,10 @@ class ProtonModel:
         except Exception as e:
             self.status = ModelStatus.FAILED
             self.error_message = f"Physics calculation error: {str(e)}"
+            print(f"Physics calculation error details: {str(e)}")
+            import traceback
+
+            traceback.print_exc()
             return False
 
     def optimize(self) -> bool:
@@ -428,18 +463,17 @@ class ProtonModel:
             def gradient_function(U: Any) -> np.ndarray:
                 return self.energy_calculator.calculate_gradient(U)
 
-            def constraint_functions(U: Any) -> Dict[str, float]:
-                return {
-                    "baryon_number": (
-                        self.physics_calculator.calculate_baryon_number(U)
-                    ),
-                    "electric_charge": (
-                        self.physics_calculator.calculate_electric_charge(U)
-                    ),
-                    "energy_balance": (
-                        self.energy_calculator.calculate_energy_balance(U)
-                    ),
-                }
+            constraint_functions = {
+                "baryon_number": lambda U: (
+                    self.physics_calculator.calculate_baryon_number(U)
+                ),
+                "electric_charge": lambda U: (
+                    self.physics_calculator.calculate_electric_charge(U)
+                ),
+                "energy_balance": lambda U: (
+                    self.energy_calculator.calculate_energy_balance(U)
+                ),
+            }
 
             # Relaxation
             optimization_results = self.relaxation_solver.solve(
@@ -452,9 +486,20 @@ class ProtonModel:
             # Update field
             self.su2_field = optimization_results["solution"]
 
+            # Recalculate field derivatives and energy density
+            self.field_derivatives = self.energy_calculator.calculate_field_derivatives(
+                su2_field=self.su2_field
+            )
+            self.energy_density = self.energy_calculator.calculate_energy_density(
+                su2_field=self.su2_field
+            )
+
             # Recalculate physical quantities
             self.physical_quantities = self.physics_calculator.calculate_quantities(
-                su2_field=self.su2_field, energy_density=self.energy_density
+                su2_field=self.su2_field,
+                energy_density=self.energy_density,
+                profile=self.profile,
+                field_derivatives=self.field_derivatives,
             )
 
             self.status = ModelStatus.OPTIMIZED
@@ -468,6 +513,10 @@ class ProtonModel:
         except Exception as e:
             self.status = ModelStatus.FAILED
             self.error_message = f"Optimization error: {str(e)}"
+            print(f"Optimization error details: {str(e)}")
+            import traceback
+
+            traceback.print_exc()
             return False
 
     def validate(self) -> bool:
@@ -518,6 +567,10 @@ class ProtonModel:
         except Exception as e:
             self.status = ModelStatus.FAILED
             self.error_message = f"Validation error: {str(e)}"
+            print(f"Validation error details: {str(e)}")
+            import traceback
+
+            traceback.print_exc()
             return False
 
     def run(self) -> ModelResults:

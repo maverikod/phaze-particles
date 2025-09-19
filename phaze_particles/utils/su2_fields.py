@@ -30,6 +30,9 @@ class SU2Field:
 
     def __post_init__(self) -> None:
         """Validate field after initialization."""
+        # Skip validation for gradient fields (they don't need to be SU(2))
+        if hasattr(self, "_skip_validation") and self._skip_validation:
+            return
         if not self._is_su2_field():
             raise ValueError("Field is not a valid SU(2) field")
 
@@ -89,6 +92,33 @@ class SU2Field:
             Determinant at each point
         """
         return self.u_00 * self.u_11 - self.u_01 * self.u_10
+
+    def copy(self) -> "SU2Field":
+        """
+        Create a copy of the SU(2) field.
+
+        Returns:
+            Copy of the field
+        """
+        return SU2Field(
+            u_00=self.u_00.copy(),
+            u_01=self.u_01.copy(),
+            u_10=self.u_10.copy(),
+            u_11=self.u_11.copy(),
+            grid_size=self.grid_size,
+            box_size=self.box_size,
+            backend=self.backend,
+        )
+
+    @property
+    def shape(self) -> tuple:
+        """
+        Get field shape.
+
+        Returns:
+            Field shape tuple
+        """
+        return self.u_00.shape
 
 
 class RadialProfile:
@@ -322,6 +352,9 @@ class SU2FieldBuilder:
             n_x = field_direction.n_x
             n_y = field_direction.n_y
             n_z = field_direction.n_z
+        elif hasattr(field_direction, "get_field_direction"):
+            # field_direction is a torus configuration object
+            n_x, n_y, n_z = field_direction.get_field_direction(self.X, self.Y, self.Z)
         elif isinstance(field_direction, (tuple, list)) and len(field_direction) == 3:
             # field_direction is a tuple/list of (n_x, n_y, n_z)
             n_x, n_y, n_z = field_direction

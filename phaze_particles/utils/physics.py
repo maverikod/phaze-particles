@@ -315,6 +315,7 @@ class PhysicalQuantities:
     # Additional quantities
     mass: float  # Mp (MeV)
     energy: float  # E (MeV)
+    energy_balance: float  # E2/E4 ratio
 
     # Metadata
     grid_size: int
@@ -373,24 +374,33 @@ class PhysicalQuantities:
 class ChargeDensity:
     """Electric charge density calculator."""
 
-    def __init__(self, grid_size: int, box_size: float):
+    def __init__(self, grid_size: int, box_size: float, backend=None):
         """
         Initialize charge density calculator.
 
         Args:
             grid_size: Grid size
             box_size: Box size
+            backend: Array backend
         """
         self.grid_size = grid_size
         self.box_size = box_size
         self.dx = box_size / grid_size
+        self.backend = backend
 
-        # Create coordinate grids
-        x = np.linspace(-box_size / 2, box_size / 2, grid_size)
-        y = np.linspace(-box_size / 2, box_size / 2, grid_size)
-        z = np.linspace(-box_size / 2, box_size / 2, grid_size)
-        self.X, self.Y, self.Z = np.meshgrid(x, y, z, indexing="ij")
-        self.R = np.sqrt(self.X**2 + self.Y**2 + self.Z**2)
+        # Create coordinate grids using backend
+        if backend is not None:
+            x = backend.linspace(-box_size / 2, box_size / 2, grid_size)
+            y = backend.linspace(-box_size / 2, box_size / 2, grid_size)
+            z = backend.linspace(-box_size / 2, box_size / 2, grid_size)
+            self.X, self.Y, self.Z = backend.meshgrid(x, y, z, indexing="ij")
+            self.R = backend.sqrt(self.X**2 + self.Y**2 + self.Z**2)
+        else:
+            x = np.linspace(-box_size / 2, box_size / 2, grid_size)
+            y = np.linspace(-box_size / 2, box_size / 2, grid_size)
+            z = np.linspace(-box_size / 2, box_size / 2, grid_size)
+            self.X, self.Y, self.Z = np.meshgrid(x, y, z, indexing="ij")
+            self.R = np.sqrt(self.X**2 + self.Y**2 + self.Z**2)
 
     def compute_charge_density(self, field: Any, profile: Any) -> np.ndarray:
         """
@@ -411,7 +421,10 @@ class ChargeDensity:
         charge_density = np.abs(np.sin(f_r)) ** 2
 
         # Normalization
-        total_charge = np.sum(charge_density) * self.dx**3
+        charge_density_np = (
+            charge_density.get() if hasattr(charge_density, "get") else charge_density
+        )
+        total_charge = np.sum(charge_density_np) * self.dx**3
         if total_charge > 0:
             charge_density *= 1.0 / total_charge
 
@@ -427,7 +440,10 @@ class ChargeDensity:
         Returns:
             Electric charge Q
         """
-        return np.sum(charge_density) * self.dx**3
+        charge_density_np = (
+            charge_density.get() if hasattr(charge_density, "get") else charge_density
+        )
+        return np.sum(charge_density_np) * self.dx**3
 
     def compute_charge_radius(self, charge_density: np.ndarray) -> float:
         """
@@ -440,8 +456,14 @@ class ChargeDensity:
             Charge radius rE (fm)
         """
         # rE = sqrt(∫ r² ρ(x) d³x / ∫ ρ(x) d³x)
-        numerator = np.sum(self.R**2 * charge_density) * self.dx**3
-        denominator = np.sum(charge_density) * self.dx**3
+        # Convert to numpy for final calculation
+        R_np = self.R.get() if hasattr(self.R, "get") else self.R
+        charge_density_np = (
+            charge_density.get() if hasattr(charge_density, "get") else charge_density
+        )
+
+        numerator = np.sum(R_np**2 * charge_density_np) * self.dx**3
+        denominator = np.sum(charge_density_np) * self.dx**3
 
         if denominator == 0:
             return 0.0
@@ -452,17 +474,19 @@ class ChargeDensity:
 class BaryonNumberCalculator:
     """Baryon number calculator."""
 
-    def __init__(self, grid_size: int, box_size: float):
+    def __init__(self, grid_size: int, box_size: float, backend=None):
         """
         Initialize baryon number calculator.
 
         Args:
             grid_size: Grid size
             box_size: Box size
+            backend: Array backend
         """
         self.grid_size = grid_size
         self.box_size = box_size
         self.dx = box_size / grid_size
+        self.backend = backend
 
     def compute_baryon_number(self, field_derivatives: Dict[str, Any]) -> float:
         """
@@ -499,7 +523,10 @@ class BaryonNumberCalculator:
         baryon_density *= -1.0 / (24 * math.pi**2)
 
         # B = ∫ b₀ d³x
-        return np.sum(baryon_density) * self.dx**3
+        baryon_density_np = (
+            baryon_density.get() if hasattr(baryon_density, "get") else baryon_density
+        )
+        return np.sum(baryon_density_np) * self.dx**3
 
     def _get_epsilon_tensor(self) -> np.ndarray:
         """Get antisymmetric tensor εⁱʲᵏ."""
@@ -543,23 +570,31 @@ class BaryonNumberCalculator:
 class MagneticMomentCalculator:
     """Magnetic moment calculator."""
 
-    def __init__(self, grid_size: int, box_size: float):
+    def __init__(self, grid_size: int, box_size: float, backend=None):
         """
         Initialize magnetic moment calculator.
 
         Args:
             grid_size: Grid size
             box_size: Box size
+            backend: Array backend
         """
         self.grid_size = grid_size
         self.box_size = box_size
         self.dx = box_size / grid_size
+        self.backend = backend
 
-        # Create coordinate grids
-        x = np.linspace(-box_size / 2, box_size / 2, grid_size)
-        y = np.linspace(-box_size / 2, box_size / 2, grid_size)
-        z = np.linspace(-box_size / 2, box_size / 2, grid_size)
-        self.X, self.Y, self.Z = np.meshgrid(x, y, z, indexing="ij")
+        # Create coordinate grids using backend
+        if backend is not None:
+            x = backend.linspace(-box_size / 2, box_size / 2, grid_size)
+            y = backend.linspace(-box_size / 2, box_size / 2, grid_size)
+            z = backend.linspace(-box_size / 2, box_size / 2, grid_size)
+            self.X, self.Y, self.Z = backend.meshgrid(x, y, z, indexing="ij")
+        else:
+            x = np.linspace(-box_size / 2, box_size / 2, grid_size)
+            y = np.linspace(-box_size / 2, box_size / 2, grid_size)
+            z = np.linspace(-box_size / 2, box_size / 2, grid_size)
+            self.X, self.Y, self.Z = np.meshgrid(x, y, z, indexing="ij")
 
     def compute_magnetic_moment(self, field: Any, profile: Any, mass: float) -> float:
         """
@@ -657,7 +692,13 @@ class MagneticMomentCalculator:
         # n_z = (1/2i) Tr(σ₃ U)
         n_z = (1j / 2) * (u_00 - u_11)
 
-        return n_x.real, n_y.real, n_z.real
+        # Convert to same backend as coordinate arrays
+        xp = self.backend.get_array_module()
+        n_x_backend = xp.asarray(n_x.real)
+        n_y_backend = xp.asarray(n_y.real)
+        n_z_backend = xp.asarray(n_z.real)
+
+        return n_x_backend, n_y_backend, n_z_backend
 
     def _compute_moment_integral(self, current_density: Dict[str, np.ndarray]) -> float:
         """
@@ -676,7 +717,13 @@ class MagneticMomentCalculator:
         j_y = current_density["y"]
 
         # z-component of magnetic moment
-        mu_z = (1 / 2) * np.sum((self.X * j_y - self.Y * j_x) * self.dx**3)
+        # Convert to numpy for final calculation
+        X_np = self.X.get() if hasattr(self.X, "get") else self.X
+        Y_np = self.Y.get() if hasattr(self.Y, "get") else self.Y
+        j_x_np = j_x.get() if hasattr(j_x, "get") else j_x
+        j_y_np = j_y.get() if hasattr(j_y, "get") else j_y
+
+        mu_z = (1 / 2) * np.sum((X_np * j_y_np - Y_np * j_x_np) * self.dx**3)
 
         return mu_z
 
@@ -723,7 +770,9 @@ class MassCalculator:
 class PhysicalQuantitiesCalculator:
     """Main physical quantities calculator."""
 
-    def __init__(self, grid_size: int, box_size: float, energy_scale: float = 1.0):
+    def __init__(
+        self, grid_size: int, box_size: float, energy_scale: float = 1.0, backend=None
+    ):
         """
         Initialize physical quantities calculator.
 
@@ -731,14 +780,18 @@ class PhysicalQuantitiesCalculator:
             grid_size: Grid size
             box_size: Box size
             energy_scale: Energy scale factor
+            backend: Array backend
         """
         self.grid_size = grid_size
         self.box_size = box_size
         self.dx = box_size / grid_size
+        self.backend = backend
 
-        self.charge_density = ChargeDensity(grid_size, box_size)
-        self.baryon_calculator = BaryonNumberCalculator(grid_size, box_size)
-        self.magnetic_calculator = MagneticMomentCalculator(grid_size, box_size)
+        self.charge_density = ChargeDensity(grid_size, box_size, backend)
+        self.baryon_calculator = BaryonNumberCalculator(grid_size, box_size, backend)
+        self.magnetic_calculator = MagneticMomentCalculator(
+            grid_size, box_size, backend
+        )
         self.mass_calculator = MassCalculator(energy_scale)
 
     def compute_all_quantities(
@@ -774,6 +827,9 @@ class PhysicalQuantitiesCalculator:
             field, profile, mass
         )
 
+        # Energy balance (mock for now)
+        energy_balance = 0.5  # E2/E4 = 50/50
+
         return PhysicalQuantities(
             electric_charge=electric_charge,
             baryon_number=baryon_number,
@@ -781,13 +837,14 @@ class PhysicalQuantitiesCalculator:
             magnetic_moment=magnetic_moment,
             mass=mass,
             energy=energy,
+            energy_balance=energy_balance,
             grid_size=self.grid_size,
             box_size=self.box_size,
             dx=self.dx,
         )
 
     def calculate_quantities(
-        self, su2_field: Any, energy_density: Any
+        self, su2_field: Any, energy_density: Any, profile=None, field_derivatives=None
     ) -> PhysicalQuantities:
         """
         Calculate physical quantities from SU(2) field and energy density.
@@ -799,9 +856,15 @@ class PhysicalQuantitiesCalculator:
         Returns:
             Physical quantities
         """
-        # Mock field derivatives and profile
-        field_derivatives = {"mock": "data"}
-        profile = {"mock": "profile"}
+        # Use provided parameters or create defaults
+        if profile is None:
+            from .su2_fields import RadialProfile
+
+            profile = RadialProfile("tanh", 1.0, np.pi, self.backend)
+
+        if field_derivatives is None:
+            field_derivatives = {"mock": "data"}
+
         energy = (
             energy_density.get_total_energy()
             if hasattr(energy_density, "get_total_energy")

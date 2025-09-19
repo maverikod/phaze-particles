@@ -227,44 +227,77 @@ class GradientDescent:
         """
         xp = self.backend.get_array_module()
 
-        # Convert to appropriate backend arrays if needed
-        if hasattr(U, "get") and self.backend.is_cuda_available:
-            U_backend = U
-        elif self.backend.is_cuda_available:
-            U_backend = xp.asarray(U)
+        # Handle SU2Field objects
+        if hasattr(U, "u_00"):  # SU2Field
+            # Initialize velocity if needed
+            if self.velocity is None:
+                self.velocity = {
+                    "u_00": xp.zeros_like(gradient.u_00),
+                    "u_01": xp.zeros_like(gradient.u_01),
+                    "u_10": xp.zeros_like(gradient.u_10),
+                    "u_11": xp.zeros_like(gradient.u_11),
+                }
+
+            # Update velocity with momentum
+            self.velocity["u_00"] = (
+                self.momentum * self.velocity["u_00"] + self.step_size * gradient.u_00
+            )
+            self.velocity["u_01"] = (
+                self.momentum * self.velocity["u_01"] + self.step_size * gradient.u_01
+            )
+            self.velocity["u_10"] = (
+                self.momentum * self.velocity["u_10"] + self.step_size * gradient.u_10
+            )
+            self.velocity["u_11"] = (
+                self.momentum * self.velocity["u_11"] + self.step_size * gradient.u_11
+            )
+
+            # Update field components
+            U.u_00 = U.u_00 - self.velocity["u_00"]
+            U.u_01 = U.u_01 - self.velocity["u_01"]
+            U.u_10 = U.u_10 - self.velocity["u_10"]
+            U.u_11 = U.u_11 - self.velocity["u_11"]
+
+            return U
         else:
-            U_backend = np.asarray(U)
+            # Convert to appropriate backend arrays if needed
+            if hasattr(U, "get") and self.backend.is_cuda_available:
+                U_backend = U
+            elif self.backend.is_cuda_available:
+                U_backend = xp.asarray(U)
+            else:
+                U_backend = np.asarray(U)
 
-        if hasattr(gradient, "get") and self.backend.is_cuda_available:
-            gradient_backend = gradient
-        elif self.backend.is_cuda_available:
-            gradient_backend = xp.asarray(gradient)
-        else:
-            gradient_backend = np.asarray(gradient)
+            if hasattr(gradient, "get") and self.backend.is_cuda_available:
+                gradient_backend = gradient
+            elif self.backend.is_cuda_available:
+                gradient_backend = xp.asarray(gradient)
+            else:
+                gradient_backend = np.asarray(gradient)
 
-        if self.velocity is None:
-            self.velocity = xp.zeros_like(gradient_backend)
+            if self.velocity is None:
+                self.velocity = xp.zeros_like(gradient_backend)
 
-        # Update velocity with momentum
-        self.velocity = (
-            self.momentum * self.velocity + self.step_size * gradient_backend
-        )
+            # Update velocity with momentum
+            self.velocity = (
+                self.momentum * self.velocity + self.step_size * gradient_backend
+            )
 
-        # Update field
-        U_new = U_backend - self.velocity
+            # Update field
+            U_new = U_backend - self.velocity
 
-        # Project onto SU(2) for each point
-        if U_new.ndim == 5:  # 3D field
-            for i in range(U_new.shape[0]):
-                for j in range(U_new.shape[1]):
-                    for k in range(U_new.shape[2]):
-                        U_new[i, j, k] = self.su2_projection.project_to_su2(
-                            U_new[i, j, k]
-                        )
-        else:  # Single matrix
-            U_new = self.su2_projection.project_to_su2(U_new)
+            # Project onto SU(2) for each point
+            if U_new.ndim == 5:  # 3D field
+                for i in range(U_new.shape[0]):
+                    for j in range(U_new.shape[1]):
+                        for k in range(U_new.shape[2]):
+                            U_new[i, j, k] = self.su2_projection.project_to_su2(
+                                U_new[i, j, k]
+                            )
+            else:  # Single matrix
+                U_new = self.su2_projection.project_to_su2(U_new)
 
-        return U_new
+            return U_new
 
     def reset(self):
         """Reset optimizer state."""

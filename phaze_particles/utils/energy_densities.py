@@ -194,6 +194,7 @@ class EnergyDensityCalculator:
         c2: float = 1.0,
         c4: float = 1.0,
         c6: float = 1.0,
+        backend=None,
     ):
         """
         Initialize calculator.
@@ -202,6 +203,7 @@ class EnergyDensityCalculator:
             grid_size: Grid size
             box_size: Box size
             c2, c4, c6: Skyrme constants
+            backend: Array backend
         """
         self.grid_size = grid_size
         self.box_size = box_size
@@ -209,6 +211,7 @@ class EnergyDensityCalculator:
         self.c2 = c2
         self.c4 = c4
         self.c6 = c6
+        self.backend = backend
 
         self.baryon_density = BaryonDensity()
 
@@ -263,7 +266,22 @@ class EnergyDensityCalculator:
         Returns:
             Energy density
         """
-        # Create mock field derivatives for now
+        # Calculate field derivatives
+        field_derivatives = self.calculate_field_derivatives(su2_field)
+        return self.compute_energy_density(field_derivatives)
+
+    def calculate_field_derivatives(self, su2_field: Any) -> Dict[str, Any]:
+        """
+        Calculate field derivatives from SU(2) field.
+
+        Args:
+            su2_field: SU(2) field
+
+        Returns:
+            Field derivatives dictionary
+        """
+        # For now, create mock data with proper structure
+        # TODO: Implement real field derivative calculations
         field_derivatives = {
             "traces": {
                 "l_squared": np.ones((self.grid_size, self.grid_size, self.grid_size)),
@@ -271,10 +289,29 @@ class EnergyDensityCalculator:
                     (self.grid_size, self.grid_size, self.grid_size)
                 ),
             },
-            "left_currents": {},
+            "left_currents": {
+                "x": {
+                    "l_00": np.ones((self.grid_size, self.grid_size, self.grid_size)),
+                    "l_01": np.ones((self.grid_size, self.grid_size, self.grid_size)),
+                    "l_10": np.ones((self.grid_size, self.grid_size, self.grid_size)),
+                    "l_11": np.ones((self.grid_size, self.grid_size, self.grid_size)),
+                },
+                "y": {
+                    "l_00": np.ones((self.grid_size, self.grid_size, self.grid_size)),
+                    "l_01": np.ones((self.grid_size, self.grid_size, self.grid_size)),
+                    "l_10": np.ones((self.grid_size, self.grid_size, self.grid_size)),
+                    "l_11": np.ones((self.grid_size, self.grid_size, self.grid_size)),
+                },
+                "z": {
+                    "l_00": np.ones((self.grid_size, self.grid_size, self.grid_size)),
+                    "l_01": np.ones((self.grid_size, self.grid_size, self.grid_size)),
+                    "l_10": np.ones((self.grid_size, self.grid_size, self.grid_size)),
+                    "l_11": np.ones((self.grid_size, self.grid_size, self.grid_size)),
+                },
+            },
             "baryon_density": np.ones((self.grid_size, self.grid_size, self.grid_size)),
         }
-        return self.compute_energy_density(field_derivatives)
+        return field_derivatives
 
     def calculate_total_energy(self, su2_field: Any) -> float:
         """
@@ -299,8 +336,28 @@ class EnergyDensityCalculator:
         Returns:
             Energy gradient
         """
-        # Mock gradient calculation
-        return np.random.randn(*su2_field.shape) * 0.01
+        # Mock gradient calculation - return SU2Field with random gradients
+        from .su2_fields import SU2Field
+
+        xp = self.backend.get_array_module() if self.backend else np
+
+        gradient_u_00 = xp.random.randn(*su2_field.shape) * 0.01
+        gradient_u_01 = xp.random.randn(*su2_field.shape) * 0.01
+        gradient_u_10 = xp.random.randn(*su2_field.shape) * 0.01
+        gradient_u_11 = xp.random.randn(*su2_field.shape) * 0.01
+
+        # Create gradient field with validation disabled
+        gradient_field = object.__new__(SU2Field)
+        gradient_field._skip_validation = True
+        gradient_field.u_00 = gradient_u_00
+        gradient_field.u_01 = gradient_u_01
+        gradient_field.u_10 = gradient_u_10
+        gradient_field.u_11 = gradient_u_11
+        gradient_field.grid_size = su2_field.grid_size
+        gradient_field.box_size = su2_field.box_size
+        gradient_field.backend = su2_field.backend
+        gradient_field.__post_init__()
+        return gradient_field
 
     def calculate_energy_balance(self, su2_field: Any) -> float:
         """
