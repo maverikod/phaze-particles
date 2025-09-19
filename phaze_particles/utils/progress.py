@@ -449,6 +449,15 @@ class TimeEstimator:
         self.checkpoints: List[Tuple[float, float]] = []  # (progress, timestamp)
         self.last_progress = 0.0
         self.last_time = self.start_time
+
+    def start(self) -> None:
+        """
+        Start time estimation.
+        """
+        self.start_time = time.time()
+        self.checkpoints = [(0.0, self.start_time)]
+        self.last_progress = 0.0
+        self.last_time = self.start_time
     
     def update(self, progress: float) -> None:
         """

@@ -376,6 +376,21 @@ class ConfigLoader:
             raise ValueError(f"Unsupported configuration format: {file_path.suffix}")
         
         return self._merge_with_defaults(config)
+
+    def load_config(self, file_path: Union[str, Path], defaults: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        Load configuration from file (alias for load_config_from_file).
+        
+        Args:
+            file_path: Path to configuration file
+            defaults: Optional default values
+            
+        Returns:
+            Configuration dictionary
+        """
+        if defaults:
+            self._defaults = defaults
+        return self.load_config_from_file(file_path)
     
     def load_config_with_defaults(self, file_path: Union[str, Path], defaults: Dict[str, Any]) -> Dict[str, Any]:
         """

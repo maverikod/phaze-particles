@@ -77,6 +77,19 @@ class CUDAMemoryManager:
         
         self._logger.debug(f"Allocated {size_bytes} bytes on device {device_id}")
         return allocation_id
+
+    def allocate(self, size_bytes: int, device_id: int = 0) -> str:
+        """
+        Allocate CUDA memory (alias for allocate_memory).
+        
+        Args:
+            size_bytes: Size to allocate in bytes
+            device_id: CUDA device ID
+            
+        Returns:
+            Allocation ID for tracking
+        """
+        return self.allocate_memory(size_bytes, device_id)
     
     def deallocate_memory(self, allocation_id: str) -> bool:
         """
@@ -129,6 +142,16 @@ class CUDAMemoryManager:
                 by_device[allocation.device_id]["total_bytes"] += allocation.size_bytes
         
         return by_device
+
+    @property
+    def allocated_memory(self) -> int:
+        """
+        Get total allocated memory in bytes.
+        
+        Returns:
+            Total allocated memory in bytes
+        """
+        return self._total_allocated
     
     def cleanup_all(self) -> None:
         """Clean up all active allocations."""
@@ -512,6 +535,12 @@ class CUDAManager:
             True if successful, False otherwise
         """
         return self.memory_manager.deallocate_memory(allocation_id)
+
+    def cleanup_memory(self) -> None:
+        """
+        Clean up all CUDA memory allocations.
+        """
+        self.memory_manager.cleanup_all()
 
     def array_to_gpu(self, array: np.ndarray) -> Any:
         """

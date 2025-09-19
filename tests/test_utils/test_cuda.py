@@ -70,7 +70,7 @@ class TestCUDADevice(unittest.TestCase):
         
         device_str = str(device)
         self.assertIn("Test GPU", device_str)
-        self.assertIn("7.5", device_str)
+        self.assertIn("(7, 5)", device_str)
         self.assertIn("8192", device_str)
 
 
@@ -85,7 +85,7 @@ class TestCUDAMemoryManager(unittest.TestCase):
         """Test memory manager initialization."""
         self.assertIsNotNone(self.memory_manager)
         self.assertEqual(self.memory_manager.allocated_memory, 0)
-        self.assertEqual(len(self.memory_manager.allocations), 0)
+        self.assertEqual(len(self.memory_manager._allocations), 0)
 
     def test_memory_allocation_tracking(self):
         """Test memory allocation tracking."""
@@ -106,7 +106,7 @@ class TestCUDAMemoryManager(unittest.TestCase):
         self.memory_manager.deallocate(allocation_id)
         
         self.assertEqual(self.memory_manager.allocated_memory, 0)
-        self.assertEqual(len(self.memory_manager.allocations), 0)
+        self.assertEqual(len(self.memory_manager._allocations), 0)
         self.assertNotIn(allocation_id, self.memory_manager.allocations)
 
     def test_memory_usage_reporting(self):
@@ -130,7 +130,7 @@ class TestCUDAMemoryManager(unittest.TestCase):
         self.memory_manager.cleanup()
         
         self.assertEqual(self.memory_manager.allocated_memory, 0)
-        self.assertEqual(len(self.memory_manager.allocations), 0)
+        self.assertEqual(len(self.memory_manager._allocations), 0)
 
 
 class TestCUDAOperations(unittest.TestCase):

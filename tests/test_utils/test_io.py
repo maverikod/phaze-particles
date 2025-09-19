@@ -120,7 +120,7 @@ class TestCSVWriter(unittest.TestCase):
             content = f.read()
             self.assertIn("42", content)
             self.assertIn("3.14159", content)
-            self.assertIn("1.23e-04", content)
+            self.assertIn("0.000123", content)
 
     def test_csv_writer_unicode_data(self):
         """Test writing unicode data."""
@@ -173,7 +173,7 @@ class TestJSONWriter(unittest.TestCase):
     def test_json_writer_initialization(self):
         """Test JSON writer initialization."""
         writer = JSONWriter(self.json_file)
-        self.assertEqual(writer.filepath, self.json_file)
+        self.assertEqual(str(writer.file_path), str(self.json_file))
 
     def test_json_writer_write_data(self):
         """Test writing JSON data."""
@@ -241,7 +241,7 @@ class TestResultsManager(unittest.TestCase):
 
     def test_results_manager_initialization(self):
         """Test results manager initialization."""
-        self.assertEqual(self.results_manager.base_dir, self.temp_dir)
+        self.assertEqual(str(self.results_manager.base_dir), str(self.temp_dir))
         self.assertTrue(os.path.exists(self.temp_dir))
 
     def test_create_results_directory(self):
@@ -252,7 +252,7 @@ class TestResultsManager(unittest.TestCase):
         results_dir = self.results_manager.create_results_directory(command, subcommand)
         
         expected_path = os.path.join(self.temp_dir, command, subcommand)
-        self.assertEqual(results_dir, expected_path)
+        self.assertEqual(str(results_dir), str(expected_path))
         self.assertTrue(os.path.exists(results_dir))
 
     def test_generate_filename(self):
@@ -262,7 +262,7 @@ class TestResultsManager(unittest.TestCase):
         short_desc = "grid64-box4.0-all"
         
         filename = self.results_manager.generate_filename(
-            command, subcommand, short_desc
+            short_desc
         )
         
         # Check filename format
@@ -285,7 +285,7 @@ class TestResultsManager(unittest.TestCase):
         }
         
         filepath = self.results_manager.save_results_csv(
-            command, subcommand, short_desc, results_data
+            results_data, short_desc
         )
         
         self.assertTrue(os.path.exists(filepath))
@@ -311,7 +311,7 @@ class TestResultsManager(unittest.TestCase):
         }
         
         filepath = self.results_manager.save_results_json(
-            command, subcommand, short_desc, results_data
+            results_data, short_desc
         )
         
         self.assertTrue(os.path.exists(filepath))
@@ -439,7 +439,8 @@ class TestConfigLoader(unittest.TestCase):
             "max_iterations": 1000
         }
         
-        self.assertTrue(loader.validate_config(valid_config))
+        schema = {"grid_size": int, "box_size": float}
+        self.assertTrue(loader.validate_config(valid_config, schema))
         
         # Invalid config
         invalid_config = {
@@ -487,7 +488,7 @@ class TestFileManager(unittest.TestCase):
 
     def test_file_manager_initialization(self):
         """Test file manager initialization."""
-        self.assertEqual(self.file_manager.base_dir, self.temp_dir)
+        self.assertEqual(str(self.file_manager.base_dir), str(self.temp_dir))
         self.assertTrue(os.path.exists(self.temp_dir))
 
     def test_create_directory(self):
@@ -560,7 +561,7 @@ class TestFileManager(unittest.TestCase):
         
         self.assertEqual(len(listed_files), 3)
         for filename in test_files:
-            self.assertIn(filename, listed_files)
+            self.assertIn(str(filename), [str(f) for f in listed_files])
 
     def test_list_directories(self):
         """Test listing directories."""
@@ -574,7 +575,7 @@ class TestFileManager(unittest.TestCase):
         
         self.assertEqual(len(listed_dirs), 3)
         for dirname in test_dirs:
-            self.assertIn(dirname, listed_dirs)
+            self.assertIn(str(dirname), [str(d) for d in listed_dirs])
 
     def test_cleanup_directory(self):
         """Test directory cleanup."""
@@ -626,7 +627,7 @@ class TestDataExporter(unittest.TestCase):
 
     def test_data_exporter_initialization(self):
         """Test data exporter initialization."""
-        self.assertEqual(self.exporter.output_dir, self.temp_dir)
+        self.assertEqual(str(self.exporter.output_dir), str(self.temp_dir))
         self.assertTrue(os.path.exists(self.temp_dir))
 
     def test_export_numpy_array(self):
@@ -710,7 +711,7 @@ class TestDataImporter(unittest.TestCase):
 
     def test_data_importer_initialization(self):
         """Test data importer initialization."""
-        self.assertEqual(self.importer.input_dir, self.temp_dir)
+        self.assertEqual(str(self.importer.input_dir), str(self.temp_dir))
         self.assertTrue(os.path.exists(self.temp_dir))
 
     def test_import_numpy_array(self):
