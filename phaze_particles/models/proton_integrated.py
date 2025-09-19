@@ -14,19 +14,19 @@ import json
 import time
 
 # Import all modules
-from ..utils.mathematical_foundations import MathematicalFoundations
-from ..utils.torus_geometries import TorusGeometryManager, TorusConfiguration
-from ..utils.su2_fields import SU2FieldBuilder
-from ..utils.energy_densities import EnergyDensityCalculator
-from ..utils.physics import PhysicalQuantitiesCalculator
-from ..utils.numerical_methods import (
+from phaze_particles.utils.mathematical_foundations import MathematicalFoundations
+from phaze_particles.utils.torus_geometries import TorusGeometryManager, TorusConfiguration
+from phaze_particles.utils.su2_fields import SU2FieldBuilder
+from phaze_particles.utils.energy_densities import EnergyDensityCalculator
+from phaze_particles.utils.physics import PhysicalQuantitiesCalculator
+from phaze_particles.utils.numerical_methods import (
     RelaxationSolver,
     RelaxationConfig,
     ConstraintConfig,
 )
-from ..utils.validation import ValidationSystem, ExperimentalData, CalculatedData
-from ..utils.cuda import get_cuda_manager
-from ..utils.progress import create_progress_bar, create_performance_monitor
+from phaze_particles.utils.validation import ValidationSystem, ExperimentalData, CalculatedData
+from phaze_particles.utils.cuda import get_cuda_manager
+from phaze_particles.utils.progress import create_progress_bar, create_performance_monitor
 
 
 class ModelStatus(Enum):

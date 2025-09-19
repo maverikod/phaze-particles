@@ -26,31 +26,38 @@ from tests.test_utils.test_mathematical_foundations import (
     TestValidationUtils, TestMathematicalFoundations
 )
 from tests.test_utils.test_torus_geometries import (
-    TestTorusGeometryManager, TestTorusConfiguration, TestFieldDirectionCalculator
+    TestTorusGeometryManager, TestTorusParameters, TestTorus120Degrees, 
+    TestTorusClover, TestTorusCartesian, TestTorusGeometries
 )
 from tests.test_utils.test_su2_fields import (
-    TestSU2Field, TestSU2FieldBuilder, TestFieldProfile, TestFieldValidation
+    TestSU2Field, TestRadialProfile, TestSU2FieldBuilder, TestSU2FieldOperations,
+    TestSU2FieldValidator, TestSU2Fields, TestSU2FieldsIntegration
 )
 from tests.test_utils.test_energy_densities import (
-    TestEnergyDensity, TestEnergyDensityCalculator, TestEnergyComponents
+    TestEnergyDensity, TestBaryonDensity, TestEnergyDensityCalculator, 
+    TestEnergyAnalyzer, TestEnergyOptimizer, TestEnergyDensities
 )
 from tests.test_utils.test_physics import (
-    TestPhysicalQuantities, TestPhysicalQuantitiesCalculator, TestBaryonNumber,
-    TestElectricCharge, TestChargeRadius, TestMagneticMoment, TestMassCalculation
+    TestPhysicalParameter, TestAnalysisResult, TestPhysicsAnalyzer, TestPhysicalQuantities,
+    TestChargeDensity, TestBaryonNumberCalculator, TestMagneticMomentCalculator,
+    TestMassCalculator, TestPhysicalQuantitiesCalculator
 )
 from tests.test_utils.test_numerical_methods import (
-    TestRelaxationSolver, TestRelaxationConfig, TestConstraintConfig,
-    TestConstraintController, TestGradientDescent, TestSU2Projection
+    TestSU2Projection, TestGradientDescent, TestLBFGSOptimizer, TestAdamOptimizer,
+    TestConstraintController, TestRelaxationSolver, TestNumericalMethods, TestCUDAIntegration
 )
 from tests.test_utils.test_validation import (
-    TestValidationSystem, TestExperimentalData, TestParameterValidator,
-    TestQualityAssessor, TestValidationResults
+    TestValidationStatus, TestExperimentalData, TestCalculatedData, TestValidationResult,
+    TestParameterValidator, TestModelQualityAssessor, TestValidationReportGenerator,
+    TestValidationSystem, TestValidationFunctions
 )
 from tests.test_utils.test_cuda import (
-    TestCUDADevice, TestCUDAManager, TestGetCUDAManager
+    TestCUDADevice, TestCUDAMemoryManager, TestCUDAOperations, TestCUDAManager,
+    TestGetCUDAManager, TestCUDAIntegration
 )
 from tests.test_utils.test_progress import (
-    TestProgressBar, TestPerformanceMonitor, TestCreateProgressBar, TestCreatePerformanceMonitor
+    TestProgressBar, TestTimeEstimator, TestPerformanceMonitor, TestProgressCallback,
+    TestCreateProgressBar, TestCreatePerformanceMonitor, TestProgressIntegration
 )
 
 
@@ -120,54 +127,77 @@ class TestSuite:
                 
                 # Torus geometries tests
                 TestTorusGeometryManager,
-                TestTorusConfiguration,
-                TestFieldDirectionCalculator,
+                TestTorusParameters,
+                TestTorus120Degrees,
+                TestTorusClover,
+                TestTorusCartesian,
+                TestTorusGeometries,
                 
                 # SU(2) fields tests
                 TestSU2Field,
+                TestRadialProfile,
                 TestSU2FieldBuilder,
-                TestFieldProfile,
-                TestFieldValidation,
+                TestSU2FieldOperations,
+                TestSU2FieldValidator,
+                TestSU2Fields,
+                TestSU2FieldsIntegration,
                 
                 # Energy densities tests
                 TestEnergyDensity,
+                TestBaryonDensity,
                 TestEnergyDensityCalculator,
-                TestEnergyComponents,
+                TestEnergyAnalyzer,
+                TestEnergyOptimizer,
+                TestEnergyDensities,
                 
                 # Physics tests
+                TestPhysicalParameter,
+                TestAnalysisResult,
+                TestPhysicsAnalyzer,
                 TestPhysicalQuantities,
+                TestChargeDensity,
+                TestBaryonNumberCalculator,
+                TestMagneticMomentCalculator,
+                TestMassCalculator,
                 TestPhysicalQuantitiesCalculator,
-                TestBaryonNumber,
-                TestElectricCharge,
-                TestChargeRadius,
-                TestMagneticMoment,
-                TestMassCalculation,
                 
                 # Numerical methods tests
-                TestRelaxationSolver,
-                TestRelaxationConfig,
-                TestConstraintConfig,
-                TestConstraintController,
-                TestGradientDescent,
                 TestSU2Projection,
+                TestGradientDescent,
+                TestLBFGSOptimizer,
+                TestAdamOptimizer,
+                TestConstraintController,
+                TestRelaxationSolver,
+                TestNumericalMethods,
+                TestCUDAIntegration,
                 
                 # Validation tests
-                TestValidationSystem,
+                TestValidationStatus,
                 TestExperimentalData,
+                TestCalculatedData,
+                TestValidationResult,
                 TestParameterValidator,
-                TestQualityAssessor,
-                TestValidationResults,
+                TestModelQualityAssessor,
+                TestValidationReportGenerator,
+                TestValidationSystem,
+                TestValidationFunctions,
                 
                 # CUDA tests
                 TestCUDADevice,
+                TestCUDAMemoryManager,
+                TestCUDAOperations,
                 TestCUDAManager,
                 TestGetCUDAManager,
+                TestCUDAIntegration,
                 
                 # Progress tests
                 TestProgressBar,
+                TestTimeEstimator,
                 TestPerformanceMonitor,
+                TestProgressCallback,
                 TestCreateProgressBar,
                 TestCreatePerformanceMonitor,
+                TestProgressIntegration,
             ]
             
             for test_class in test_classes:
@@ -221,54 +251,77 @@ class TestSuite:
                 
                 # Torus geometries tests
                 TestTorusGeometryManager,
-                TestTorusConfiguration,
-                TestFieldDirectionCalculator,
+                TestTorusParameters,
+                TestTorus120Degrees,
+                TestTorusClover,
+                TestTorusCartesian,
+                TestTorusGeometries,
                 
                 # SU(2) fields tests
                 TestSU2Field,
+                TestRadialProfile,
                 TestSU2FieldBuilder,
-                TestFieldProfile,
-                TestFieldValidation,
+                TestSU2FieldOperations,
+                TestSU2FieldValidator,
+                TestSU2Fields,
+                TestSU2FieldsIntegration,
                 
                 # Energy densities tests
                 TestEnergyDensity,
+                TestBaryonDensity,
                 TestEnergyDensityCalculator,
-                TestEnergyComponents,
+                TestEnergyAnalyzer,
+                TestEnergyOptimizer,
+                TestEnergyDensities,
                 
                 # Physics tests
+                TestPhysicalParameter,
+                TestAnalysisResult,
+                TestPhysicsAnalyzer,
                 TestPhysicalQuantities,
+                TestChargeDensity,
+                TestBaryonNumberCalculator,
+                TestMagneticMomentCalculator,
+                TestMassCalculator,
                 TestPhysicalQuantitiesCalculator,
-                TestBaryonNumber,
-                TestElectricCharge,
-                TestChargeRadius,
-                TestMagneticMoment,
-                TestMassCalculation,
                 
                 # Numerical methods tests
-                TestRelaxationSolver,
-                TestRelaxationConfig,
-                TestConstraintConfig,
-                TestConstraintController,
-                TestGradientDescent,
                 TestSU2Projection,
+                TestGradientDescent,
+                TestLBFGSOptimizer,
+                TestAdamOptimizer,
+                TestConstraintController,
+                TestRelaxationSolver,
+                TestNumericalMethods,
+                TestCUDAIntegration,
                 
                 # Validation tests
-                TestValidationSystem,
+                TestValidationStatus,
                 TestExperimentalData,
+                TestCalculatedData,
+                TestValidationResult,
                 TestParameterValidator,
-                TestQualityAssessor,
-                TestValidationResults,
+                TestModelQualityAssessor,
+                TestValidationReportGenerator,
+                TestValidationSystem,
+                TestValidationFunctions,
                 
                 # CUDA tests
                 TestCUDADevice,
+                TestCUDAMemoryManager,
+                TestCUDAOperations,
                 TestCUDAManager,
                 TestGetCUDAManager,
+                TestCUDAIntegration,
                 
                 # Progress tests
                 TestProgressBar,
+                TestTimeEstimator,
                 TestPerformanceMonitor,
+                TestProgressCallback,
                 TestCreateProgressBar,
                 TestCreatePerformanceMonitor,
+                TestProgressIntegration,
             ]
             
             for test_class in unit_test_classes:
