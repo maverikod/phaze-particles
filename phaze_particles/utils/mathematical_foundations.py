@@ -282,6 +282,24 @@ class ArrayBackend:
         xp = self.get_array_module()
         return xp.where(condition, x, y)
 
+    def gradient(self, field: Any, dx: float, axis: int = None) -> Any:
+        """
+        Compute gradient using appropriate backend.
+
+        Args:
+            field: Input field
+            dx: Grid step
+            axis: Axis for gradient (None for all axes)
+
+        Returns:
+            Gradient in appropriate backend
+        """
+        xp = self.get_array_module()
+        if axis is not None:
+            return xp.gradient(field, dx, axis=axis)
+        else:
+            return xp.gradient(field, dx)
+
     def abs(self, x: Any) -> Any:
         """
         Compute absolute value using appropriate backend.

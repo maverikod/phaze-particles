@@ -508,10 +508,21 @@ class ValidationReportGenerator:
         Returns:
             JSON report string
         """
+        # Convert numpy arrays to lists for JSON serialization
+        def convert_for_json(value):
+            if hasattr(value, 'tolist'):  # numpy array
+                return value.tolist()
+            elif hasattr(value, 'get'):  # CuPy array
+                return value.get().tolist()
+            elif isinstance(value, complex):  # complex number
+                return {"real": value.real, "imag": value.imag}
+            else:
+                return value
+
         report_data = {
             "timestamp": self.timestamp.isoformat(),
             "overall_status": quality_assessment["overall_status"].value,
-            "weighted_score": quality_assessment["weighted_score"],
+            "weighted_score": convert_for_json(quality_assessment["weighted_score"]),
             "status_counts": {
                 k.value: v for k, v in quality_assessment["status_counts"].items()
             },
@@ -521,14 +532,15 @@ class ValidationReportGenerator:
         }
 
         for result in validation_results:
+            
             report_data["validation_results"].append(
                 {
                     "parameter_name": result.parameter_name,
-                    "calculated_value": result.calculated_value,
-                    "experimental_value": result.experimental_value,
-                    "experimental_error": result.experimental_error,
-                    "deviation": result.deviation,
-                    "deviation_percent": result.deviation_percent,
+                    "calculated_value": convert_for_json(result.calculated_value),
+                    "experimental_value": convert_for_json(result.experimental_value),
+                    "experimental_error": convert_for_json(result.experimental_error),
+                    "deviation": convert_for_json(result.deviation),
+                    "deviation_percent": convert_for_json(result.deviation_percent),
                     "within_tolerance": bool(result.within_tolerance),
                     "status": result.status.value,
                 }

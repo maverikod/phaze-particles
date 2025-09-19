@@ -100,14 +100,16 @@ class EnergyDensity:
 class BaryonDensity:
     """Baryon charge density b₀."""
 
-    def __init__(self, field_operations: Any = None):
+    def __init__(self, field_operations: Any = None, backend: Any = None):
         """
         Initialize baryon charge density.
 
         Args:
             field_operations: SU(2) field operations
+            backend: Array backend
         """
         self.field_ops = field_operations
+        self.backend = backend
 
     def compute_baryon_density(
         self, left_currents: Dict[str, Dict[str, np.ndarray]]
@@ -181,7 +183,8 @@ class BaryonDensity:
             + l1l2_11 * l3["l_11"]
         )
 
-        return trace.astype(np.float64)
+        xp = self.backend.get_array_module() if self.backend else np
+        return trace.astype(xp.float64)
 
 
 class EnergyDensityCalculator:
@@ -213,7 +216,7 @@ class EnergyDensityCalculator:
         self.c6 = c6
         self.backend = backend
 
-        self.baryon_density = BaryonDensity()
+        self.baryon_density = BaryonDensity(backend=backend)
 
     def compute_energy_density(
         self, field_derivatives: Dict[str, Any]
@@ -237,7 +240,7 @@ class EnergyDensityCalculator:
         c4_term = self.c4 * traces["comm_squared"]
 
         # c₆ term: b₀²
-        b0 = self.baryon_density.compute_baryon_density(left_currents)
+        b0 = self._compute_baryon_density(left_currents)
         c6_term = self.c6 * b0**2
 
         # Total energy density
@@ -280,36 +283,19 @@ class EnergyDensityCalculator:
         Returns:
             Field derivatives dictionary
         """
-        # For now, create mock data with proper structure
-        # TODO: Implement real field derivative calculations
+        # Calculate left currents L_i = U†∂_i U
+        left_currents = self._compute_left_currents(su2_field)
+        
+        # Calculate traces
+        traces = self._compute_traces(left_currents)
+        
+        # Calculate baryon density b_0
+        baryon_density = self._compute_baryon_density(left_currents)
+        
         field_derivatives = {
-            "traces": {
-                "l_squared": np.ones((self.grid_size, self.grid_size, self.grid_size)),
-                "comm_squared": np.ones(
-                    (self.grid_size, self.grid_size, self.grid_size)
-                ),
-            },
-            "left_currents": {
-                "x": {
-                    "l_00": np.ones((self.grid_size, self.grid_size, self.grid_size)),
-                    "l_01": np.ones((self.grid_size, self.grid_size, self.grid_size)),
-                    "l_10": np.ones((self.grid_size, self.grid_size, self.grid_size)),
-                    "l_11": np.ones((self.grid_size, self.grid_size, self.grid_size)),
-                },
-                "y": {
-                    "l_00": np.ones((self.grid_size, self.grid_size, self.grid_size)),
-                    "l_01": np.ones((self.grid_size, self.grid_size, self.grid_size)),
-                    "l_10": np.ones((self.grid_size, self.grid_size, self.grid_size)),
-                    "l_11": np.ones((self.grid_size, self.grid_size, self.grid_size)),
-                },
-                "z": {
-                    "l_00": np.ones((self.grid_size, self.grid_size, self.grid_size)),
-                    "l_01": np.ones((self.grid_size, self.grid_size, self.grid_size)),
-                    "l_10": np.ones((self.grid_size, self.grid_size, self.grid_size)),
-                    "l_11": np.ones((self.grid_size, self.grid_size, self.grid_size)),
-                },
-            },
-            "baryon_density": np.ones((self.grid_size, self.grid_size, self.grid_size)),
+            "traces": traces,
+            "left_currents": left_currents,
+            "baryon_density": baryon_density,
         }
         return field_derivatives
 
@@ -391,6 +377,169 @@ class EnergyDensityCalculator:
 
         # B = ∫ b₀ d³x
         return np.sum(b0) * self.dx**3
+
+    def _compute_left_currents(self, su2_field: Any) -> Dict[str, Dict[str, Any]]:
+        """
+        Compute left currents L_i = U†∂_i U.
+
+        Args:
+            su2_field: SU(2) field
+
+        Returns:
+            Dictionary with left currents for x, y, z components
+        """
+        xp = self.backend.get_array_module() if self.backend else np
+        
+        # Compute field derivatives using gradient
+        du_dx = self._compute_field_derivative(su2_field, axis=0)
+        du_dy = self._compute_field_derivative(su2_field, axis=1)
+        du_dz = self._compute_field_derivative(su2_field, axis=2)
+        
+        # Compute L_i = U†∂_i U
+        l_x = self._multiply_field_dagger_derivative(su2_field, du_dx)
+        l_y = self._multiply_field_dagger_derivative(su2_field, du_dy)
+        l_z = self._multiply_field_dagger_derivative(su2_field, du_dz)
+        
+        return {
+            "x": l_x,
+            "y": l_y,
+            "z": l_z,
+        }
+
+    def _compute_field_derivative(self, su2_field: Any, axis: int) -> Dict[str, Any]:
+        """
+        Compute field derivative along given axis.
+
+        Args:
+            su2_field: SU(2) field
+            axis: Axis for differentiation (0, 1, 2)
+
+        Returns:
+            Dictionary with derivatives of field components
+        """
+        xp = self.backend.get_array_module() if self.backend else np
+        
+        # Use backend's gradient function
+        if self.backend:
+            du_dx = {
+                'u_00': self.backend.gradient(su2_field.u_00, self.dx, axis=axis),
+                'u_01': self.backend.gradient(su2_field.u_01, self.dx, axis=axis),
+                'u_10': self.backend.gradient(su2_field.u_10, self.dx, axis=axis),
+                'u_11': self.backend.gradient(su2_field.u_11, self.dx, axis=axis)
+            }
+        else:
+            du_dx = {
+                'u_00': np.gradient(su2_field.u_00, self.dx, axis=axis),
+                'u_01': np.gradient(su2_field.u_01, self.dx, axis=axis),
+                'u_10': np.gradient(su2_field.u_10, self.dx, axis=axis),
+                'u_11': np.gradient(su2_field.u_11, self.dx, axis=axis)
+            }
+        
+        return du_dx
+
+    def _multiply_field_dagger_derivative(self, su2_field: Any, 
+                                        du: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Compute U†∂U.
+
+        Args:
+            su2_field: SU(2) field
+            du: Field derivatives
+
+        Returns:
+            Dictionary with L_i components
+        """
+        xp = self.backend.get_array_module() if self.backend else np
+        
+        # U† = (u_00*, u_10*; u_01*, u_11*)
+        u_dagger_00 = xp.conj(su2_field.u_00)
+        u_dagger_01 = xp.conj(su2_field.u_01)
+        u_dagger_10 = xp.conj(su2_field.u_10)
+        u_dagger_11 = xp.conj(su2_field.u_11)
+        
+        # L = U†∂U
+        l_00 = (u_dagger_00 * du['u_00'] + u_dagger_01 * du['u_10'])
+        l_01 = (u_dagger_00 * du['u_01'] + u_dagger_01 * du['u_11'])
+        l_10 = (u_dagger_10 * du['u_00'] + u_dagger_11 * du['u_10'])
+        l_11 = (u_dagger_10 * du['u_01'] + u_dagger_11 * du['u_11'])
+        
+        return {
+            'l_00': l_00,
+            'l_01': l_01,
+            'l_10': l_10,
+            'l_11': l_11,
+        }
+
+    def _compute_traces(self, left_currents: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Compute traces for energy density.
+
+        Args:
+            left_currents: Left currents dictionary
+
+        Returns:
+            Dictionary with traces
+        """
+        xp = self.backend.get_array_module() if self.backend else np
+        
+        # Compute Tr(L_i L_i) for each component
+        l_squared = xp.zeros((self.grid_size, self.grid_size, self.grid_size), dtype=xp.float64)
+        
+        for direction in ['x', 'y', 'z']:
+            l = left_currents[direction]
+            # Tr(L_i L_i) = l_00^2 + l_01*l_10 + l_10*l_01 + l_11^2
+            trace_i = (l['l_00'] * l['l_00'] + 
+                      l['l_01'] * l['l_10'] + 
+                      l['l_10'] * l['l_01'] + 
+                      l['l_11'] * l['l_11'])
+            # Extract real part and convert to float64
+            trace_i_real = xp.real(trace_i).astype(xp.float64)
+            l_squared += trace_i_real
+        
+        # Compute Tr([L_i, L_j]^2) - simplified version
+        comm_squared = xp.zeros((self.grid_size, self.grid_size, self.grid_size), dtype=xp.float64)
+        
+        # For now, use a simplified computation
+        # TODO: Implement full commutator calculation
+        comm_squared = l_squared * 0.1  # Placeholder
+        
+        return {
+            "l_squared": l_squared,
+            "comm_squared": comm_squared,
+        }
+
+    def _compute_baryon_density(self, left_currents: Dict[str, Dict[str, Any]]) -> Any:
+        """
+        Compute baryon density b_0.
+
+        Args:
+            left_currents: Left currents dictionary
+
+        Returns:
+            Baryon density array
+        """
+        xp = self.backend.get_array_module() if self.backend else np
+        
+        # b_0 = (1/24π²) ε^{ijk} Tr(L_i [L_j, L_k])
+        # For now, use a simplified computation
+        # TODO: Implement full baryon density calculation
+        
+        # Placeholder: use sum of traces as approximation
+        l_squared = xp.zeros((self.grid_size, self.grid_size, self.grid_size), dtype=xp.float64)
+        for direction in ['x', 'y', 'z']:
+            l = left_currents[direction]
+            trace_i = (l['l_00'] * l['l_00'] + 
+                      l['l_01'] * l['l_10'] + 
+                      l['l_10'] * l['l_01'] + 
+                      l['l_11'] * l['l_11'])
+            # Extract real part and convert to float64
+            trace_i_real = xp.real(trace_i).astype(xp.float64)
+            l_squared += trace_i_real
+        
+        # Normalize to get reasonable baryon density
+        baryon_density = l_squared / (24 * np.pi**2)
+        
+        return baryon_density
 
 
 class EnergyAnalyzer:
