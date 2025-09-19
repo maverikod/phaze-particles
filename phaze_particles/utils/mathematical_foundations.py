@@ -568,15 +568,26 @@ class ValidationUtils:
         """
         xp = self.backend.get_array_module()
 
+        # Convert to appropriate backend array if needed
+        if hasattr(U, 'get') and self.backend.is_cuda_available:
+            # Already CuPy array
+            U_backend = U
+        elif self.backend.is_cuda_available:
+            # Convert NumPy to CuPy
+            U_backend = xp.asarray(U)
+        else:
+            # Use NumPy
+            U_backend = np.asarray(U)
+
         # Check unitarity: U†U = I
         unitary_check = xp.allclose(
-            self.backend.dot(U.conj().T, U),
+            self.backend.dot(U_backend.conj().T, U_backend),
             self.backend.eye(2),
             atol=tolerance
         )
 
         # Check determinant: det(U) = 1
-        det_check = abs(self.backend.det(U) - 1.0) < tolerance
+        det_check = abs(self.backend.det(U_backend) - 1.0) < tolerance
 
         return bool(unitary_check and det_check)
 

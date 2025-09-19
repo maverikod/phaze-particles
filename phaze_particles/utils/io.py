@@ -262,9 +262,41 @@ class ResultsManager:
         
         return f"-{short_desc}-{timestamp}.csv"
     
-    def save_results_csv(self, data: Dict[str, Any], file_path: Union[str, Path]) -> None:
+    def save_results_csv(self, data: Dict[str, Any], short_desc: str, command: str = "proton", subcommand: str = "static") -> Path:
         """
-        Save results to CSV file.
+        Save results to CSV file with standardized naming.
+        
+        Args:
+            data: Results data
+            short_desc: Short description for filename
+            command: Command name
+            subcommand: Subcommand name
+            
+        Returns:
+            Path to saved file
+        """
+        # Create results directory
+        results_dir = self.create_results_directory(command, subcommand)
+        
+        # Generate filename
+        filename = self.generate_filename(short_desc)
+        file_path = results_dir / filename
+        
+        # Save CSV
+        with CSVWriter(file_path) as writer:
+            # Write headers
+            headers = list(data.keys())
+            writer.write_header(headers)
+            
+            # Write data row
+            row = [data.get(header, "") for header in headers]
+            writer.write_row(row)
+        
+        return file_path
+    
+    def save_results_csv_file(self, data: Dict[str, Any], file_path: Union[str, Path]) -> None:
+        """
+        Save results to CSV file with given path.
         
         Args:
             data: Results data
@@ -282,9 +314,35 @@ class ResultsManager:
             row = [data.get(header, "") for header in headers]
             writer.write_row(row)
     
-    def save_results_json(self, data: Dict[str, Any], file_path: Union[str, Path]) -> None:
+    def save_results_json(self, data: Dict[str, Any], short_desc: str, command: str = "proton", subcommand: str = "static") -> Path:
         """
-        Save results to JSON file.
+        Save results to JSON file with standardized naming.
+        
+        Args:
+            data: Results data
+            short_desc: Short description for filename
+            command: Command name
+            subcommand: Subcommand name
+            
+        Returns:
+            Path to saved file
+        """
+        # Create results directory
+        results_dir = self.create_results_directory(command, subcommand)
+        
+        # Generate filename (replace .csv with .json)
+        filename = self.generate_filename(short_desc).replace('.csv', '.json')
+        file_path = results_dir / filename
+        
+        # Save JSON
+        writer = JSONWriter(file_path, pretty=True)
+        writer.write_data(data)
+        
+        return file_path
+    
+    def save_results_json_file(self, data: Dict[str, Any], file_path: Union[str, Path]) -> None:
+        """
+        Save results to JSON file with given path.
         
         Args:
             data: Results data
@@ -438,13 +496,25 @@ class ConfigLoader:
         Returns:
             True if valid, False otherwise
         """
-        # Simple validation - check required keys
-        required_keys = schema.get('required', [])
-        for key in required_keys:
-            if key not in config:
-                return False
-        
-        return True
+        try:
+            # Check if schema is JSON Schema format
+            if 'type' in schema and 'properties' in schema:
+                # JSON Schema validation
+                import jsonschema
+                jsonschema.validate(config, schema)
+                return True
+            else:
+                # Simple type validation
+                for key, expected_type in schema.items():
+                    if key in config:
+                        if not isinstance(config[key], expected_type):
+                            return False
+                        # Additional validation for specific types
+                        if expected_type == int and config[key] < 0:
+                            return False
+                return True
+        except Exception:
+            return False
     
     def _merge_with_defaults(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """Merge configuration with defaults."""
@@ -660,11 +730,11 @@ class DataExporter:
         Returns:
             Path to exported file
         """
-        file_path = self.output_dir / filename
-        
         if format.lower() == "npy":
+            file_path = self.output_dir / f"{filename}.npy"
             np.save(file_path, array)
         elif format.lower() == "csv":
+            file_path = self.output_dir / f"{filename}.csv"
             np.savetxt(file_path, array, delimiter=',')
         else:
             raise ValueError(f"Unsupported export format: {format}")

@@ -15,7 +15,7 @@ import time
 
 # Import all modules
 from phaze_particles.utils.mathematical_foundations import MathematicalFoundations
-from phaze_particles.utils.torus_geometries import TorusGeometryManager, TorusConfiguration
+from phaze_particles.utils.torus_geometries import TorusGeometryManager, TorusGeometries, TorusConfiguration
 from phaze_particles.utils.su2_fields import SU2FieldBuilder
 from phaze_particles.utils.energy_densities import EnergyDensityCalculator
 from phaze_particles.utils.physics import PhysicalQuantitiesCalculator
@@ -231,7 +231,7 @@ class ProtonModel:
             )
 
             # Torus geometries
-            self.torus_geometries = TorusGeometryManager(
+            self.torus_geometries = TorusGeometries(
                 grid_size=self.config.grid_size, box_size=self.config.box_size
             )
 
@@ -312,6 +312,7 @@ class ProtonModel:
                 config_type=config_type,
                 radius=self.config.R_torus,
                 thickness=self.config.r_torus,
+                strength=1.0,
             )
 
             self.status = ModelStatus.GEOMETRY_CREATED

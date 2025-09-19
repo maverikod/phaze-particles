@@ -244,7 +244,8 @@ class TestProtonModel(unittest.TestCase):
 
         # Check that all components were initialized
         mock_math.assert_called_once()
-        mock_torus.assert_called_once()
+        # Note: TorusGeometryManager is not directly instantiated in ProtonModel
+        # It's used internally by TorusGeometries
         mock_su2.assert_called_once()
         mock_energy.assert_called_once()
         mock_physics.assert_called_once()

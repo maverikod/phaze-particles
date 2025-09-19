@@ -446,7 +446,7 @@ class TimeEstimator:
     def __init__(self):
         """Initialize time estimator."""
         self.start_time = time.time()
-        self.checkpoints: List[Tuple[float, float]] = []  # (progress, timestamp)
+        self.checkpoints: List[Tuple[float, float]] = [(0.0, self.start_time)]  # (progress, timestamp)
         self.last_progress = 0.0
         self.last_time = self.start_time
 
@@ -474,6 +474,15 @@ class TimeEstimator:
             self.last_progress = progress
             self.last_time = current_time
     
+    def update_progress(self, progress: float) -> None:
+        """
+        Update progress for time estimation (alias for update).
+        
+        Args:
+            progress: Current progress (0.0 to 1.0)
+        """
+        self.update(progress)
+    
     def estimate_remaining(self, current_progress: float) -> float:
         """
         Estimate remaining time.
@@ -485,7 +494,7 @@ class TimeEstimator:
             Estimated remaining time in seconds
         """
         if current_progress <= 0:
-            return float('inf')
+            return None
         
         if current_progress >= 1.0:
             return 0.0
@@ -501,6 +510,16 @@ class TimeEstimator:
         
         return 0.0
     
+    @property
+    def estimated_remaining_time(self) -> float:
+        """Get estimated remaining time."""
+        return self.estimate_remaining(self.last_progress)
+    
+    @property
+    def estimated_total_time(self) -> float:
+        """Get estimated total time."""
+        return self.estimate_total(self.last_progress)
+    
     def estimate_total(self, current_progress: float) -> float:
         """
         Estimate total time.
@@ -512,7 +531,7 @@ class TimeEstimator:
             Estimated total time in seconds
         """
         if current_progress <= 0:
-            return float('inf')
+            return None
         
         current_time = time.time()
         elapsed = current_time - self.start_time
@@ -522,7 +541,7 @@ class TimeEstimator:
     def reset(self) -> None:
         """Reset time estimator."""
         self.start_time = time.time()
-        self.checkpoints.clear()
+        self.checkpoints = [(0.0, self.start_time)]
         self.last_progress = 0.0
         self.last_time = self.start_time
 
@@ -574,15 +593,18 @@ class ProgressCallback:
         """
         self.error_handlers.append(handler)
     
-    def execute_callbacks(self, current: int, total: int, percentage: float) -> None:
+    def execute_callbacks(self, current: int, total: int = 100, percentage: float = None) -> None:
         """
         Execute all registered callbacks.
         
         Args:
             current: Current progress
-            total: Total progress
-            percentage: Progress percentage
+            total: Total progress (default: 100)
+            percentage: Progress percentage (calculated if None)
         """
+        if percentage is None:
+            percentage = (current / total) * 100.0 if total > 0 else 0.0
+        
         for callback in self.callbacks:
             try:
                 callback(current, total, percentage)

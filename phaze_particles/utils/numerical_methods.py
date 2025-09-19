@@ -103,8 +103,19 @@ class SU2Projection:
         """
         xp = self.backend.get_array_module()
 
+        # Convert to appropriate backend array if needed
+        if hasattr(U, 'get') and self.backend.is_cuda_available:
+            # Already CuPy array
+            U_backend = U
+        elif self.backend.is_cuda_available:
+            # Convert NumPy to CuPy
+            U_backend = xp.asarray(U)
+        else:
+            # Use NumPy
+            U_backend = np.asarray(U)
+
         # QR decomposition
-        Q, R = xp.linalg.qr(U)
+        Q, R = xp.linalg.qr(U_backend)
 
         # Correct determinant
         det_Q = xp.linalg.det(Q)
@@ -131,11 +142,22 @@ class SU2Projection:
         """
         xp = self.backend.get_array_module()
 
+        # Convert to appropriate backend array if needed
+        if hasattr(U, 'get') and self.backend.is_cuda_available:
+            # Already CuPy array
+            U_backend = U
+        elif self.backend.is_cuda_available:
+            # Convert NumPy to CuPy
+            U_backend = xp.asarray(U)
+        else:
+            # Use NumPy
+            U_backend = np.asarray(U)
+
         # Check unitarity
-        unitary_check = xp.allclose(xp.dot(U.conj().T, U), xp.eye(2), atol=tolerance)
+        unitary_check = xp.allclose(xp.dot(U_backend.conj().T, U_backend), xp.eye(2), atol=tolerance)
 
         # Check determinant
-        det_check = abs(xp.linalg.det(U) - 1.0) < tolerance
+        det_check = abs(xp.linalg.det(U_backend) - 1.0) < tolerance
 
         return bool(unitary_check and det_check)
 
@@ -203,14 +225,29 @@ class GradientDescent:
         """
         xp = self.backend.get_array_module()
 
+        # Convert to appropriate backend arrays if needed
+        if hasattr(U, 'get') and self.backend.is_cuda_available:
+            U_backend = U
+        elif self.backend.is_cuda_available:
+            U_backend = xp.asarray(U)
+        else:
+            U_backend = np.asarray(U)
+
+        if hasattr(gradient, 'get') and self.backend.is_cuda_available:
+            gradient_backend = gradient
+        elif self.backend.is_cuda_available:
+            gradient_backend = xp.asarray(gradient)
+        else:
+            gradient_backend = np.asarray(gradient)
+
         if self.velocity is None:
-            self.velocity = xp.zeros_like(gradient)
+            self.velocity = xp.zeros_like(gradient_backend)
 
         # Update velocity with momentum
-        self.velocity = self.momentum * self.velocity + self.step_size * gradient
+        self.velocity = self.momentum * self.velocity + self.step_size * gradient_backend
 
         # Update field
-        U_new = U - self.velocity
+        U_new = U_backend - self.velocity
 
         # Project onto SU(2) for each point
         if U_new.ndim == 5:  # 3D field
@@ -325,22 +362,37 @@ class AdamOptimizer:
         """
         xp = self.backend.get_array_module()
 
+        # Convert to appropriate backend arrays if needed
+        if hasattr(U, 'get') and self.backend.is_cuda_available:
+            U_backend = U
+        elif self.backend.is_cuda_available:
+            U_backend = xp.asarray(U)
+        else:
+            U_backend = np.asarray(U)
+
+        if hasattr(gradient, 'get') and self.backend.is_cuda_available:
+            gradient_backend = gradient
+        elif self.backend.is_cuda_available:
+            gradient_backend = xp.asarray(gradient)
+        else:
+            gradient_backend = np.asarray(gradient)
+
         if self.m is None:
-            self.m = xp.zeros_like(gradient)
-            self.v = xp.zeros_like(gradient)
+            self.m = xp.zeros_like(gradient_backend)
+            self.v = xp.zeros_like(gradient_backend)
 
         self.t += 1
 
         # Update moments
-        self.m = self.beta1 * self.m + (1 - self.beta1) * gradient
-        self.v = self.beta2 * self.v + (1 - self.beta2) * (gradient**2)
+        self.m = self.beta1 * self.m + (1 - self.beta1) * gradient_backend
+        self.v = self.beta2 * self.v + (1 - self.beta2) * (gradient_backend**2)
 
         # Bias correction
         m_hat = self.m / (1 - self.beta1**self.t)
         v_hat = self.v / (1 - self.beta2**self.t)
 
         # Update field
-        U_new = U - self.config.step_size * m_hat / (xp.sqrt(v_hat) + self.epsilon)
+        U_new = U_backend - self.config.step_size * m_hat / (xp.sqrt(v_hat) + self.epsilon)
 
         # Project onto SU(2) for each point
         if U_new.ndim == 5:  # 3D field

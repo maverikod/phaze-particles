@@ -107,9 +107,10 @@ class CUDAMemoryManager:
         allocation = self._allocations[allocation_id]
         if allocation.is_active:
             self._total_allocated -= allocation.size_bytes
-            allocation.is_active = False
             self._logger.debug(f"Deallocated {allocation.size_bytes} bytes")
         
+        # Remove from allocations dictionary
+        del self._allocations[allocation_id]
         return True
     
     def get_memory_usage(self) -> Dict[str, Any]:
@@ -122,9 +123,11 @@ class CUDAMemoryManager:
         active_allocations = [a for a in self._allocations.values() if a.is_active]
         
         return {
+            "allocated": self._total_allocated,
             "total_allocated_bytes": self._total_allocated,
             "active_allocations": len(active_allocations),
             "total_allocations": len(self._allocations),
+            "allocations_count": len(self._allocations),
             "allocations_by_device": self._get_allocations_by_device()
         }
     
@@ -152,6 +155,19 @@ class CUDAMemoryManager:
             Total allocated memory in bytes
         """
         return self._total_allocated
+    
+    @property
+    def allocations(self) -> Dict[str, MemoryAllocation]:
+        """Get all allocations."""
+        return self._allocations.copy()
+    
+    def deallocate(self, allocation_id: str) -> bool:
+        """Deallocate memory (alias for deallocate_memory)."""
+        return self.deallocate_memory(allocation_id)
+    
+    def cleanup(self) -> None:
+        """Cleanup all memory (alias for cleanup_all)."""
+        self.cleanup_all()
     
     def cleanup_all(self) -> None:
         """Clean up all active allocations."""
@@ -338,6 +354,54 @@ class CUDAOperations:
         except Exception as e:
             self._logger.error(f"Error in GPU max: {e}")
             return np.max(array, axis=axis)
+    
+    def mean(self, array: Any, axis: Optional[int] = None) -> Any:
+        """
+        Mean of array elements.
+        
+        Args:
+            array: Array to find mean
+            axis: Axis along which to find mean
+            
+        Returns:
+            Mean result
+        """
+        if not self._cuda_available:
+            return np.mean(array, axis=axis)
+        
+        try:
+            import cupy as cp
+            if isinstance(array, cp.ndarray):
+                return cp.mean(array, axis=axis)
+            else:
+                return np.mean(array, axis=axis)
+        except Exception as e:
+            self._logger.error(f"Error in GPU mean: {e}")
+            return np.mean(array, axis=axis)
+    
+    def matmul(self, a: Any, b: Any) -> Any:
+        """
+        Matrix multiplication.
+        
+        Args:
+            a: First matrix
+            b: Second matrix
+            
+        Returns:
+            Matrix multiplication result
+        """
+        if not self._cuda_available:
+            return np.matmul(a, b)
+        
+        try:
+            import cupy as cp
+            if isinstance(a, cp.ndarray) and isinstance(b, cp.ndarray):
+                return cp.matmul(a, b)
+            else:
+                return np.matmul(a, b)
+        except Exception as e:
+            self._logger.error(f"Error in GPU matmul: {e}")
+            return np.matmul(a, b)
 
 
 class CUDAManager:
@@ -434,6 +498,11 @@ class CUDAManager:
     def is_available(self) -> bool:
         """Check if CUDA is available."""
         return self._cuda_available
+
+    @is_available.setter
+    def is_available(self, value: bool) -> None:
+        """Set CUDA availability (for testing)."""
+        self._cuda_available = value
 
     @property
     def device_count(self) -> int:
@@ -541,6 +610,34 @@ class CUDAManager:
         Clean up all CUDA memory allocations.
         """
         self.memory_manager.cleanup_all()
+    
+    def discover_devices(self) -> List[CUDADevice]:
+        """
+        Discover available CUDA devices.
+        
+        Returns:
+            List of available CUDA devices
+        """
+        return self._devices.copy()
+    
+    def select_device(self, device_id: int) -> bool:
+        """
+        Select CUDA device.
+        
+        Args:
+            device_id: Device ID to select
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        if not self.is_available:
+            return False
+        
+        if device_id >= len(self._devices):
+            return False
+        
+        self._current_device = self._devices[device_id]
+        return True
 
     def array_to_gpu(self, array: np.ndarray) -> Any:
         """

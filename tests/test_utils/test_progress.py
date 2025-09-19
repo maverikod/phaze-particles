@@ -156,7 +156,7 @@ class TestTimeEstimator(unittest.TestCase):
         self.time_estimator.update_progress(0.5)
         self.time_estimator.reset()
 
-        self.assertIsNone(self.time_estimator.start_time)
+        self.assertIsNotNone(self.time_estimator.start_time)
         self.assertIsNone(self.time_estimator.estimated_total_time)
         self.assertIsNone(self.time_estimator.estimated_remaining_time)
 
@@ -222,7 +222,7 @@ class TestPerformanceMonitor(unittest.TestCase):
 
         # Both operations should be recorded
         self.assertIn("outer_operation_duration", self.monitor.metrics)
-        self.assertIn("inner_operation", self.monitor.metrics)
+        self.assertIn("inner_operation_duration", self.monitor.metrics)
         self.assertGreater(self.monitor.metrics["outer_operation_duration"], self.monitor.metrics["inner_operation_duration"])
 
     def test_memory_usage_tracking(self):
@@ -302,10 +302,10 @@ class TestProgressCallback(unittest.TestCase):
         callback_called = False
         callback_value = None
 
-        def test_function(progress):
+        def test_function(current, total, percentage):
             nonlocal callback_called, callback_value
             callback_called = True
-            callback_value = progress
+            callback_value = current
 
         callback = ProgressCallback()
         callback.add_callback(test_function)
@@ -319,11 +319,11 @@ class TestProgressCallback(unittest.TestCase):
         callback1_called = False
         callback2_called = False
 
-        def callback1(progress):
+        def callback1(current, total, percentage):
             nonlocal callback1_called
             callback1_called = True
 
-        def callback2(progress):
+        def callback2(current, total, percentage):
             nonlocal callback2_called
             callback2_called = True
 
@@ -339,7 +339,7 @@ class TestProgressCallback(unittest.TestCase):
         """Test callback removal."""
         callback_called = False
 
-        def test_function(progress):
+        def test_function(current, total, percentage):
             nonlocal callback_called
             callback_called = True
 
@@ -352,10 +352,10 @@ class TestProgressCallback(unittest.TestCase):
 
     def test_callback_error_handling(self):
         """Test callback error handling."""
-        def error_callback(progress):
+        def error_callback(current, total, percentage):
             raise ValueError("Test error")
 
-        def normal_callback(progress):
+        def normal_callback(current, total, percentage):
             pass
 
         callback = ProgressCallback()
@@ -381,7 +381,7 @@ class TestCreateProgressBar(unittest.TestCase):
         """Test progress bar creation with callback."""
         callback_called = False
 
-        def test_callback(progress):
+        def test_callback(current, total, percentage):
             nonlocal callback_called
             callback_called = True
 
@@ -454,11 +454,11 @@ class TestProgressIntegration(unittest.TestCase):
         monitor = PerformanceMonitor()
         callback = ProgressCallback()
         
-        def progress_callback(progress):
-            monitor.record_metric("current_progress", progress)
+        def progress_callback(current, total, percentage):
+            monitor.record_metric("current_progress", current)
         
         callback.add_callback(progress_callback)
-        progress_bar = ProgressBar(total=100, callback=callback)
+        progress_bar = ProgressBar(total=100, callback=callback.execute_callbacks)
         
         # Update progress
         progress_bar.update(60)

@@ -139,6 +139,8 @@ class RadialProfile:
             return self._exponential_profile(r)
         elif profile_type_str == "polynomial":
             return self._polynomial_profile(r)
+        elif profile_type_str == "tanh":
+            return self._tanh_profile(r)
         else:
             raise ValueError(f"Unknown profile type: {profile_type_str} (type: {type(self.profile_type)})")
 
@@ -177,6 +179,18 @@ class RadialProfile:
             Profile f(r) = center_value * (1 + r/scale)⁻¹
         """
         return self.center_value / (1 + r / self.scale)
+    
+    def _tanh_profile(self, r: Any) -> Any:
+        """
+        Hyperbolic tangent profile.
+
+        Args:
+            r: Radial coordinate
+
+        Returns:
+            Profile f(r) = center_value * tanh(r/scale)
+        """
+        return self.center_value * self.backend.tanh(r / self.scale)
 
     def get_derivative(self, r: Any, dr: float) -> Any:
         """
@@ -295,7 +309,7 @@ class SU2FieldBuilder:
         """
         # Create radial profile if not provided
         if profile is None:
-            profile = RadialProfile(profile_type, f_0, f_inf, r_scale, self.backend)
+            profile = RadialProfile(profile_type, r_scale, f_0, self.backend)
 
         # Extract direction components from field_direction
         if hasattr(field_direction, "n_x"):
@@ -602,11 +616,18 @@ class SU2FieldValidator:
         grad_u_11 = xp.gradient(field.u_11, dx)
 
         # Check that gradients are finite
+        # xp.gradient returns a list of arrays, so we need to check each component
+        def check_gradient_finite(grad):
+            if isinstance(grad, (list, tuple)):
+                return all(xp.all(xp.isfinite(g)) for g in grad)
+            else:
+                return xp.all(xp.isfinite(grad))
+
         return bool(
-            xp.all(xp.isfinite(grad_u_00))
-            and xp.all(xp.isfinite(grad_u_01))
-            and xp.all(xp.isfinite(grad_u_10))
-            and xp.all(xp.isfinite(grad_u_11))
+            check_gradient_finite(grad_u_00)
+            and check_gradient_finite(grad_u_01)
+            and check_gradient_finite(grad_u_10)
+            and check_gradient_finite(grad_u_11)
         )
 
     def _check_boundary_conditions(self, field: SU2Field) -> bool:

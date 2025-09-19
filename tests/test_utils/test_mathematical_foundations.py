@@ -82,21 +82,24 @@ class TestPauliMatrices(unittest.TestCase):
             sigma = self.pauli.get_sigma(i)
             self.assertEqual(sigma.shape, (2, 2))
 
-        # Check specific matrices
-        sigma1 = self.pauli.SIGMA_1
+        # Check specific matrices - convert to numpy for comparison
+        # Use backend's to_numpy method
+        backend = self.pauli.backend
+        sigma1 = backend.to_numpy(self.pauli.SIGMA_1)
         np.testing.assert_array_equal(sigma1, np.array([[0, 1], [1, 0]]))
 
-        sigma2 = self.pauli.SIGMA_2
+        sigma2 = backend.to_numpy(self.pauli.SIGMA_2)
         np.testing.assert_array_equal(sigma2, np.array([[0, -1j], [1j, 0]]))
 
-        sigma3 = self.pauli.SIGMA_3
+        sigma3 = backend.to_numpy(self.pauli.SIGMA_3)
         np.testing.assert_array_equal(sigma3, np.array([[1, 0], [0, -1]]))
 
     def test_get_sigma_valid_indices(self) -> None:
         """Test get_sigma with valid indices."""
         for i in range(1, 4):
             sigma = self.pauli.get_sigma(i)
-            self.assertIsInstance(sigma, np.ndarray)
+            # Check that it's either numpy or cupy array
+            self.assertTrue(hasattr(sigma, 'shape') and hasattr(sigma, 'dtype'))
             self.assertEqual(sigma.shape, (2, 2))
 
     def test_get_sigma_invalid_index(self) -> None:
@@ -113,7 +116,8 @@ class TestPauliMatrices(unittest.TestCase):
         self.assertEqual(len(sigmas), 3)
 
         for sigma in sigmas:
-            self.assertIsInstance(sigma, np.ndarray)
+            # Check that it's either numpy or cupy array
+            self.assertTrue(hasattr(sigma, 'shape') and hasattr(sigma, 'dtype'))
             self.assertEqual(sigma.shape, (2, 2))
 
 
@@ -242,10 +246,11 @@ class TestNumericalUtils(unittest.TestCase):
 
         grad_x, grad_y, grad_z = self.numerical_utils.gradient_3d(field, dx)
 
-        # Gradient of constant field should be zero
-        np.testing.assert_array_almost_equal(grad_x, 0, decimal=10)
-        np.testing.assert_array_almost_equal(grad_y, 0, decimal=10)
-        np.testing.assert_array_almost_equal(grad_z, 0, decimal=10)
+        # Gradient of constant field should be zero - convert to numpy for comparison
+        backend = self.numerical_utils.backend
+        np.testing.assert_array_almost_equal(backend.to_numpy(grad_x), 0, decimal=10)
+        np.testing.assert_array_almost_equal(backend.to_numpy(grad_y), 0, decimal=10)
+        np.testing.assert_array_almost_equal(backend.to_numpy(grad_z), 0, decimal=10)
 
     def test_gradient_3d_linear_field(self):
         """Test gradient of linear field."""
@@ -261,9 +266,11 @@ class TestNumericalUtils(unittest.TestCase):
 
         # Gradient should be (1, 1, 1) for linear field
         # Note: numpy.gradient uses finite differences, so expect some variation
-        np.testing.assert_array_almost_equal(grad_x, 1, decimal=1)
-        np.testing.assert_array_almost_equal(grad_y, 1, decimal=1)
-        np.testing.assert_array_almost_equal(grad_z, 1, decimal=1)
+        # Convert to numpy for comparison
+        backend = self.numerical_utils.backend
+        np.testing.assert_array_almost_equal(backend.to_numpy(grad_x), 1, decimal=1)
+        np.testing.assert_array_almost_equal(backend.to_numpy(grad_y), 1, decimal=1)
+        np.testing.assert_array_almost_equal(backend.to_numpy(grad_z), 1, decimal=1)
 
     def test_divergence_3d_constant_field(self):
         """Test divergence of constant vector field."""
@@ -274,8 +281,9 @@ class TestNumericalUtils(unittest.TestCase):
 
         div = self.numerical_utils.divergence_3d(field_x, field_y, field_z, dx)
 
-        # Divergence of constant field should be zero
-        np.testing.assert_array_almost_equal(div, 0, decimal=10)
+        # Divergence of constant field should be zero - convert to numpy for comparison
+        backend = self.numerical_utils.backend
+        np.testing.assert_array_almost_equal(backend.to_numpy(div), 0, decimal=10)
 
     def test_integrate_3d_constant_field(self):
         """Test integration of constant field."""

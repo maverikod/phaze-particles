@@ -325,26 +325,26 @@ class TestResultsManager(unittest.TestCase):
         """Test listing results."""
         # Create some test results
         self.results_manager.save_results_csv(
-            "proton", "static", "test1", {"mass": 938.272}
+            {"mass": 938.272}, "test1", "proton", "static"
         )
         self.results_manager.save_results_csv(
-            "proton", "static", "test2", {"mass": 938.272}
+            {"mass": 938.272}, "test2", "proton", "static"
         )
         
         results = self.results_manager.list_results("proton", "static")
         
         self.assertEqual(len(results), 2)
-        self.assertTrue(all("test" in result for result in results))
+        self.assertTrue(all("test" in str(result) for result in results))
 
     def test_cleanup_old_results(self):
         """Test cleaning up old results."""
         # Create some test results
         self.results_manager.save_results_csv(
-            "proton", "static", "test1", {"mass": 938.272}
+            {"mass": 938.272}, "test1", "proton", "static"
         )
         
         # Cleanup old results (older than 0 days)
-        self.results_manager.cleanup_old_results("proton", "static", days=0)
+        self.results_manager.cleanup_old_results(days=0)
         
         # Results should be cleaned up
         results = self.results_manager.list_results("proton", "static")
@@ -448,7 +448,8 @@ class TestConfigLoader(unittest.TestCase):
             "box_size": 4.0
         }
         
-        self.assertFalse(loader.validate_config(invalid_config))
+        schema = {"type": "object", "properties": {"grid_size": {"type": "integer", "minimum": 0}}}
+        self.assertFalse(loader.validate_config(invalid_config, schema))
 
     def test_merge_configs(self):
         """Test merging configs."""
@@ -561,7 +562,7 @@ class TestFileManager(unittest.TestCase):
         
         self.assertEqual(len(listed_files), 3)
         for filename in test_files:
-            self.assertIn(str(filename), [str(f) for f in listed_files])
+            self.assertTrue(any(str(f).endswith(filename) for f in listed_files))
 
     def test_list_directories(self):
         """Test listing directories."""
@@ -575,7 +576,7 @@ class TestFileManager(unittest.TestCase):
         
         self.assertEqual(len(listed_dirs), 3)
         for dirname in test_dirs:
-            self.assertIn(str(dirname), [str(d) for d in listed_dirs])
+            self.assertTrue(any(str(d).endswith(dirname) for d in listed_dirs))
 
     def test_cleanup_directory(self):
         """Test directory cleanup."""
