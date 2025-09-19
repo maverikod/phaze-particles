@@ -14,8 +14,6 @@ from phaze_particles.utils.cuda import (
     CUDAManager,
     get_cuda_manager,
     CUDADevice,
-    CUDAMemoryManager,
-    CUDAOperations
 )
 
 

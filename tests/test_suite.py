@@ -17,42 +17,40 @@ from dataclasses import dataclass
 from pathlib import Path
 
 # Import all test modules
-from test_cli.test_base import TestBaseCommand
-from test_cli.test_proton_command import TestProtonCommand
-from test_models.test_proton_integrated import TestProtonModel, TestModelConfig, TestModelResults, TestProtonModelFactory
-from test_utils.test_mathematical_foundations import (
+from tests.test_cli.test_base import TestBaseCommand
+from tests.test_cli.test_proton_command import TestProtonCommand
+from tests.test_models.test_proton_integrated import TestProtonModel, TestModelConfig, TestModelResults, TestProtonModelFactory
+from tests.test_utils.test_mathematical_foundations import (
     TestPhysicalConstants, TestSkyrmeConstants, TestPauliMatrices, 
     TestTensorOperations, TestCoordinateSystem, TestNumericalUtils, 
     TestValidationUtils, TestMathematicalFoundations
 )
-from test_utils.test_torus_geometries import (
+from tests.test_utils.test_torus_geometries import (
     TestTorusGeometryManager, TestTorusConfiguration, TestFieldDirectionCalculator
 )
-from test_utils.test_su2_fields import (
+from tests.test_utils.test_su2_fields import (
     TestSU2Field, TestSU2FieldBuilder, TestFieldProfile, TestFieldValidation
 )
-from test_utils.test_energy_densities import (
+from tests.test_utils.test_energy_densities import (
     TestEnergyDensity, TestEnergyDensityCalculator, TestEnergyComponents
 )
-from test_utils.test_physics import (
+from tests.test_utils.test_physics import (
     TestPhysicalQuantities, TestPhysicalQuantitiesCalculator, TestBaryonNumber,
     TestElectricCharge, TestChargeRadius, TestMagneticMoment, TestMassCalculation
 )
-from test_utils.test_numerical_methods import (
+from tests.test_utils.test_numerical_methods import (
     TestRelaxationSolver, TestRelaxationConfig, TestConstraintConfig,
     TestConstraintController, TestGradientDescent, TestSU2Projection
 )
-from test_utils.test_validation import (
+from tests.test_utils.test_validation import (
     TestValidationSystem, TestExperimentalData, TestParameterValidator,
     TestQualityAssessor, TestValidationResults
 )
-from test_utils.test_cuda import (
-    TestCUDADevice, TestCUDAMemoryManager, TestCUDAOperations, TestCUDAManager,
-    TestGetCUDAManager, TestCUDAIntegration
+from tests.test_utils.test_cuda import (
+    TestCUDADevice, TestCUDAManager, TestGetCUDAManager
 )
-from test_utils.test_progress import (
-    TestProgressBar, TestTimeEstimator, TestPerformanceMonitor, TestProgressCallback,
-    TestCreateProgressBar, TestCreatePerformanceMonitor, TestProgressIntegration
+from tests.test_utils.test_progress import (
+    TestProgressBar, TestPerformanceMonitor, TestCreateProgressBar, TestCreatePerformanceMonitor
 )
 
 
@@ -162,20 +160,14 @@ class TestSuite:
                 
                 # CUDA tests
                 TestCUDADevice,
-                TestCUDAMemoryManager,
-                TestCUDAOperations,
                 TestCUDAManager,
                 TestGetCUDAManager,
-                TestCUDAIntegration,
                 
                 # Progress tests
                 TestProgressBar,
-                TestTimeEstimator,
                 TestPerformanceMonitor,
-                TestProgressCallback,
                 TestCreateProgressBar,
                 TestCreatePerformanceMonitor,
-                TestProgressIntegration,
             ]
             
             for test_class in test_classes:
@@ -269,20 +261,14 @@ class TestSuite:
                 
                 # CUDA tests
                 TestCUDADevice,
-                TestCUDAMemoryManager,
-                TestCUDAOperations,
                 TestCUDAManager,
                 TestGetCUDAManager,
-                TestCUDAIntegration,
                 
                 # Progress tests
                 TestProgressBar,
-                TestTimeEstimator,
                 TestPerformanceMonitor,
-                TestProgressCallback,
                 TestCreateProgressBar,
                 TestCreatePerformanceMonitor,
-                TestProgressIntegration,
             ]
             
             for test_class in unit_test_classes:

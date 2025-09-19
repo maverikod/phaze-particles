@@ -16,13 +16,10 @@ from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 
 from phaze_particles.utils.io import (
-    CSVWriter,
-    JSONWriter,
-    ResultsManager,
-    ConfigLoader,
-    FileManager,
-    DataExporter,
-    DataImporter
+    save_results,
+    load_config,
+    ensure_output_directory,
+    generate_report_filename,
 )
 
 

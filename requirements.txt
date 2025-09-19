@@ -13,6 +13,13 @@ flake8>=4.0.0
 mypy>=0.950
 pytest>=7.0.0
 
+# Performance and optimization
+psutil>=5.8.0  # For system monitoring
+
 # Optional dependencies for advanced features
 # h5py>=3.0.0  # For HDF5 data storage
 # jupyter>=1.0.0  # For interactive notebooks
+
+# CUDA dependencies (optional)
+# cupy-cuda11x>=10.0.0  # For CUDA 11.x support
+# cupy-cuda12x>=12.0.0  # For CUDA 12.x support
