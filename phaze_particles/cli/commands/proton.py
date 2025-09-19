@@ -44,6 +44,7 @@ class ProtonCommand(BaseCommand):
         self.subcommands = {
             "static": ProtonStaticCommand(),
             "optimize": ProtonOptimizeCommand(),
+            "tune": ProtonTuneCommand(),
             # Future subcommands will be added here
             # 'dynamic': ProtonDynamicCommand(),
         }
@@ -810,4 +811,275 @@ class ProtonOptimizeCommand(BaseCommand):
             return 1
         except Exception as e:
             print(f"Error during optimization: {e}", file=sys.stderr)
+            return 1
+
+
+class ProtonTuneCommand(BaseCommand):
+    """
+    Tune Skyrme constants for optimal virial balance and energy balance.
+    """
+
+    def __init__(self) -> None:
+        """Initialize tune command."""
+        super().__init__(
+            name="tune",
+            description="Tune Skyrme constants for virial balance and energy balance",
+        )
+
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
+        """
+        Add tune command arguments.
+
+        Args:
+            parser: Argument parser to add arguments to
+        """
+        # Basic model parameters
+        parser.add_argument(
+            "--grid-size",
+            type=int,
+            default=32,
+            help="Grid size for calculation (default: 32)",
+        )
+        parser.add_argument(
+            "--box-size",
+            type=float,
+            default=2.0,
+            help="Box size in fm (default: 2.0)",
+        )
+        parser.add_argument(
+            "--config-type",
+            type=str,
+            default="120deg",
+            choices=["120deg", "clover", "cartesian"],
+            help="Torus configuration type (default: 120deg)",
+        )
+
+        # Optimization targets
+        parser.add_argument(
+            "--target-e2-ratio",
+            type=float,
+            default=0.5,
+            help="Target E₂/E_total ratio (default: 0.5)",
+        )
+        parser.add_argument(
+            "--target-e4-ratio",
+            type=float,
+            default=0.5,
+            help="Target E₄/E_total ratio (default: 0.5)",
+        )
+        parser.add_argument(
+            "--target-virial-residual",
+            type=float,
+            default=0.05,
+            help="Target virial residual (default: 0.05)",
+        )
+
+        # Optimization parameters
+        parser.add_argument(
+            "--max-iterations",
+            type=int,
+            default=100,
+            help="Maximum optimization iterations (default: 100)",
+        )
+
+        # Initial constants
+        parser.add_argument(
+            "--initial-c2",
+            type=float,
+            default=1.0,
+            help="Initial c₂ constant (default: 1.0)",
+        )
+        parser.add_argument(
+            "--initial-c4",
+            type=float,
+            default=1.0,
+            help="Initial c₄ constant (default: 1.0)",
+        )
+        parser.add_argument(
+            "--initial-c6",
+            type=float,
+            default=1.0,
+            help="Initial c₆ constant (default: 1.0)",
+        )
+
+        # Output options
+        parser.add_argument(
+            "--output",
+            type=str,
+            default="proton_tune_results",
+            help="Output directory (default: proton_tune_results)",
+        )
+        parser.add_argument(
+            "--config",
+            type=str,
+            help="Configuration file path (JSON format)",
+        )
+        parser.add_argument(
+            "--verbose",
+            action="store_true",
+            help="Enable verbose output",
+        )
+
+    def execute(self, args: argparse.Namespace) -> int:
+        """
+        Execute tune command.
+
+        Args:
+            args: Parsed command arguments
+
+        Returns:
+            Exit code
+        """
+        try:
+            # Load configuration if provided
+            if args.config:
+                try:
+                    model_config = ModelConfig.from_file(args.config)
+                    print(f"Configuration loaded from: {args.config}")
+                except Exception as e:
+                    print(f"Error loading configuration file: {e}", file=sys.stderr)
+                    return 1
+            else:
+                # Use command line arguments to create config
+                model_config = ModelConfig(
+                    grid_size=args.grid_size,
+                    box_size=args.box_size,
+                    torus_config=args.config_type,
+                    c2=args.initial_c2,
+                    c4=args.initial_c4,
+                    c6=args.initial_c6,
+                    validation_enabled=True,
+                    save_reports=True,
+                    output_dir=args.output,
+                )
+
+            # Display parameters
+            print("Running Skyrme constants tuning...")
+            print(f"Configuration: {args.config_type}")
+            print(f"Grid size: {args.grid_size}")
+            print(f"Box size: {args.box_size} fm")
+            print(f"Output directory: {args.output}")
+            print(f"Initial constants: c₂={args.initial_c2}, c₄={args.initial_c4}, c₆={args.initial_c6}")
+            print(f"Target ratios: E₂/E₄ = {args.target_e2_ratio:.1%}/{args.target_e4_ratio:.1%}")
+            print(f"Target virial residual: < {args.target_virial_residual:.1%}")
+
+            # Create and run model
+            with create_performance_monitor("Proton Constants Tuning") as monitor:
+                # Create model
+                model = ProtonModel(model_config)
+
+                # Build geometry and fields
+                if not model.create_geometry():
+                    print("Failed to create geometry", file=sys.stderr)
+                    return 1
+
+                if not model.build_fields():
+                    print("Failed to build fields", file=sys.stderr)
+                    return 1
+
+                if not model.calculate_energy():
+                    print("Failed to calculate energy", file=sys.stderr)
+                    return 1
+
+                # Show initial energy analysis
+                print("\n" + "="*60)
+                print("INITIAL ENERGY ANALYSIS")
+                print("="*60)
+                print(model.get_energy_report())
+
+                # Optimize constants
+                success = model.optimize_skyrme_constants(
+                    target_e2_ratio=args.target_e2_ratio,
+                    target_e4_ratio=args.target_e4_ratio,
+                    target_virial_residual=args.target_virial_residual,
+                    max_iterations=args.max_iterations,
+                    verbose=args.verbose
+                )
+
+                if not success:
+                    print("Failed to optimize constants", file=sys.stderr)
+                    return 1
+
+                # Show optimization report
+                print("\n" + "="*60)
+                print("OPTIMIZATION REPORT")
+                print("="*60)
+                print(model.get_optimization_report())
+
+                # Recalculate physics with optimized constants
+                if not model.calculate_physics():
+                    print("Failed to recalculate physics", file=sys.stderr)
+                    return 1
+
+                # Create results by running the model
+                results = model.run()
+
+                # Display results
+                print("\n" + "="*60)
+                print("TUNED PROTON MODEL RESULTS")
+                print("="*60)
+                print(f"Status: {results.status}")
+                print(f"Execution time: {results.execution_time:.2f} seconds")
+                print(f"Optimization iterations: {model.optimization_result.iterations}")
+                print(f"Converged: {model.optimization_result.converged}")
+
+                print(f"\nOptimized Constants:")
+                print(f"  c₂ = {model.optimization_result.c2:.6f}")
+                print(f"  c₄ = {model.optimization_result.c4:.6f}")
+                print(f"  c₆ = {model.optimization_result.c6:.6f}")
+
+                print(f"\nPhysical Parameters:")
+                print(f"  Proton mass: {results.proton_mass:.3f} MeV")
+                print(f"  Charge radius: {results.charge_radius:.3f} fm")
+                print(f"  Magnetic moment: {results.magnetic_moment:.3f} μN")
+                print(f"  Electric charge: {results.electric_charge:.3f} e")
+                print(f"  Baryon number: {results.baryon_number:.3f}")
+                print(f"  Energy balance: {results.energy_balance:.3f}")
+                print(f"  Total energy: {results.total_energy:.3f} MeV")
+
+                # Show final energy analysis
+                print("\n" + "="*60)
+                print("FINAL ENERGY ANALYSIS")
+                print("="*60)
+                print(model.get_energy_report())
+
+                # Save results
+                os.makedirs(args.output, exist_ok=True)
+                
+                # Save optimized constants
+                constants_path = os.path.join(args.output, "optimized_constants.json")
+                constants_data = {
+                    "c2": model.optimization_result.c2,
+                    "c4": model.optimization_result.c4,
+                    "c6": model.optimization_result.c6,
+                    "optimization_targets": {
+                        "target_e2_ratio": args.target_e2_ratio,
+                        "target_e4_ratio": args.target_e4_ratio,
+                        "target_virial_residual": args.target_virial_residual
+                    },
+                    "achieved_values": {
+                        "e2_ratio": model.optimization_result.e2_ratio,
+                        "e4_ratio": model.optimization_result.e4_ratio,
+                        "virial_residual": model.optimization_result.virial_residual
+                    },
+                    "converged": bool(model.optimization_result.converged),
+                    "iterations": model.optimization_result.iterations
+                }
+                
+                with open(constants_path, 'w') as f:
+                    json.dump(constants_data, f, indent=2)
+                print(f"\nOptimized constants saved to: {constants_path}")
+
+                # Save model results
+                results_path = os.path.join(args.output, "model_results.json")
+                results.save_to_file(results_path)
+                print(f"Model results saved to: {results_path}")
+
+                print("\nSkyrme constants tuning completed successfully.")
+                return 0
+
+        except Exception as e:
+            print(f"Error executing tune command: {e}", file=sys.stderr)
+            import traceback
+            traceback.print_exc()
             return 1

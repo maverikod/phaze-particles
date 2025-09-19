@@ -34,6 +34,11 @@ from phaze_particles.utils.validation import (
 )
 from phaze_particles.utils.cuda import get_cuda_manager
 from phaze_particles.utils.progress import create_progress_bar
+from phaze_particles.utils.skyrme_optimizer import (
+    SkyrmeConstantsOptimizer,
+    OptimizationTargets,
+    AdaptiveOptimizer
+)
 
 
 class ModelStatus(Enum):
@@ -576,6 +581,113 @@ Quality Assessment:
 """
         
         return energy_report + additional_info
+
+    def optimize_skyrme_constants(
+        self,
+        target_e2_ratio: float = 0.5,
+        target_e4_ratio: float = 0.5,
+        target_virial_residual: float = 0.05,
+        max_iterations: int = 100,
+        verbose: bool = False
+    ) -> bool:
+        """
+        Optimize Skyrme constants for virial balance and energy balance.
+        
+        Args:
+            target_e2_ratio: Target E₂/E_total ratio
+            target_e4_ratio: Target E₄/E_total ratio
+            target_virial_residual: Target virial residual
+            max_iterations: Maximum optimization iterations
+            verbose: Verbose output
+            
+        Returns:
+            True if optimization successful
+        """
+        try:
+            if self.status != ModelStatus.ENERGY_CALCULATED:
+                raise ValueError("Energy must be calculated first")
+            
+            if verbose:
+                print("Starting Skyrme constants optimization...")
+            
+            # Create optimization targets
+            targets = OptimizationTargets(
+                target_e2_ratio=target_e2_ratio,
+                target_e4_ratio=target_e4_ratio,
+                target_virial_residual=target_virial_residual
+            )
+            
+            # Create optimizer
+            optimizer = SkyrmeConstantsOptimizer(
+                targets=targets,
+                max_iterations=max_iterations,
+                learning_rate=0.1,
+                convergence_tolerance=1e-4
+            )
+            
+            # Create adaptive optimizer
+            adaptive_optimizer = AdaptiveOptimizer(optimizer)
+            
+            # Optimize constants
+            optimization_result = adaptive_optimizer.optimize_with_adaptation(
+                energy_calculator=self.energy_calculator,
+                su2_field=self.su2_field,
+                initial_c2=self.config.c2,
+                initial_c4=self.config.c4,
+                initial_c6=self.config.c6,
+                verbose=verbose
+            )
+            
+            # Update configuration with optimized constants
+            self.config.c2 = optimization_result.c2
+            self.config.c4 = optimization_result.c4
+            self.config.c6 = optimization_result.c6
+            
+            # Update energy calculator
+            self.energy_calculator.c2 = optimization_result.c2
+            self.energy_calculator.c4 = optimization_result.c4
+            self.energy_calculator.c6 = optimization_result.c6
+            
+            # Recalculate energy density with optimized constants
+            self.energy_density = self.energy_calculator.calculate_energy_density(
+                su2_field=self.su2_field
+            )
+            self.field_derivatives = self.energy_calculator.calculate_field_derivatives(
+                su2_field=self.su2_field
+            )
+            
+            # Store optimization result
+            self.optimization_result = optimization_result
+            
+            if verbose:
+                print("\n" + "="*60)
+                print("SKYRME CONSTANTS OPTIMIZATION COMPLETED")
+                print("="*60)
+                print(optimizer.get_optimization_report(optimization_result))
+            
+            return True
+            
+        except Exception as e:
+            self.status = ModelStatus.FAILED
+            self.error_message = f"Constants optimization error: {str(e)}"
+            print(f"Constants optimization error: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return False
+
+    def get_optimization_report(self) -> str:
+        """
+        Get optimization report.
+        
+        Returns:
+            Optimization report string
+        """
+        if not hasattr(self, 'optimization_result') or self.optimization_result is None:
+            return "No optimization performed yet."
+        
+        from phaze_particles.utils.skyrme_optimizer import SkyrmeConstantsOptimizer
+        optimizer = SkyrmeConstantsOptimizer()
+        return optimizer.get_optimization_report(self.optimization_result)
 
     def validate(self) -> bool:
         """

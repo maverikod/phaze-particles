@@ -1,0 +1,15 @@
+{
+  "c2": 2.5228811153333255,
+  "c4": 0.3875258003495023,
+  "c6": 5.388736424313554,
+  "optimization_targets": {
+    "target_e2_ratio": 0.5,
+    "target_e4_ratio": 0.5,
+    "target_virial_residual": 0.05
+  },
+  "achieved_values": {
+    "e2_ratio": 0.3766511720336686,
+    "e4_ratio": 0.6218137978060432,
+    "virial_residual": 0.24976771625323924
+  },
+  "converged": 
