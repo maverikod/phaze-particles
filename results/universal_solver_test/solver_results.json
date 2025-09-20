@@ -1,0 +1,71 @@
+{
+  "input_parameters": {
+    "grid_size": 32,
+    "box_size": 4.0,
+    "config_type": "120deg",
+    "c2": 1.0,
+    "c4": 1.0,
+    "c6": 1.0,
+    "F_pi": 186.0,
+    "e": 5.45,
+    "target_mass": null,
+    "target_radius": null,
+    "target_magnetic_moment": null,
+    "target_bands": 11,
+    "optimization_strategy": "quantization"
+  },
+  "results": {
+    "success": true,
+    "physical_parameters": {
+      "mass": 3014.6964427105995,
+      "charge_radius": 0.746026178432402,
+      "magnetic_moment": -0.4212414214815141,
+      "electric_charge": 0.09524377306358064,
+      "baryon_number": 1.9669140774020005e-18
+    },
+    "energy_analysis": {
+      "e2": 56.03916448270324,
+      "e4": 2958.46988200298,
+      "e6": 0.18739622491670418,
+      "total": 3014.6964427105995,
+      "e2_ratio": 0.01858865910635992,
+      "e4_ratio": 0.9813491800000053,
+      "e6_ratio": 6.216089363485329e-05
+    },
+    "mode_analysis": {
+      "total_modes": 29,
+      "energy_bands": 9,
+      "core_radius": 0.7776554646227611,
+      "quantization_parameter": 4674.9186658185
+    },
+    "topological_analysis": {
+      "geometric_radius": 0.6005137879656399,
+      "phase_radius": 1.022127710822894,
+      "effective_radius": 0.8956435339657178,
+      "topological_charge": 3.3318688119830256e-18,
+      "phase_transitions": 0
+    },
+    "interference_analysis": {
+      "fluctuation_energy": 417.93154628067003,
+      "background_field_strength": 9.230569616964393,
+      "constructive_regions": 5,
+      "destructive_regions": 22,
+      "interference_strength": 7.613301881918319,
+      "fluctuation_amplitude": 361.14627531574024
+    },
+    "optimized_constants": {
+      "c2": 0.3793103448275862,
+      "c4": 2.6363636363636367,
+      "c6": 1.0,
+      "F_pi": 186.0,
+      "e": 5.45
+    },
+    "convergence_info": {
+      "converged": true,
+      "final_error": 0.0,
+      "strategy_used": "quantization"
+    },
+    "execution_time": 0.4454059600830078,
+    "iterations": 50
+  }
+}

@@ -228,6 +228,7 @@ class TestPhysicalQuantities(unittest.TestCase):
             magnetic_moment=2.793,
             mass=938.272,
             energy=938.272,
+            energy_balance=0.5,
             grid_size=64,
             box_size=4.0,
             dx=0.0625,
@@ -252,6 +253,7 @@ class TestPhysicalQuantities(unittest.TestCase):
             magnetic_moment=2.793,
             mass=938.272,
             energy=938.272,
+            energy_balance=0.5,
             grid_size=64,
             box_size=4.0,
             dx=0.0625,
@@ -272,6 +274,7 @@ class TestPhysicalQuantities(unittest.TestCase):
             magnetic_moment=2.793,
             mass=938.272,
             energy=938.272,
+            energy_balance=0.5,
             grid_size=64,
             box_size=4.0,
             dx=0.0625,
@@ -292,6 +295,7 @@ class TestPhysicalQuantities(unittest.TestCase):
             magnetic_moment=2.793,
             mass=938.272,
             energy=938.272,
+            energy_balance=0.5,
             grid_size=64,
             box_size=4.0,
             dx=0.0625,
@@ -310,7 +314,9 @@ class TestChargeDensity(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.charge_density = ChargeDensity(grid_size=32, box_size=4.0)
+        self.charge_density = ChargeDensity(
+            F_pi=186.0, e=5.45, c6=0.0, grid_size=32, box_size=4.0
+        )
 
     def test_initialization(self):
         """Test ChargeDensity initialization."""
@@ -455,7 +461,9 @@ class TestMagneticMomentCalculator(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.calculator = MagneticMomentCalculator(grid_size=32, box_size=4.0)
+        from phaze_particles.utils.mathematical_foundations import ArrayBackend
+        backend = ArrayBackend()
+        self.calculator = MagneticMomentCalculator(grid_size=32, box_size=4.0, backend=backend)
 
     def test_initialization(self):
         """Test MagneticMomentCalculator initialization."""
@@ -647,6 +655,7 @@ class TestPhysicalQuantitiesCalculator(unittest.TestCase):
             magnetic_moment=2.793,
             mass=938.272,
             energy=938.272,
+            energy_balance=0.5,
             grid_size=32,
             box_size=4.0,
             dx=0.125,
@@ -670,6 +679,7 @@ class TestPhysicalQuantitiesCalculator(unittest.TestCase):
             magnetic_moment=2.793,
             mass=938.272,
             energy=938.272,
+            energy_balance=0.5,
             grid_size=32,
             box_size=4.0,
             dx=0.125,

@@ -12,6 +12,7 @@ from typing import Dict, Type
 
 from .base import BaseCommand
 from .commands.proton import ProtonCommand
+from .commands.solve import SolveCommand
 
 
 class PhazeParticlesCLI:
@@ -30,6 +31,7 @@ class PhazeParticlesCLI:
         """Register all available commands."""
         self.commands = {
             "proton": ProtonCommand,
+            "solve": SolveCommand,
             # Future commands will be added here
             # 'neutron': NeutronCommand,
         }

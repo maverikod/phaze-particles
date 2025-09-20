@@ -1,0 +1,79 @@
+{
+  "timestamp": "2025-09-19T22:14:32.952462",
+  "overall_status": "failed",
+  "weighted_score": 0.14,
+  "status_counts": {
+    "excellent": 1,
+    "good": 0,
+    "fair": 1,
+    "poor": 0,
+    "failed": 4
+  },
+  "total_parameters": 6,
+  "passed_parameters": 1,
+  "validation_results": [
+    {
+      "parameter_name": "proton_mass",
+      "calculated_value": 1438.605852593699,
+      "experimental_value": 938.272,
+      "experimental_error": 0.006,
+      "deviation": 500.3338525936989,
+      "deviation_percent": 53.32503288957774,
+      "within_tolerance": false,
+      "status": "failed"
+    },
+    {
+      "parameter_name": "charge_radius",
+      "calculated_value": 1.232646091799896,
+      "experimental_value": 0.841,
+      "experimental_error": 0.019,
+      "deviation": 0.39164609179989607,
+      "deviation_percent": 46.56909533886993,
+      "within_tolerance": false,
+      "status": "failed"
+    },
+    {
+      "parameter_name": "magnetic_moment",
+      "calculated_value": -0.09886416725056421,
+      "experimental_value": 2.793,
+      "experimental_error": 0.001,
+      "deviation": 2.8918641672505645,
+      "deviation_percent": 103.5397123970843,
+      "within_tolerance": false,
+      "status": "failed"
+    },
+    {
+      "parameter_name": "electric_charge",
+      "calculated_value": 1.0009174669922498,
+      "experimental_value": 1.0,
+      "experimental_error": 1e-06,
+      "deviation": 0.0009174669922498158,
+      "deviation_percent": 0.09174669922498158,
+      "within_tolerance": false,
+      "status": "fair"
+    },
+    {
+      "parameter_name": "baryon_number",
+      "calculated_value": {
+        "real": 0.0015918782289524455,
+        "imag": 0.0003414967895347715
+      },
+      "experimental_value": 1.0,
+      "experimental_error": 0.02,
+      "deviation": 0.998408180174045,
+      "deviation_percent": 99.8408180174045,
+      "within_tolerance": false,
+      "status": "failed"
+    },
+    {
+      "parameter_name": "energy_balance",
+      "calculated_value": 0.5,
+      "experimental_value": 0.5,
+      "experimental_error": 0.01,
+      "deviation": 0.0,
+      "deviation_percent": 0.0,
+      "within_tolerance": true,
+      "status": "excellent"
+    }
+  ]
+}

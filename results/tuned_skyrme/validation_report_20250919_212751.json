@@ -1,0 +1,79 @@
+{
+  "timestamp": "2025-09-19T21:26:25.356304",
+  "overall_status": "failed",
+  "weighted_score": 0.24,
+  "status_counts": {
+    "excellent": 1,
+    "good": 0,
+    "fair": 1,
+    "poor": 1,
+    "failed": 3
+  },
+  "total_parameters": 6,
+  "passed_parameters": 1,
+  "validation_results": [
+    {
+      "parameter_name": "proton_mass",
+      "calculated_value": 990.3691118844387,
+      "experimental_value": 938.272,
+      "experimental_error": 0.006,
+      "deviation": 52.09711188443862,
+      "deviation_percent": 5.552453007703376,
+      "within_tolerance": false,
+      "status": "failed"
+    },
+    {
+      "parameter_name": "charge_radius",
+      "calculated_value": 0.7286271177205734,
+      "experimental_value": 0.841,
+      "experimental_error": 0.019,
+      "deviation": 0.11237288227942654,
+      "deviation_percent": 13.361817155698757,
+      "within_tolerance": false,
+      "status": "poor"
+    },
+    {
+      "parameter_name": "magnetic_moment",
+      "calculated_value": -4.58214380754019e-14,
+      "experimental_value": 2.793,
+      "experimental_error": 0.001,
+      "deviation": 2.793000000000046,
+      "deviation_percent": 100.00000000000165,
+      "within_tolerance": false,
+      "status": "failed"
+    },
+    {
+      "parameter_name": "electric_charge",
+      "calculated_value": 1.0004314710736155,
+      "experimental_value": 1.0,
+      "experimental_error": 1e-06,
+      "deviation": 0.0004314710736155192,
+      "deviation_percent": 0.04314710736155192,
+      "within_tolerance": false,
+      "status": "fair"
+    },
+    {
+      "parameter_name": "baryon_number",
+      "calculated_value": {
+        "real": 0.0009976595072260994,
+        "imag": 0.0015322054751205055
+      },
+      "experimental_value": 1.0,
+      "experimental_error": 0.02,
+      "deviation": 0.9990035154911409,
+      "deviation_percent": 99.90035154911409,
+      "within_tolerance": false,
+      "status": "failed"
+    },
+    {
+      "parameter_name": "energy_balance",
+      "calculated_value": 0.5,
+      "experimental_value": 0.5,
+      "experimental_error": 0.01,
+      "deviation": 0.0,
+      "deviation_percent": 0.0,
+      "within_tolerance": true,
+      "status": "excellent"
+    }
+  ]
+}

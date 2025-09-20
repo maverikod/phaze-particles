@@ -1,0 +1,79 @@
+{
+  "timestamp": "2025-09-19T20:58:07.714946",
+  "overall_status": "failed",
+  "weighted_score": 0.16999999999999998,
+  "status_counts": {
+    "excellent": 1,
+    "good": 1,
+    "fair": 0,
+    "poor": 0,
+    "failed": 4
+  },
+  "total_parameters": 6,
+  "passed_parameters": 1,
+  "validation_results": [
+    {
+      "parameter_name": "proton_mass",
+      "calculated_value": 1231.3165888094768,
+      "experimental_value": 938.272,
+      "experimental_error": 0.006,
+      "deviation": 293.04458880947675,
+      "deviation_percent": 31.232370656853952,
+      "within_tolerance": false,
+      "status": "failed"
+    },
+    {
+      "parameter_name": "charge_radius",
+      "calculated_value": 0.6432353776079449,
+      "experimental_value": 0.841,
+      "experimental_error": 0.019,
+      "deviation": 0.19776462239205506,
+      "deviation_percent": 23.51541288847266,
+      "within_tolerance": false,
+      "status": "failed"
+    },
+    {
+      "parameter_name": "magnetic_moment",
+      "calculated_value": -2.6066105574965506e-14,
+      "experimental_value": 2.793,
+      "experimental_error": 0.001,
+      "deviation": 2.7930000000000264,
+      "deviation_percent": 100.00000000000094,
+      "within_tolerance": false,
+      "status": "failed"
+    },
+    {
+      "parameter_name": "electric_charge",
+      "calculated_value": 1.0000750737193362,
+      "experimental_value": 1.0,
+      "experimental_error": 1e-06,
+      "deviation": 7.50737193362383e-05,
+      "deviation_percent": 0.00750737193362383,
+      "within_tolerance": false,
+      "status": "good"
+    },
+    {
+      "parameter_name": "baryon_number",
+      "calculated_value": {
+        "real": 0.0014491232986783408,
+        "imag": 0.003143650818141522
+      },
+      "experimental_value": 1.0,
+      "experimental_error": 0.02,
+      "deviation": 0.998555825130195,
+      "deviation_percent": 99.8555825130195,
+      "within_tolerance": false,
+      "status": "failed"
+    },
+    {
+      "parameter_name": "energy_balance",
+      "calculated_value": 0.5,
+      "experimental_value": 0.5,
+      "experimental_error": 0.01,
+      "deviation": 0.0,
+      "deviation_percent": 0.0,
+      "within_tolerance": true,
+      "status": "excellent"
+    }
+  ]
+}

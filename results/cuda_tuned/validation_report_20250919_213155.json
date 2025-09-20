@@ -1,0 +1,79 @@
+{
+  "timestamp": "2025-09-19T21:31:07.731934",
+  "overall_status": "failed",
+  "weighted_score": 0.24,
+  "status_counts": {
+    "excellent": 1,
+    "good": 0,
+    "fair": 1,
+    "poor": 1,
+    "failed": 3
+  },
+  "total_parameters": 6,
+  "passed_parameters": 1,
+  "validation_results": [
+    {
+      "parameter_name": "proton_mass",
+      "calculated_value": 990.476690757948,
+      "experimental_value": 938.272,
+      "experimental_error": 0.006,
+      "deviation": 52.2046907579479,
+      "deviation_percent": 5.563918645973438,
+      "within_tolerance": false,
+      "status": "failed"
+    },
+    {
+      "parameter_name": "charge_radius",
+      "calculated_value": 0.7266678457403719,
+      "experimental_value": 0.841,
+      "experimental_error": 0.019,
+      "deviation": 0.11433215425962806,
+      "deviation_percent": 13.594786475580031,
+      "within_tolerance": false,
+      "status": "poor"
+    },
+    {
+      "parameter_name": "magnetic_moment",
+      "calculated_value": -4.454738189478521e-14,
+      "experimental_value": 2.793,
+      "experimental_error": 0.001,
+      "deviation": 2.7930000000000446,
+      "deviation_percent": 100.00000000000159,
+      "within_tolerance": false,
+      "status": "failed"
+    },
+    {
+      "parameter_name": "electric_charge",
+      "calculated_value": 1.0005015965443012,
+      "experimental_value": 1.0,
+      "experimental_error": 1e-06,
+      "deviation": 0.0005015965443011527,
+      "deviation_percent": 0.050159654430115275,
+      "within_tolerance": false,
+      "status": "fair"
+    },
+    {
+      "parameter_name": "baryon_number",
+      "calculated_value": {
+        "real": -0.0005298189515811557,
+        "imag": -0.0011973697778439863
+      },
+      "experimental_value": 1.0,
+      "experimental_error": 0.02,
+      "deviation": 1.0005305354189191,
+      "deviation_percent": 100.05305354189191,
+      "within_tolerance": false,
+      "status": "failed"
+    },
+    {
+      "parameter_name": "energy_balance",
+      "calculated_value": 0.5,
+      "experimental_value": 0.5,
+      "experimental_error": 0.01,
+      "deviation": 0.0,
+      "deviation_percent": 0.0,
+      "within_tolerance": true,
+      "status": "excellent"
+    }
+  ]
+}

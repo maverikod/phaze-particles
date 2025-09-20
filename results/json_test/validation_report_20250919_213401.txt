@@ -1,0 +1,64 @@
+================================================================================
+PROTON MODEL VALIDATION REPORT
+================================================================================
+Date and time: 2025-09-19 21:33:32
+
+OVERALL ASSESSMENT:
+----------------------------------------
+Status: FAILED
+Weighted score: 0.170
+Passed parameters: 1/6
+
+DETAILED RESULTS:
+----------------------------------------
+Parameter: proton_mass
+  Calculated value: 798.097941
+  Experimental value: 938.272000 ± 0.006000
+  Deviation: 140.174059 (14.94%)
+  Within tolerance: NO
+  Status: FAILED
+
+Parameter: charge_radius
+  Calculated value: 0.644330
+  Experimental value: 0.841000 ± 0.019000
+  Deviation: 0.196670 (23.39%)
+  Within tolerance: NO
+  Status: FAILED
+
+Parameter: magnetic_moment
+  Calculated value: -0.000000
+  Experimental value: 2.793000 ± 0.001000
+  Deviation: 2.793000 (100.00%)
+  Within tolerance: NO
+  Status: FAILED
+
+Parameter: electric_charge
+  Calculated value: 1.000069
+  Experimental value: 1.000000 ± 0.000001
+  Deviation: 0.000069 (0.01%)
+  Within tolerance: NO
+  Status: GOOD
+
+Parameter: baryon_number
+  Calculated value: -0.000557-0.001028j
+  Experimental value: 1.000000 ± 0.020000
+  Deviation: 1.000557 (100.06%)
+  Within tolerance: NO
+  Status: FAILED
+
+Parameter: energy_balance
+  Calculated value: 0.500000
+  Experimental value: 0.500000 ± 0.010000
+  Deviation: 0.000000 (0.00%)
+  Within tolerance: YES
+  Status: EXCELLENT
+
+RECOMMENDATIONS:
+----------------------------------------
+CRITICAL ISSUES:
+  - proton_mass: requires immediate correction
+  - charge_radius: requires immediate correction
+  - magnetic_moment: requires immediate correction
+  - baryon_number: requires immediate correction
+
+================================================================================

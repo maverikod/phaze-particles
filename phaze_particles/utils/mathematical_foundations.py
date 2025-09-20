@@ -267,6 +267,26 @@ class ArrayBackend:
             x_backend = xp.asarray(x)
         return xp.tanh(x_backend)
 
+    def cosh(self, x: Any) -> Any:
+        """
+        Compute hyperbolic cosine using appropriate backend.
+
+        Args:
+            x: Input array
+
+        Returns:
+            Cosh array in appropriate backend
+        """
+        xp = self.get_array_module()
+        # Convert to appropriate backend array if needed
+        if hasattr(x, "get") and self.is_cuda_available:
+            # Already CuPy array
+            x_backend = x
+        else:
+            # Convert to appropriate backend
+            x_backend = xp.asarray(x)
+        return xp.cosh(x_backend)
+
     def where(self, condition: Any, x: Any, y: Any) -> Any:
         """
         Compute where condition using appropriate backend.

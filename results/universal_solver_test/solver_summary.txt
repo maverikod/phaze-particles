@@ -1,0 +1,28 @@
+UNIVERSAL SKYRME FIELD SOLVER RESULTS
+==================================================
+
+PHYSICAL PARAMETERS:
+  Mass: 3014.7 MeV
+  Charge radius: 0.746 fm
+  Magnetic moment: -0.421 μN
+  Electric charge: 0.095+0.000j
+  Baryon number: 0.000+0.000j
+
+ENERGY ANALYSIS:
+  E₂: 56.0 MeV
+  E₄: 2958.5 MeV
+  E₆: 0.2 MeV
+  Total: 3014.7 MeV
+  Ratios: E₂/E₄ = 0.02/0.98
+
+OPTIMIZED CONSTANTS:
+  c₂: 0.379310
+  c₄: 2.636364
+  c₆: 1.000000
+  F_π: 186.0 MeV
+  e: 5.450
+
+PERFORMANCE:
+  Execution time: 0.4 seconds
+  Iterations: 50
+  Strategy used: quantization

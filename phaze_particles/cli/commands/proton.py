@@ -45,6 +45,9 @@ class ProtonCommand(BaseCommand):
             "static": ProtonStaticCommand(),
             "optimize": ProtonOptimizeCommand(),
             "tune": ProtonTuneCommand(),
+            "solve": ProtonSolveCommand(),
+            "phase": ProtonPhaseEnvironmentCommand(),
+            "phase-tails": ProtonPhaseTailsCommand(),
             # Future subcommands will be added here
             # 'dynamic': ProtonDynamicCommand(),
         }
@@ -450,6 +453,20 @@ class ProtonStaticCommand(BaseCommand):
                 print("DETAILED ENERGY ANALYSIS")
                 print("="*60)
                 print(model.get_energy_report())
+            
+            # Print phase environment report
+            if hasattr(model, 'get_phase_environment_report'):
+                print("\n" + "="*60)
+                print("PHASE ENVIRONMENT INTEGRATION REPORT")
+                print("="*60)
+                print(model.get_phase_environment_report())
+            
+            # Print phase tail report
+            if hasattr(model, 'get_phase_tail_report'):
+                print("\n" + "="*60)
+                print("PHASE TAIL ANALYSIS REPORT")
+                print("="*60)
+                print(model.get_phase_tail_report())
 
             # Print validation results
             if results.validation_status:
@@ -1049,18 +1066,18 @@ class ProtonTuneCommand(BaseCommand):
                 # Save optimized constants
                 constants_path = os.path.join(args.output, "optimized_constants.json")
                 constants_data = {
-                    "c2": model.optimization_result.c2,
-                    "c4": model.optimization_result.c4,
-                    "c6": model.optimization_result.c6,
+                    "c2": float(model.optimization_result.c2),
+                    "c4": float(model.optimization_result.c4),
+                    "c6": float(model.optimization_result.c6),
                     "optimization_targets": {
                         "target_e2_ratio": args.target_e2_ratio,
                         "target_e4_ratio": args.target_e4_ratio,
                         "target_virial_residual": args.target_virial_residual
                     },
                     "achieved_values": {
-                        "e2_ratio": model.optimization_result.e2_ratio,
-                        "e4_ratio": model.optimization_result.e4_ratio,
-                        "virial_residual": model.optimization_result.virial_residual
+                        "e2_ratio": float(model.optimization_result.e2_ratio),
+                        "e4_ratio": float(model.optimization_result.e4_ratio),
+                        "virial_residual": float(model.optimization_result.virial_residual)
                     },
                     "converged": bool(model.optimization_result.converged),
                     "iterations": model.optimization_result.iterations
@@ -1083,3 +1100,819 @@ class ProtonTuneCommand(BaseCommand):
             import traceback
             traceback.print_exc()
             return 1
+
+
+class ProtonSolveCommand(BaseCommand):
+    """Proton solve command using universal solver."""
+
+    def __init__(self) -> None:
+        """Initialize proton solve command."""
+        super().__init__(
+            name="solve",
+            description="Solve proton model using universal solver with advanced optimization"
+        )
+
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
+        """Add solve command arguments."""
+        parser.add_argument(
+            "--grid-size", type=int, default=32,
+            help="Grid size (default: 32)"
+        )
+        parser.add_argument(
+            "--box-size", type=float, default=4.0,
+            help="Box size in fm (default: 4.0)"
+        )
+        parser.add_argument(
+            "--config-type", type=str, default="120deg",
+            choices=["120deg", "clover", "cartesian"],
+            help="Configuration type (default: 120deg)"
+        )
+        parser.add_argument(
+            "--c2", type=float, default=1.0,
+            help="Skyrme constant c2 (default: 1.0)"
+        )
+        parser.add_argument(
+            "--c4", type=float, default=1.0,
+            help="Skyrme constant c4 (default: 1.0)"
+        )
+        parser.add_argument(
+            "--c6", type=float, default=1.0,
+            help="Skyrme constant c6 (default: 1.0)"
+        )
+        parser.add_argument(
+            "--F-pi", type=float, default=186.0,
+            help="Pion decay constant in MeV (default: 186.0)"
+        )
+        parser.add_argument(
+            "--e", type=float, default=5.45,
+            help="Dimensionless Skyrme constant (default: 5.45)"
+        )
+        parser.add_argument(
+            "--target-mass", type=float,
+            help="Target mass in MeV (e.g., 938.272 for proton)"
+        )
+        parser.add_argument(
+            "--target-radius", type=float,
+            help="Target radius in fm (e.g., 0.841 for proton)"
+        )
+        parser.add_argument(
+            "--target-magnetic-moment", type=float,
+            help="Target magnetic moment in μN (e.g., 2.793 for proton)"
+        )
+        parser.add_argument(
+            "--target-bands", type=int,
+            help="Target number of energy bands (e.g., 11)"
+        )
+        parser.add_argument(
+            "--optimization-strategy", type=str, default="auto",
+            choices=["auto", "energy_balance", "physical_params", "quantization"],
+            help="Optimization strategy (default: auto)"
+        )
+        parser.add_argument(
+            "--output", type=str,
+            help="Output directory for results"
+        )
+        parser.add_argument(
+            "--verbose", action="store_true",
+            help="Verbose output"
+        )
+
+    def execute(self, args: argparse.Namespace) -> int:
+        """Execute the proton solve command."""
+        try:
+            print("PROTON MODEL WITH UNIVERSAL SOLVER")
+            print("=" * 50)
+            
+            # Display CUDA status
+            cuda_status = get_cuda_status()
+            print(f"CUDA Status: {cuda_status}")
+            print()
+            
+            # Create model configuration
+            config = ModelConfig(
+                grid_size=args.grid_size,
+                box_size=args.box_size,
+                c2=args.c2,
+                c4=args.c4,
+                c6=args.c6,
+                F_pi=args.F_pi,
+                e=args.e
+            )
+            config.config_type = args.config_type
+            
+            if args.verbose:
+                print(f"Configuration:")
+                print(f"  Grid size: {config.grid_size}")
+                print(f"  Box size: {config.box_size} fm")
+                print(f"  Config type: {config.config_type}")
+                print(f"  Constants: c2={config.c2}, c4={config.c4}, c6={config.c6}")
+                print(f"  Physical: F_π={config.F_pi} MeV, e={config.e}")
+                if args.target_mass:
+                    print(f"  Target mass: {args.target_mass} MeV")
+                if args.target_radius:
+                    print(f"  Target radius: {args.target_radius} fm")
+                if args.target_magnetic_moment:
+                    print(f"  Target magnetic moment: {args.target_magnetic_moment} μN")
+                if args.target_bands:
+                    print(f"  Target bands: {args.target_bands}")
+                print(f"  Strategy: {args.optimization_strategy}")
+                print()
+            
+            # Create and initialize model
+            model = ProtonModel(config)
+            model.create_geometry()
+            model.build_fields()
+            model.calculate_energy()
+            model.calculate_physics()
+            
+            # Run universal solver
+            print("Running universal solver optimization...")
+            solver_result = model.solve_with_universal_solver(
+                target_mass=args.target_mass,
+                target_radius=args.target_radius,
+                target_magnetic_moment=args.target_magnetic_moment,
+                target_bands=args.target_bands,
+                optimization_strategy=args.optimization_strategy,
+                verbose=args.verbose
+            )
+            
+            if not solver_result.success:
+                print(f"❌ Universal solver failed: {solver_result.convergence_info}")
+                return 1
+            
+            # Display results
+            print("\n" + "="*60)
+            print("UNIVERSAL SOLVER RESULTS")
+            print("="*60)
+            
+            print("\nPHYSICAL PARAMETERS:")
+            print(f"  Mass: {solver_result.physical_parameters['mass']:.1f} MeV")
+            print(f"  Charge radius: {solver_result.physical_parameters['charge_radius']:.3f} fm")
+            print(f"  Magnetic moment: {solver_result.physical_parameters['magnetic_moment']:.3f} μN")
+            print(f"  Electric charge: {solver_result.physical_parameters['electric_charge']:.3f}")
+            print(f"  Baryon number: {solver_result.physical_parameters['baryon_number']:.3f}")
+            
+            print("\nENERGY ANALYSIS:")
+            print(f"  E₂: {solver_result.energy_analysis['e2']:.1f} MeV")
+            print(f"  E₄: {solver_result.energy_analysis['e4']:.1f} MeV")
+            print(f"  E₆: {solver_result.energy_analysis['e6']:.1f} MeV")
+            print(f"  Total: {solver_result.energy_analysis['total']:.1f} MeV")
+            print(f"  Ratios: E₂/E₄ = {solver_result.energy_analysis['e2_ratio']:.2f}/{solver_result.energy_analysis['e4_ratio']:.2f}")
+            
+            print("\nMODE ANALYSIS:")
+            print(f"  Total modes: {solver_result.mode_analysis['total_modes']}")
+            print(f"  Energy bands: {solver_result.mode_analysis['energy_bands']}")
+            print(f"  Core radius: {solver_result.mode_analysis['core_radius']:.3f} fm")
+            print(f"  Quantization parameter: {solver_result.mode_analysis['quantization_parameter']:.3f}")
+            
+            print("\nTOPOLOGICAL ANALYSIS:")
+            print(f"  Geometric radius: {solver_result.topological_analysis['geometric_radius']:.3f} fm")
+            print(f"  Phase radius: {solver_result.topological_analysis['phase_radius']:.3f} fm")
+            print(f"  Effective radius: {solver_result.topological_analysis['effective_radius']:.3f} fm")
+            print(f"  Topological charge: {solver_result.topological_analysis['topological_charge']:.3f}")
+            print(f"  Phase transitions: {solver_result.topological_analysis['phase_transitions']}")
+            
+            print("\nINTERFERENCE ANALYSIS:")
+            print(f"  Fluctuation energy: {solver_result.interference_analysis['fluctuation_energy']:.1f} MeV")
+            print(f"  Background field strength: {solver_result.interference_analysis['background_field_strength']:.3f}")
+            print(f"  Constructive regions: {solver_result.interference_analysis['constructive_regions']}")
+            print(f"  Destructive regions: {solver_result.interference_analysis['destructive_regions']}")
+            print(f"  Interference strength: {solver_result.interference_analysis['interference_strength']:.3f}")
+            print(f"  Fluctuation amplitude: {solver_result.interference_analysis['fluctuation_amplitude']:.3f}")
+            
+            print("\nOPTIMIZED CONSTANTS:")
+            print(f"  c₂: {solver_result.optimized_constants['c2']:.6f}")
+            print(f"  c₄: {solver_result.optimized_constants['c4']:.6f}")
+            print(f"  c₆: {solver_result.optimized_constants['c6']:.6f}")
+            print(f"  F_π: {solver_result.optimized_constants['F_pi']:.1f} MeV")
+            print(f"  e: {solver_result.optimized_constants['e']:.3f}")
+            
+            print("\nPERFORMANCE:")
+            print(f"  Execution time: {solver_result.execution_time:.1f} seconds")
+            print(f"  Iterations: {solver_result.iterations}")
+            print(f"  Strategy used: {solver_result.convergence_info['strategy_used']}")
+            
+            # Save results if output directory specified
+            if args.output:
+                self._save_results(model, solver_result, args.output, args)
+                print(f"\nResults saved to: {args.output}")
+            
+            return 0
+            
+        except Exception as e:
+            print(f"❌ Error executing proton solve command: {str(e)}")
+            if args.verbose:
+                import traceback
+                traceback.print_exc()
+            return 1
+    
+    def _save_results(self, model, solver_result, output_dir: str, args) -> None:
+        """Save results to output directory."""
+        import os
+        from pathlib import Path
+        
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
+        
+        # Save detailed results as JSON
+        results_data = {
+            "input_parameters": {
+                "grid_size": args.grid_size,
+                "box_size": args.box_size,
+                "config_type": args.config_type,
+                "c2": args.c2,
+                "c4": args.c4,
+                "c6": args.c6,
+                "F_pi": args.F_pi,
+                "e": args.e,
+                "target_mass": args.target_mass,
+                "target_radius": args.target_radius,
+                "target_magnetic_moment": args.target_magnetic_moment,
+                "target_bands": args.target_bands,
+                "optimization_strategy": args.optimization_strategy
+            },
+            "solver_results": {
+                "success": solver_result.success,
+                "physical_parameters": solver_result.physical_parameters,
+                "energy_analysis": solver_result.energy_analysis,
+                "mode_analysis": solver_result.mode_analysis,
+                "topological_analysis": solver_result.topological_analysis,
+                "interference_analysis": solver_result.interference_analysis,
+                "optimized_constants": solver_result.optimized_constants,
+                "convergence_info": solver_result.convergence_info,
+                "execution_time": solver_result.execution_time,
+                "iterations": solver_result.iterations
+            },
+            "model_results": {
+                "mass": model.physical_quantities.mass,
+                "charge_radius": model.physical_quantities.charge_radius,
+                "magnetic_moment": model.physical_quantities.magnetic_moment,
+                "electric_charge": model.physical_quantities.electric_charge,
+                "baryon_number": model.physical_quantities.baryon_number
+            }
+        }
+        
+        # Convert numpy types to Python types for JSON serialization
+        def convert_numpy(obj):
+            import numpy as np
+            if hasattr(obj, 'item'):
+                item = obj.item()
+                if isinstance(item, complex):
+                    return float(item.real)
+                return item
+            elif isinstance(obj, (np.complex128, np.complex64, complex)):
+                return float(obj.real)
+            elif isinstance(obj, dict):
+                return {k: convert_numpy(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_numpy(v) for v in obj]
+            else:
+                return obj
+        
+        results_data = convert_numpy(results_data)
+        
+        # Save JSON file
+        json_file = output_path / "proton_solver_results.json"
+        with open(json_file, 'w', encoding='utf-8') as f:
+            json.dump(results_data, f, indent=2, ensure_ascii=False)
+        
+        # Save summary as text
+        summary_file = output_path / "proton_solver_summary.txt"
+        with open(summary_file, 'w', encoding='utf-8') as f:
+            f.write("PROTON MODEL WITH UNIVERSAL SOLVER RESULTS\n")
+            f.write("=" * 50 + "\n\n")
+            
+            f.write("PHYSICAL PARAMETERS:\n")
+            f.write(f"  Mass: {solver_result.physical_parameters['mass']:.1f} MeV\n")
+            f.write(f"  Charge radius: {solver_result.physical_parameters['charge_radius']:.3f} fm\n")
+            f.write(f"  Magnetic moment: {solver_result.physical_parameters['magnetic_moment']:.3f} μN\n")
+            f.write(f"  Electric charge: {solver_result.physical_parameters['electric_charge']:.3f}\n")
+            f.write(f"  Baryon number: {solver_result.physical_parameters['baryon_number']:.3f}\n\n")
+            
+            f.write("ENERGY ANALYSIS:\n")
+            f.write(f"  E₂: {solver_result.energy_analysis['e2']:.1f} MeV\n")
+            f.write(f"  E₄: {solver_result.energy_analysis['e4']:.1f} MeV\n")
+            f.write(f"  E₆: {solver_result.energy_analysis['e6']:.1f} MeV\n")
+            f.write(f"  Total: {solver_result.energy_analysis['total']:.1f} MeV\n")
+            f.write(f"  Ratios: E₂/E₄ = {solver_result.energy_analysis['e2_ratio']:.2f}/{solver_result.energy_analysis['e4_ratio']:.2f}\n\n")
+            
+            f.write("OPTIMIZED CONSTANTS:\n")
+            f.write(f"  c₂: {solver_result.optimized_constants['c2']:.6f}\n")
+            f.write(f"  c₄: {solver_result.optimized_constants['c4']:.6f}\n")
+            f.write(f"  c₆: {solver_result.optimized_constants['c6']:.6f}\n")
+            f.write(f"  F_π: {solver_result.optimized_constants['F_pi']:.1f} MeV\n")
+            f.write(f"  e: {solver_result.optimized_constants['e']:.3f}\n\n")
+            
+            f.write("PERFORMANCE:\n")
+            f.write(f"  Execution time: {solver_result.execution_time:.1f} seconds\n")
+            f.write(f"  Iterations: {solver_result.iterations}\n")
+            f.write(f"  Strategy used: {solver_result.convergence_info['strategy_used']}\n")
+
+
+class ProtonPhaseEnvironmentCommand(BaseCommand):
+    """Proton phase environment analysis command."""
+
+    def __init__(self) -> None:
+        """Initialize proton phase environment command."""
+        super().__init__(
+            name="phase",
+            description="Analyze phase environment according to 7D theory"
+        )
+
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
+        """Add phase environment command arguments."""
+        parser.add_argument(
+            "--grid-size", type=int, default=32,
+            help="Grid size (default: 32)"
+        )
+        parser.add_argument(
+            "--box-size", type=float, default=4.0,
+            help="Box size in fm (default: 4.0)"
+        )
+        parser.add_argument(
+            "--config-type", type=str, default="120deg",
+            choices=["120deg", "clover", "cartesian"],
+            help="Configuration type (default: 120deg)"
+        )
+        parser.add_argument(
+            "--c2", type=float, default=1.0,
+            help="Skyrme constant c2 (default: 1.0)"
+        )
+        parser.add_argument(
+            "--c4", type=float, default=1.0,
+            help="Skyrme constant c4 (default: 1.0)"
+        )
+        parser.add_argument(
+            "--c6", type=float, default=1.0,
+            help="Skyrme constant c6 (default: 1.0)"
+        )
+        parser.add_argument(
+            "--F-pi", type=float, default=186.0,
+            help="Pion decay constant in MeV (default: 186.0)"
+        )
+        parser.add_argument(
+            "--e", type=float, default=5.45,
+            help="Dimensionless Skyrme constant (default: 5.45)"
+        )
+        parser.add_argument(
+            "--well-depth", type=float, default=1.0,
+            help="Phase well depth (default: 1.0)"
+        )
+        parser.add_argument(
+            "--well-width", type=float, default=1.0,
+            help="Phase well width (default: 1.0)"
+        )
+        parser.add_argument(
+            "--compression-strength", type=float, default=1.0,
+            help="Phase compression strength (default: 1.0)"
+        )
+        parser.add_argument(
+            "--rarefaction-strength", type=float, default=1.0,
+            help="Phase rarefaction strength (default: 1.0)"
+        )
+        parser.add_argument(
+            "--output", type=str,
+            help="Output directory for results"
+        )
+        parser.add_argument(
+            "--verbose", action="store_true",
+            help="Verbose output"
+        )
+
+    def execute(self, args: argparse.Namespace) -> int:
+        """Execute the proton phase environment command."""
+        try:
+            print("PROTON PHASE ENVIRONMENT ANALYSIS")
+            print("=" * 50)
+            
+            # Display CUDA status
+            cuda_status = get_cuda_status()
+            print(f"CUDA Status: {cuda_status}")
+            print()
+            
+            # Create model configuration
+            config = ModelConfig(
+                grid_size=args.grid_size,
+                box_size=args.box_size,
+                c2=args.c2,
+                c4=args.c4,
+                c6=args.c6,
+                F_pi=args.F_pi,
+                e=args.e
+            )
+            config.config_type = args.config_type
+            
+            if args.verbose:
+                print(f"Configuration:")
+                print(f"  Grid size: {config.grid_size}")
+                print(f"  Box size: {config.box_size} fm")
+                print(f"  Config type: {config.config_type}")
+                print(f"  Constants: c2={config.c2}, c4={config.c4}, c6={config.c6}")
+                print(f"  Physical: F_π={config.F_pi} MeV, e={config.e}")
+                print(f"  Phase well: depth={args.well_depth}, width={args.well_width}")
+                print(f"  Balance: compression={args.compression_strength}, rarefaction={args.rarefaction_strength}")
+                print()
+            
+            # Create and initialize model
+            model = ProtonModel(config)
+            model.create_geometry()
+            model.build_fields()
+            model.calculate_energy()
+            model.calculate_physics()
+            
+            # Configure phase environment
+            if model.phase_environment:
+                model.phase_environment.well_params.well_depth = args.well_depth
+                model.phase_environment.well_params.well_width = args.well_width
+                model.phase_environment.well_params.compression_strength = args.compression_strength
+                model.phase_environment.well_params.rarefaction_strength = args.rarefaction_strength
+            
+            # Analyze phase environment
+            print("Analyzing phase environment...")
+            phase_analysis = model.analyze_phase_environment()
+            
+            if 'error' in phase_analysis:
+                print(f"❌ Phase environment analysis failed: {phase_analysis['error']}")
+                return 1
+            
+            # Display results
+            print("\n" + "="*60)
+            print("PHASE ENVIRONMENT ANALYSIS RESULTS")
+            print("="*60)
+            
+            print("\n" + phase_analysis['environment_report'])
+            
+            print("\nCOMPRESSION-RAREFACTION BALANCE:")
+            balance = phase_analysis['compression_rarefaction_balance']
+            print(f"  Total compression: {balance['total_compression']:.3f}")
+            print(f"  Total rarefaction: {balance['total_rarefaction']:.3f}")
+            print(f"  Balance ratio: {balance['balance_ratio']:.3f}")
+            print(f"  Is stable: {balance['is_stable']}")
+            print(f"  Stability margin: {balance['stability_margin']:.3f}")
+            
+            print("\nIMPEDANCE PARAMETERS:")
+            impedance = phase_analysis['impedance_parameters']
+            print(f"  K_real: {impedance.K_real}")
+            print(f"  K_imag: {impedance.K_imag}")
+            print(f"  Boundary radius: {impedance.boundary_radius:.3f} fm")
+            print(f"  Phase velocity: {impedance.phase_velocity}")
+            
+            print("\nSCALE QUANTIZATION:")
+            quantization = phase_analysis['scale_quantization']
+            print(f"  Natural radius R*: {quantization.natural_radius_R_star:.3f} fm")
+            print(f"  Spectral radii Rn: {len(quantization.spectral_radii_Rn)} modes")
+            print(f"  Allowed radii: {len(quantization.allowed_radii)} modes")
+            print(f"  ΔR: {quantization.delta_R:.3f} fm")
+            
+            if quantization.allowed_radii:
+                print(f"  First few allowed radii: {[f'{r:.3f}' for r in quantization.allowed_radii[:5]]}")
+            
+            print("\nPHASE FIELD ENERGY:")
+            energy = phase_analysis['phase_energy']
+            print(f"  Total phase energy: {energy['total_phase_energy']:.3f}")
+            print(f"  Interaction energy: {energy['interaction_energy']:.3f}")
+            print(f"  Total energy: {energy['total_energy']:.3f}")
+            
+            # Save results if output directory specified
+            if args.output:
+                self._save_results(model, phase_analysis, args.output, args)
+                print(f"\nResults saved to: {args.output}")
+            
+            return 0
+            
+        except Exception as e:
+            print(f"❌ Error executing proton phase environment command: {str(e)}")
+            if args.verbose:
+                import traceback
+                traceback.print_exc()
+            return 1
+    
+    def _save_results(self, model, phase_analysis, output_dir: str, args) -> None:
+        """Save results to output directory."""
+        import os
+        from pathlib import Path
+        
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
+        
+        # Save detailed results as JSON
+        results_data = {
+            "input_parameters": {
+                "grid_size": args.grid_size,
+                "box_size": args.box_size,
+                "config_type": args.config_type,
+                "c2": args.c2,
+                "c4": args.c4,
+                "c6": args.c6,
+                "F_pi": args.F_pi,
+                "e": args.e,
+                "well_depth": args.well_depth,
+                "well_width": args.well_width,
+                "compression_strength": args.compression_strength,
+                "rarefaction_strength": args.rarefaction_strength
+            },
+            "phase_analysis": {
+                "compression_rarefaction_balance": phase_analysis['compression_rarefaction_balance'],
+                "impedance_parameters": {
+                    "K_real": phase_analysis['impedance_parameters'].K_real,
+                    "K_imag": phase_analysis['impedance_parameters'].K_imag,
+                    "boundary_radius": phase_analysis['impedance_parameters'].boundary_radius,
+                    "phase_velocity": phase_analysis['impedance_parameters'].phase_velocity
+                },
+                "scale_quantization": {
+                    "natural_radius_R_star": phase_analysis['scale_quantization'].natural_radius_R_star,
+                    "spectral_radii_Rn": phase_analysis['scale_quantization'].spectral_radii_Rn,
+                    "allowed_radii": phase_analysis['scale_quantization'].allowed_radii,
+                    "delta_R": phase_analysis['scale_quantization'].delta_R
+                },
+                "phase_energy": phase_analysis['phase_energy']
+            },
+            "model_results": {
+                "mass": model.physical_quantities.mass,
+                "charge_radius": model.physical_quantities.charge_radius,
+                "magnetic_moment": model.physical_quantities.magnetic_moment,
+                "electric_charge": model.physical_quantities.electric_charge,
+                "baryon_number": model.physical_quantities.baryon_number
+            }
+        }
+        
+        # Convert numpy types to Python types for JSON serialization
+        def convert_numpy(obj):
+            import numpy as np
+            if hasattr(obj, 'item'):
+                item = obj.item()
+                if isinstance(item, complex):
+                    return float(item.real)
+                return item
+            elif isinstance(obj, (np.complex128, np.complex64, complex)):
+                return float(obj.real)
+            elif isinstance(obj, dict):
+                return {k: convert_numpy(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_numpy(v) for v in obj]
+            else:
+                return obj
+        
+        results_data = convert_numpy(results_data)
+        
+        # Save JSON file
+        json_file = output_path / "proton_phase_environment_results.json"
+        with open(json_file, 'w', encoding='utf-8') as f:
+            json.dump(results_data, f, indent=2, ensure_ascii=False)
+        
+        # Save summary as text
+        summary_file = output_path / "proton_phase_environment_summary.txt"
+        with open(summary_file, 'w', encoding='utf-8') as f:
+            f.write("PROTON PHASE ENVIRONMENT ANALYSIS RESULTS\n")
+            f.write("=" * 50 + "\n\n")
+            
+            f.write(phase_analysis['environment_report'])
+            
+            f.write("\n\nCOMPRESSION-RAREFACTION BALANCE:\n")
+            balance = phase_analysis['compression_rarefaction_balance']
+            f.write(f"  Total compression: {balance['total_compression']:.3f}\n")
+            f.write(f"  Total rarefaction: {balance['total_rarefaction']:.3f}\n")
+            f.write(f"  Balance ratio: {balance['balance_ratio']:.3f}\n")
+            f.write(f"  Is stable: {balance['is_stable']}\n")
+            f.write(f"  Stability margin: {balance['stability_margin']:.3f}\n")
+            
+            f.write("\nIMPEDANCE PARAMETERS:\n")
+            impedance = phase_analysis['impedance_parameters']
+            f.write(f"  K_real: {impedance.K_real}\n")
+            f.write(f"  K_imag: {impedance.K_imag}\n")
+            f.write(f"  Boundary radius: {impedance.boundary_radius:.3f} fm\n")
+            f.write(f"  Phase velocity: {impedance.phase_velocity}\n")
+            
+            f.write("\nSCALE QUANTIZATION:\n")
+            quantization = phase_analysis['scale_quantization']
+            f.write(f"  Natural radius R*: {quantization.natural_radius_R_star:.3f} fm\n")
+            f.write(f"  Spectral radii Rn: {len(quantization.spectral_radii_Rn)} modes\n")
+            f.write(f"  Allowed radii: {len(quantization.allowed_radii)} modes\n")
+            f.write(f"  ΔR: {quantization.delta_R:.3f} fm\n")
+            
+            if quantization.allowed_radii:
+                f.write(f"  First few allowed radii: {[f'{r:.3f}' for r in quantization.allowed_radii[:5]]}\n")
+            
+            f.write("\nPHASE FIELD ENERGY:\n")
+            energy = phase_analysis['phase_energy']
+            f.write(f"  Total phase energy: {energy['total_phase_energy']:.3f}\n")
+            f.write(f"  Interaction energy: {energy['interaction_energy']:.3f}\n")
+            f.write(f"  Total energy: {energy['total_energy']:.3f}\n")
+
+    def get_subcommands(self) -> list:
+        """Get available subcommands."""
+        return []
+
+    def get_help(self) -> str:
+        """Get help text."""
+        return """
+Proton solve command using universal solver with advanced optimization.
+
+This command uses the universal solver to optimize proton model parameters
+using various strategies including energy balance, physical parameters,
+and quantization analysis.
+
+Examples:
+  # Basic proton solve
+  phaze-particles proton solve --grid-size 32 --box-size 4.0
+
+  # Optimize for target radius
+  phaze-particles proton solve --target-radius 0.841 --optimization-strategy physical_params
+
+  # Optimize for target bands
+  phaze-particles proton solve --target-bands 11 --optimization-strategy quantization
+
+  # Full optimization with all targets
+  phaze-particles proton solve --target-mass 938.272 --target-radius 0.841 --target-magnetic-moment 2.793
+        """
+
+
+class ProtonPhaseTailsCommand(BaseCommand):
+    """Proton phase tails analysis command."""
+    
+    def __init__(self):
+        """Initialize phase tails command."""
+        super().__init__(
+            name="phase-tails",
+            description="Analyze phase tails and interference patterns in proton model"
+        )
+    
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
+        """Add phase tails command arguments."""
+        # Grid parameters
+        parser.add_argument(
+            "--grid-size", type=int, default=32,
+            help="Grid size for calculations (default: 32)"
+        )
+        parser.add_argument(
+            "--box-size", type=float, default=4.0,
+            help="Box size in fm (default: 4.0)"
+        )
+        
+        # Torus configuration
+        parser.add_argument(
+            "--torus-config", type=str, default="120deg",
+            choices=["120deg", "clover", "cartesian"],
+            help="Torus configuration (default: 120deg)"
+        )
+        parser.add_argument(
+            "--r-scale", type=float, default=1.0,
+            help="Radial scale parameter (default: 1.0)"
+        )
+        
+        # Skyrme constants
+        parser.add_argument(
+            "--c2", type=float, default=1.0,
+            help="Skyrme constant c2 (default: 1.0)"
+        )
+        parser.add_argument(
+            "--c4", type=float, default=1.0,
+            help="Skyrme constant c4 (default: 1.0)"
+        )
+        parser.add_argument(
+            "--c6", type=float, default=0.0,
+            help="Skyrme constant c6 (default: 0.0)"
+        )
+        
+        # Physical constants
+        parser.add_argument(
+            "--F-pi", type=float, default=186.0,
+            help="Pion decay constant in MeV (default: 186.0)"
+        )
+        parser.add_argument(
+            "--e", type=float, default=5.45,
+            help="Dimensionless Skyrme constant (default: 5.45)"
+        )
+        
+        # Output options
+        parser.add_argument(
+            "--output-dir", type=str, default="results/proton/phase-tails",
+            help="Output directory for results (default: results/proton/phase-tails)"
+        )
+        parser.add_argument(
+            "--save-results", action="store_true",
+            help="Save analysis results to files"
+        )
+        parser.add_argument(
+            "--verbose", action="store_true",
+            help="Enable verbose output"
+        )
+    
+    def execute(self, args: argparse.Namespace) -> int:
+        """Execute phase tails analysis."""
+        try:
+            print("=" * 60)
+            print("PROTON PHASE TAILS ANALYSIS")
+            print("=" * 60)
+            print()
+            
+            # Create model configuration
+            from phaze_particles.models.proton_integrated import ProtonModel, ModelConfig
+            
+            config = ModelConfig(
+                grid_size=args.grid_size,
+                box_size=args.box_size,
+                torus_config=args.torus_config,
+                r_scale=args.r_scale,
+                c2=args.c2,
+                c4=args.c4,
+                c6=args.c6,
+                F_pi=args.F_pi,
+                e=args.e
+            )
+            
+            print(f"Configuration:")
+            print(f"  Grid size: {config.grid_size}")
+            print(f"  Box size: {config.box_size} fm")
+            print(f"  Torus config: {config.torus_config}")
+            print(f"  Skyrme constants: c2={config.c2}, c4={config.c4}, c6={config.c6}")
+            print(f"  Physical constants: F_π={config.F_pi} MeV, e={config.e}")
+            print()
+            
+            # Initialize model
+            print("Initializing proton model...")
+            model = ProtonModel(config)
+            
+            # Build geometry and fields
+            print("Building geometry and fields...")
+            model.create_geometry()
+            model.build_fields()
+            
+            # Calculate energy
+            print("Calculating energy...")
+            model.calculate_energy()
+            
+            # Analyze phase tails
+            print("Analyzing phase tails and interference...")
+            phase_tail_result = model.analyze_phase_tails()
+            
+            # Generate report
+            print("Generating analysis report...")
+            report = model.get_phase_tail_report()
+            
+            print(report)
+            
+            # Save results if requested
+            if args.save_results:
+                import os
+                from datetime import datetime
+                
+                os.makedirs(args.output_dir, exist_ok=True)
+                
+                timestamp = datetime.now().strftime("%Y-%m-%dT%H.%M.%S")
+                filename = f"phase-tails-analysis-{timestamp}.txt"
+                filepath = os.path.join(args.output_dir, filename)
+                
+                with open(filepath, 'w', encoding='utf-8') as f:
+                    f.write(report)
+                    f.write(f"\n\nConfiguration:\n")
+                    f.write(f"  Grid size: {config.grid_size}\n")
+                    f.write(f"  Box size: {config.box_size} fm\n")
+                    f.write(f"  Torus config: {config.torus_config}\n")
+                    f.write(f"  Skyrme constants: c2={config.c2}, c4={config.c4}, c6={config.c6}\n")
+                    f.write(f"  Physical constants: F_π={config.F_pi} MeV, e={config.e}\n")
+                
+                print(f"\nResults saved to: {filepath}")
+            
+            print("\nPhase tails analysis completed successfully!")
+            return 0
+            
+        except Exception as e:
+            print(f"Error during phase tails analysis: {e}")
+            if args.verbose:
+                import traceback
+                traceback.print_exc()
+            return 1
+    
+    def get_subcommands(self) -> list:
+        """Get available subcommands."""
+        return []
+    
+    def get_help(self) -> str:
+        """Get help text."""
+        return """
+Proton phase tails analysis command.
+
+This command analyzes phase tails and interference patterns in the proton model
+based on the 7D phase space-time theory. It examines:
+
+- Phase tail energy and structure
+- Interference patterns and coherence
+- Resonance modes and quantization
+- Energy contributions from tails vs background
+- Geometric effects on effective metric
+- Stability and coherence assessment
+
+Examples:
+  # Basic phase tails analysis
+  phaze-particles proton phase-tails
+
+  # Analysis with custom parameters
+  phaze-particles proton phase-tails --grid-size 64 --box-size 6.0 --c4 2.0
+
+  # Save results to file
+  phaze-particles proton phase-tails --save-results --output-dir results/analysis
+
+  # Verbose output with detailed information
+  phaze-particles proton phase-tails --verbose
+        """

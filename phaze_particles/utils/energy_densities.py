@@ -206,8 +206,9 @@ class BaryonDensity:
             + epsilon[2, 0, 1] * trace_zxy
         )
 
-        # Normalization
-        baryon_density *= -1.0 / (24 * math.pi**2)
+        # Normalization for skyrmion baryon number
+        # B = (1/24π²) ∫ εⁱʲᵏ Tr(Lᵢ Lⱼ Lₖ) d³x
+        baryon_density *= 1.0 / (24 * math.pi**2)
 
         return baryon_density.astype(np.float64)
 
@@ -673,8 +674,9 @@ class EnergyDensityCalculator:
             + epsilon[2, 0, 1] * trace_zxy
         )
         
-        # Normalization
-        baryon_density *= -1.0 / (24 * math.pi**2)
+        # Normalization for skyrmion baryon number
+        # B = (1/24π²) ∫ εⁱʲᵏ Tr(Lᵢ Lⱼ Lₖ) d³x
+        baryon_density *= 1.0 / (24 * math.pi**2)
         
         # Extract real part and convert to float64
         return xp.real(baryon_density).astype(xp.float64)

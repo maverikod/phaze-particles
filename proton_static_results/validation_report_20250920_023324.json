@@ -1,0 +1,76 @@
+{
+  "timestamp": "2025-09-20T02:31:17.684206",
+  "overall_status": "poor",
+  "weighted_score": 0.3,
+  "status_counts": {
+    "excellent": 3,
+    "good": 0,
+    "fair": 0,
+    "poor": 0,
+    "failed": 3
+  },
+  "total_parameters": 6,
+  "passed_parameters": 3,
+  "validation_results": [
+    {
+      "parameter_name": "proton_mass",
+      "calculated_value": 693.2646801710938,
+      "experimental_value": 938.272,
+      "experimental_error": 0.006,
+      "deviation": 245.00731982890625,
+      "deviation_percent": 26.112611250139217,
+      "within_tolerance": false,
+      "status": "failed"
+    },
+    {
+      "parameter_name": "charge_radius",
+      "calculated_value": 1.1829737843433195,
+      "experimental_value": 0.841,
+      "experimental_error": 0.019,
+      "deviation": 0.3419737843433195,
+      "deviation_percent": 40.6627567590154,
+      "within_tolerance": false,
+      "status": "failed"
+    },
+    {
+      "parameter_name": "magnetic_moment",
+      "calculated_value": 496.7398136361336,
+      "experimental_value": 2.793,
+      "experimental_error": 0.001,
+      "deviation": 493.9468136361336,
+      "deviation_percent": 17685.170556252542,
+      "within_tolerance": false,
+      "status": "failed"
+    },
+    {
+      "parameter_name": "electric_charge",
+      "calculated_value": 1.0,
+      "experimental_value": 1.0,
+      "experimental_error": 1e-06,
+      "deviation": 0.0,
+      "deviation_percent": 0.0,
+      "within_tolerance": true,
+      "status": "excellent"
+    },
+    {
+      "parameter_name": "baryon_number",
+      "calculated_value": 0.9826604517976618,
+      "experimental_value": 1.0,
+      "experimental_error": 0.02,
+      "deviation": 0.017339548202338184,
+      "deviation_percent": 1.7339548202338184,
+      "within_tolerance": true,
+      "status": "excellent"
+    },
+    {
+      "parameter_name": "energy_balance",
+      "calculated_value": 0.5,
+      "experimental_value": 0.5,
+      "experimental_error": 0.01,
+      "deviation": 0.0,
+      "deviation_percent": 0.0,
+      "within_tolerance": true,
+      "status": "excellent"
+    }
+  ]
+}

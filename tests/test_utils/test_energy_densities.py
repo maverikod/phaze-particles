@@ -416,7 +416,8 @@ class TestEnergyAnalyzer(unittest.TestCase):
         balance = {"E2_ratio": 0.7, "E4_ratio": 0.3, "E6_ratio": 0.0}
         virial_ok = False
 
-        recommendations = self.analyzer._get_energy_recommendations(balance, virial_ok)
+        positivity = {"total_energy_positive": True, "energy_density_positive": True}
+        recommendations = self.analyzer._get_energy_recommendations(balance, virial_ok, positivity)
 
         self.assertIsInstance(recommendations, list)
         self.assertGreater(len(recommendations), 0)
